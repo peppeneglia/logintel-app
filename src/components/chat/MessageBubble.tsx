@@ -21,8 +21,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         <div
           className={`px-4 py-3 text-sm leading-relaxed ${
             isUser
-              ? 'bg-primary-500/15 text-gray-100 rounded-2xl rounded-tr-sm'
-              : 'bg-gray-800 text-gray-200 rounded-2xl rounded-tl-sm'
+              ? 'bg-primary-500/15 text-slate-100 rounded-2xl rounded-tr-sm'
+              : 'bg-[#334155] text-slate-200 rounded-2xl rounded-tl-sm'
           }`}
           style={{ whiteSpace: 'pre-wrap' }}
         >
@@ -34,7 +34,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         )}
 
         <div
-          className={`text-xs text-gray-500 mt-1 ${
+          className={`text-xs text-slate-500 mt-1 ${
             isUser ? 'text-right' : 'text-left'
           }`}
         >

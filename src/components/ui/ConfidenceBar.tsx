@@ -23,7 +23,7 @@ export function ConfidenceBar({ value, size = 'md' }: ConfidenceBarProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`flex-1 ${barHeight} bg-gray-700 rounded-full overflow-hidden`}>
+      <div className={`flex-1 ${barHeight} bg-slate-600 rounded-full overflow-hidden`}>
         <div
           className={`h-full ${getColor()} rounded-full transition-all duration-300`}
           style={{ width: `${clampedValue}%` }}

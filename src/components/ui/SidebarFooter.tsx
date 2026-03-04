@@ -6,10 +6,10 @@ export function SidebarFooter() {
 
   return (
     <div className="mt-auto p-3 flex flex-col gap-2">
-      <div className="bg-gray-800 rounded-xl p-2 flex items-center">
+      <div className="bg-[#334155] rounded-xl p-2 flex items-center">
         <button
           onClick={() => navigate('/settings')}
-          className="flex-1 flex items-center gap-2 px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors text-sm font-medium"
+          className="flex-1 flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium"
           title="Impostazioni"
         >
           <Settings size={18} />
@@ -17,14 +17,14 @@ export function SidebarFooter() {
         </button>
         <button
           onClick={() => navigate('/settings/plan')}
-          className="p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-lg transition-colors"
+          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-600 rounded-lg transition-colors"
           title="Piano e Crediti"
         >
           <CreditCard size={16} />
         </button>
         <button
           onClick={() => navigate('/settings/notifications')}
-          className="relative p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-lg transition-colors"
+          className="relative p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-600 rounded-lg transition-colors"
           title="Notifiche"
         >
           <Bell size={16} />
@@ -33,7 +33,7 @@ export function SidebarFooter() {
       </div>
 
       <div
-        className="bg-gray-800 rounded-xl p-3 flex items-center justify-center gap-3 cursor-pointer hover:bg-gray-700 transition-colors"
+        className="bg-[#334155] rounded-xl p-3 flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-600 transition-colors"
         onClick={() => navigate('/settings/profile')}
       >
         <img
@@ -43,7 +43,7 @@ export function SidebarFooter() {
         />
         <div>
           <div className="text-sm font-medium text-white leading-tight">Francesco Moretti</div>
-          <div className="text-xs text-gray-400 leading-tight">Logistica Moretti S.r.l.</div>
+          <div className="text-xs text-slate-400 leading-tight">Logistica Moretti S.r.l.</div>
         </div>
       </div>
     </div>

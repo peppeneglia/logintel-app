@@ -24,8 +24,8 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   }
 
   return (
-    <div className="bg-gray-950 px-4 py-3">
-      <div className="max-w-3xl mx-auto flex items-center gap-3 border border-gray-700 rounded-2xl bg-gray-900 py-3 px-4">
+    <div className="bg-[#0f172a] px-4 py-3">
+      <div className="max-w-3xl mx-auto flex items-center gap-3 border border-slate-600 rounded-2xl bg-[#1e293b] py-3 px-4">
         <input
           type="text"
           value={text}
@@ -33,7 +33,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Scrivi un messaggio..."
           disabled={disabled}
-          className="flex-1 outline-none text-sm text-gray-100 placeholder-gray-500 bg-transparent disabled:opacity-50"
+          className="flex-1 outline-none text-sm text-slate-100 placeholder-slate-500 bg-transparent disabled:opacity-50"
         />
         <button
           onClick={handleSend}

@@ -5,7 +5,6 @@ import { WelcomeScreen } from './WelcomeScreen'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { ChatSidebar } from './ChatSidebar'
-import { CreditConfirmModal } from '../ui/CreditConfirmModal'
 
 const PREDICTION_KEYWORDS = ['predizione', 'calcola', 'prevedi', 'eta']
 
@@ -44,8 +43,6 @@ const GENERIC_RESPONSES = [
 
 export function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [showCreditModal, setShowCreditModal] = useState(false)
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
 
   function addAssistantReply() {
@@ -69,27 +66,12 @@ export function ChatPage() {
   }
 
   function handleSend(text: string) {
+    setMessages((prev) => [...prev, createUserMessage(text)])
     if (isPredictionRequest(text)) {
-      setPendingMessage(text)
-      setShowCreditModal(true)
+      addPredictionReply()
     } else {
-      setMessages((prev) => [...prev, createUserMessage(text)])
       addAssistantReply()
     }
-  }
-
-  function handleCreditConfirm() {
-    if (pendingMessage) {
-      setMessages((prev) => [...prev, createUserMessage(pendingMessage)])
-      addPredictionReply()
-    }
-    setPendingMessage(null)
-    setShowCreditModal(false)
-  }
-
-  function handleCreditCancel() {
-    setPendingMessage(null)
-    setShowCreditModal(false)
   }
 
   function handleSuggestionClick(text: string) {
@@ -125,13 +107,6 @@ export function ChatPage() {
         )}
 
         <ChatInput onSend={handleSend} />
-
-        <CreditConfirmModal
-          isOpen={showCreditModal}
-          creditsRemaining={142}
-          onConfirm={handleCreditConfirm}
-          onCancel={handleCreditCancel}
-        />
       </div>
     </div>
   )

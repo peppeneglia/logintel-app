@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { mockSinglePrediction } from '../../data/mockData'
 import { ConfidenceBar } from '../ui/ConfidenceBar'
-import { CreditConfirmModal } from '../ui/CreditConfirmModal'
 import type { WeatherCondition } from '../../types'
 
 const weatherEmoji: Record<WeatherCondition, string> = {
@@ -37,17 +36,11 @@ export function SinglePrediction() {
   const [destination, setDestination] = useState('')
   const [departureTime, setDepartureTime] = useState('')
   const [vehicleType, setVehicleType] = useState('truck_standard')
-  const [showModal, setShowModal] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setShowModal(true)
-  }
-
-  const handleConfirm = () => {
-    setShowModal(false)
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
@@ -59,46 +52,46 @@ export function SinglePrediction() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Predizione Singola</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Predizione Singola</h1>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-3">
+      <form onSubmit={handleSubmit} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6 mb-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Origine</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Origine</label>
             <input
               type="text"
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
               placeholder="es. Milano"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Destinazione</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Destinazione</label>
             <input
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               placeholder="es. Roma"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Data e ora partenza</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Data e ora partenza</label>
             <input
               type="datetime-local"
               value={departureTime}
               onChange={(e) => setDepartureTime(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Tipo veicolo</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Tipo veicolo</label>
             <select
               value={vehicleType}
               onChange={(e) => setVehicleType(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             >
               <option value="truck_standard">Truck standard</option>
               <option value="truck_refrigerato">Truck refrigerato</option>
@@ -110,32 +103,31 @@ export function SinglePrediction() {
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-colors"
+            className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors"
           >
             Calcola predizione
           </button>
-          <span className="text-xs text-gray-500">(1 credito)</span>
         </div>
       </form>
 
       {/* Loading */}
       {loading && (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-12 text-center">
+        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-12 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Calcolo predizione in corso...</p>
+          <p className="text-sm text-slate-500">Calcolo predizione in corso...</p>
         </div>
       )}
 
       {/* Result */}
       {showResult && !loading && (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+        <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-lg font-semibold text-white">
                 {prediction.origin} &rarr; {prediction.destination}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-500">
                 {formatDateTime(prediction.departureTime)}
               </p>
             </div>
@@ -143,42 +135,42 @@ export function SinglePrediction() {
 
           {/* Delay + Confidence */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-3">
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-sm text-gray-400 mb-1">Ritardo stimato</p>
+            <div className="bg-[#334155] rounded-xl p-4">
+              <p className="text-sm text-slate-400 mb-1">Ritardo stimato</p>
               <p className={`text-4xl font-bold ${getDelayColor(prediction.estimatedDelay)}`}>
                 +{prediction.estimatedDelay} min
               </p>
             </div>
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-sm text-gray-400 mb-2">Confidenza</p>
+            <div className="bg-[#334155] rounded-xl p-4">
+              <p className="text-sm text-slate-400 mb-2">Confidenza</p>
               <ConfidenceBar value={prediction.confidence} />
             </div>
           </div>
 
           {/* Weather Table */}
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-gray-300 mb-3">Condizioni meteo lungo il percorso</h3>
+            <h3 className="text-sm font-semibold text-slate-300 mb-3">Condizioni meteo lungo il percorso</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="text-left py-2 px-3 font-medium text-gray-400">Localita</th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-400">Km</th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-400">Condizioni</th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-400">Temperatura</th>
-                    <th className="text-left py-2 px-3 font-medium text-gray-400">Impatto</th>
+                  <tr className="border-b border-[#334155]">
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Localita</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Km</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Condizioni</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Temperatura</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Impatto</th>
                   </tr>
                 </thead>
                 <tbody>
                   {prediction.weatherConditions.map((wp, idx) => (
-                    <tr key={idx} className="border-b border-gray-800">
+                    <tr key={idx} className="border-b border-[#334155]">
                       <td className="py-2 px-3 text-white">{wp.location}</td>
-                      <td className="py-2 px-3 text-gray-400">{wp.km}</td>
+                      <td className="py-2 px-3 text-slate-400">{wp.km}</td>
                       <td className="py-2 px-3">
                         <span className="mr-1">{weatherEmoji[wp.condition]}</span>
-                        <span className="text-gray-400">{wp.condition.replace('_', ' ')}</span>
+                        <span className="text-slate-400">{wp.condition.replace('_', ' ')}</span>
                       </td>
-                      <td className="py-2 px-3 text-gray-400">{wp.temperature}°C</td>
+                      <td className="py-2 px-3 text-slate-400">{wp.temperature}°C</td>
                       <td className="py-2 px-3">
                         {wp.impactMinutes > 0 ? (
                           <span className="text-orange-400 font-medium">+{wp.impactMinutes} min</span>
@@ -218,17 +210,17 @@ export function SinglePrediction() {
           )}
 
           {/* ETA */}
-          <div className="bg-gray-800 rounded-xl p-4 mb-3">
+          <div className="bg-[#334155] rounded-xl p-4 mb-3">
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-xs text-gray-400">ETA originale</p>
-                <p className="text-sm font-medium text-gray-300">
+                <p className="text-xs text-slate-400">ETA originale</p>
+                <p className="text-sm font-medium text-slate-300">
                   {formatDateTime(prediction.originalETA)}
                 </p>
               </div>
-              <span className="text-gray-500">&rarr;</span>
+              <span className="text-slate-500">&rarr;</span>
               <div>
-                <p className="text-xs text-gray-400">ETA corretta</p>
+                <p className="text-xs text-slate-400">ETA corretta</p>
                 <p className="text-sm font-semibold text-white">
                   {formatDateTime(prediction.correctedETA)}
                 </p>
@@ -238,22 +230,16 @@ export function SinglePrediction() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 border border-gray-700 rounded-xl text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+            <button className="px-4 py-2 border border-slate-600 rounded-xl text-sm font-medium text-slate-300 hover:bg-[#334155] transition-colors">
               Esporta PDF
             </button>
-            <button className="px-4 py-2 border border-gray-700 rounded-xl text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+            <button className="px-4 py-2 border border-slate-600 rounded-xl text-sm font-medium text-slate-300 hover:bg-[#334155] transition-colors">
               Dai feedback
             </button>
           </div>
         </div>
       )}
 
-      <CreditConfirmModal
-        isOpen={showModal}
-        creditsRemaining={142}
-        onConfirm={handleConfirm}
-        onCancel={() => setShowModal(false)}
-      />
     </div>
   )
 }

@@ -14,7 +14,7 @@ const statusLabel: Record<string, string> = {
 
 const holderTypeBadge: Record<string, string> = {
   vehicle: 'bg-primary-500/10 text-primary-400',
-  driver: 'bg-gray-700 text-gray-300',
+  driver: 'bg-slate-600 text-slate-300',
 }
 
 const holderTypeLabel: Record<string, string> = {
@@ -39,7 +39,7 @@ function daysLeftText(days: number): string {
 function daysLeftColor(days: number): string {
   if (days < 0) return 'text-red-400 font-semibold'
   if (days <= 14) return 'text-amber-400 font-semibold'
-  return 'text-gray-300'
+  return 'text-slate-300'
 }
 
 export function DocumentExpiry() {
@@ -51,37 +51,37 @@ export function DocumentExpiry() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Scadenze & Documenti</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Scadenze & Documenti</h1>
 
       {/* Summary Row */}
       <div className="grid grid-cols-3 gap-4 mb-3">
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
-          <p className="text-xs text-gray-400">Scaduti</p>
+        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
+          <p className="text-xs text-slate-400">Scaduti</p>
           <p className="text-lg font-bold text-red-400">{expiredCount}</p>
         </div>
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
-          <p className="text-xs text-gray-400">In Scadenza</p>
+        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
+          <p className="text-xs text-slate-400">In Scadenza</p>
           <p className="text-lg font-bold text-amber-400">{expiringCount}</p>
         </div>
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
-          <p className="text-xs text-gray-400">Validi</p>
+        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
+          <p className="text-xs text-slate-400">Validi</p>
           <p className="text-lg font-bold text-emerald-400">{validCount}</p>
         </div>
       </div>
 
       {/* Documents Table */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Elenco Documenti</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Intestatario</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Tipo</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Documento</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Scadenza</th>
-                <th className="text-right py-2 px-3 font-medium text-gray-400">Giorni</th>
-                <th className="text-left py-2 px-3 font-medium text-gray-400">Stato</th>
+              <tr className="border-b border-[#334155]">
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Intestatario</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Tipo</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Documento</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Scadenza</th>
+                <th className="text-right py-2 px-3 font-medium text-slate-400">Giorni</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Stato</th>
               </tr>
             </thead>
             <tbody>
@@ -93,15 +93,15 @@ export function DocumentExpiry() {
                       ? 'bg-amber-500/5'
                       : ''
                 return (
-                  <tr key={doc.id} className={`border-b border-gray-800 ${rowHighlight}`}>
+                  <tr key={doc.id} className={`border-b border-[#334155] ${rowHighlight}`}>
                     <td className="py-2.5 px-3 font-medium text-white">{doc.holder}</td>
                     <td className="py-2.5 px-3">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${holderTypeBadge[doc.holderType]}`}>
                         {holderTypeLabel[doc.holderType]}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-gray-300">{doc.documentType}</td>
-                    <td className="py-2.5 px-3 text-gray-300">{formatDate(doc.expiryDate)}</td>
+                    <td className="py-2.5 px-3 text-slate-300">{doc.documentType}</td>
+                    <td className="py-2.5 px-3 text-slate-300">{formatDate(doc.expiryDate)}</td>
                     <td className={`py-2.5 px-3 text-right ${daysLeftColor(doc.daysLeft)}`}>
                       {daysLeftText(doc.daysLeft)}
                     </td>

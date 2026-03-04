@@ -23,7 +23,7 @@ export function ComingSoonPage({ moduleKey }: ComingSoonPageProps) {
   if (!mod) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-gray-500">Modulo non trovato</p>
+        <p className="text-slate-500">Modulo non trovato</p>
       </div>
     )
   }
@@ -39,15 +39,15 @@ export function ComingSoonPage({ moduleKey }: ComingSoonPageProps) {
   return (
     <div className="flex-1 flex items-center justify-center px-6">
       <div className="max-w-md text-center">
-        <div className="w-20 h-20 rounded-2xl bg-gray-800 flex items-center justify-center mx-auto mb-3">
-          <IconComponent size={36} className="text-gray-500" />
+        <div className="w-20 h-20 rounded-2xl bg-[#334155] flex items-center justify-center mx-auto mb-3">
+          <IconComponent size={36} className="text-slate-500" />
         </div>
 
-        <h1 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-2">
           {mod.title} — Coming Soon
         </h1>
 
-        <p className="text-gray-400 text-sm leading-relaxed mb-4">
+        <p className="text-slate-400 text-sm leading-relaxed mb-4">
           {mod.description}
         </p>
 
@@ -63,7 +63,7 @@ export function ComingSoonPage({ moduleKey }: ComingSoonPageProps) {
           </div>
         ) : (
           <div>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm text-slate-500 mb-3">
               Vuoi essere avvisato quando sarà disponibile?
             </p>
             <div className="flex gap-2">
@@ -72,11 +72,11 @@ export function ComingSoonPage({ moduleKey }: ComingSoonPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="La tua email"
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+                className="flex-1 bg-[#334155] border border-slate-600 rounded-xl px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
               />
               <button
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-primary-500 text-white rounded-xl text-sm font-medium hover:bg-primary-600 transition-colors"
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
               >
                 Avvisami
               </button>

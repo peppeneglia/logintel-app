@@ -34,13 +34,13 @@ export function ComplianceReport() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Report Conformità</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Report Conformità</h1>
 
       {/* Overall score */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 mb-3">
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4 mb-3">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs text-gray-400">Conformità complessiva</p>
+            <p className="text-xs text-slate-400">Conformità complessiva</p>
             <p className="text-4xl font-bold text-white">{overallPercentage}%</p>
           </div>
           <span className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium ${statusBadge[overallStatus]}`}>
@@ -60,7 +60,7 @@ export function ComplianceReport() {
         {mockComplianceScores.map((item) => {
           const pct = Math.round((item.score / item.maxScore) * 100)
           return (
-            <div key={item.category} className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
+            <div key={item.category} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-white">{item.category}</h3>
                 <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[item.status]}`}>
@@ -69,7 +69,7 @@ export function ComplianceReport() {
               </div>
               <div className="flex items-end gap-2 mb-3">
                 <span className="text-lg font-bold text-white">{item.score}</span>
-                <span className="text-sm text-gray-400 mb-0.5">/ {item.maxScore}</span>
+                <span className="text-sm text-slate-400 mb-0.5">/ {item.maxScore}</span>
               </div>
               <div className={`w-full h-2 rounded-full ${statusTrack[item.status]}`}>
                 <div

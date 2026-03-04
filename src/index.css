@@ -14,7 +14,7 @@
   }
 
   body {
-    @apply font-sans antialiased bg-gray-950 text-gray-100;
+    @apply font-sans antialiased bg-[#0f172a] text-slate-100;
   }
 
   #root {
@@ -25,14 +25,31 @@
     width: 12px;
   }
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #0f172a;
     margin-bottom: 12px;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.06);
+    background: #334155;
     border-radius: 6px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: #475569;
+  }
+}
+
+@layer components {
+  .card-accent {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-accent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to right, #34d399, #06b6d4);
+    border-radius: 1rem 1rem 0 0;
   }
 }

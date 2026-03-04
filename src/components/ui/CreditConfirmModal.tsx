@@ -22,29 +22,29 @@ export function CreditConfirmModal({
       />
 
       {/* Modal Card */}
-      <div className="relative bg-gray-900 border border-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+      <div className="relative bg-[#1e293b] border border-[#334155] rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
         <h3 className="text-lg font-semibold text-white mb-4">
           Conferma predizione
         </h3>
 
-        <p className="text-gray-300 mb-2">
+        <p className="text-slate-300 mb-2">
           Questa predizione costa 1 credito.
         </p>
 
-        <p className="text-gray-300 mb-6">
+        <p className="text-slate-300 mb-6">
           Crediti rimanenti: <span className="font-semibold text-white">{creditsRemaining}/200</span>
         </p>
 
         <div className="flex items-center justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-gray-700 text-gray-300 font-medium hover:bg-gray-800 transition-colors"
+            className="px-4 py-2 rounded-lg border border-slate-600 text-slate-300 font-medium hover:bg-[#334155] transition-colors"
           >
             Annulla
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
           >
             Conferma
           </button>

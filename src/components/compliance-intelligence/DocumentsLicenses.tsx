@@ -30,15 +30,15 @@ export function DocumentsLicenses() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Documenti & Scadenze</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Documenti & Scadenze</h1>
 
       {/* Filter */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-3">
-        <label className="block text-sm font-medium text-gray-300 mb-2">Filtra per stato</label>
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6 mb-3">
+        <label className="block text-sm font-medium text-slate-300 mb-2">Filtra per stato</label>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+          className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
         >
           <option value="all">Tutti</option>
           <option value="valid">Valido</option>
@@ -48,31 +48,31 @@ export function DocumentsLicenses() {
       </div>
 
       {/* Table */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Elenco documenti</h2>
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
+        <h2 className="text-sm font-semibold text-slate-300 mb-4">Elenco documenti</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Titolare</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Tipo</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Numero</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Emissione</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Scadenza</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Giorni</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Stato</th>
+              <tr className="border-b border-[#334155]">
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Titolare</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Tipo</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Numero</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Emissione</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Scadenza</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Giorni</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Stato</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((doc) => {
                 const days = daysToExpiry(doc.expiryDate)
                 return (
-                  <tr key={doc.id} className="border-b border-gray-800">
+                  <tr key={doc.id} className="border-b border-[#334155]">
                     <td className="py-3 px-3 text-white font-medium">{doc.holder}</td>
-                    <td className="py-3 px-3 text-gray-300">{doc.documentType}</td>
-                    <td className="py-3 px-3 text-gray-400 font-mono text-xs">{doc.number}</td>
-                    <td className="py-3 px-3 text-gray-400">{doc.issueDate}</td>
-                    <td className="py-3 px-3 text-gray-400">{doc.expiryDate}</td>
+                    <td className="py-3 px-3 text-slate-300">{doc.documentType}</td>
+                    <td className="py-3 px-3 text-slate-400 font-mono text-xs">{doc.number}</td>
+                    <td className="py-3 px-3 text-slate-400">{doc.issueDate}</td>
+                    <td className="py-3 px-3 text-slate-400">{doc.expiryDate}</td>
                     <td className="py-3 px-3">
                       <span
                         className={`font-semibold ${
@@ -80,7 +80,7 @@ export function DocumentsLicenses() {
                             ? 'text-red-400'
                             : days <= 60
                               ? 'text-amber-400'
-                              : 'text-gray-300'
+                              : 'text-slate-300'
                         }`}
                       >
                         {days < 0 ? `${days}` : `${days}`}

@@ -52,13 +52,13 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
   } = prediction
 
   return (
-    <div className="border border-gray-700 rounded-2xl overflow-hidden bg-gray-800 max-w-lg mt-3">
+    <div className="border border-slate-600 rounded-2xl overflow-hidden bg-[#334155] max-w-lg mt-3">
       {/* Header */}
-      <div className="bg-gray-900 text-white p-4">
+      <div className="bg-[#1e293b] text-white p-4">
         <div className="text-lg font-semibold">
           {origin} &rarr; {destination}
         </div>
-        <div className="text-sm text-gray-300 mt-1">
+        <div className="text-sm text-slate-300 mt-1">
           Partenza: {formatDateTime(departureTime)}
         </div>
       </div>
@@ -69,17 +69,17 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
           <span className={`text-4xl font-bold ${getDelayColor(estimatedDelay)}`}>
             {estimatedDelay}
           </span>
-          <span className="text-gray-400 text-sm">minuti di ritardo stimato</span>
+          <span className="text-slate-400 text-sm">minuti di ritardo stimato</span>
         </div>
       </div>
 
       {/* Confidence */}
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between text-sm mb-1">
-          <span className="text-gray-400">Affidabilit&agrave;</span>
-          <span className="font-medium text-gray-100">{confidence}%</span>
+          <span className="text-slate-400">Affidabilit&agrave;</span>
+          <span className="font-medium text-slate-100">{confidence}%</span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-slate-600 rounded-full h-2">
           <div
             className="bg-primary-500 h-2 rounded-full transition-all"
             style={{ width: `${confidence}%` }}
@@ -90,21 +90,21 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
       {/* Weather along route */}
       {weatherConditions.length > 0 && (
         <div className="px-4 pb-4">
-          <div className="text-sm font-medium text-gray-300 mb-2">
+          <div className="text-sm font-medium text-slate-300 mb-2">
             Meteo lungo il percorso
           </div>
           <div className="grid gap-2">
             {weatherConditions.map((wp) => (
               <div
                 key={wp.km}
-                className="flex items-center justify-between text-sm bg-gray-900 rounded-xl px-3 py-2"
+                className="flex items-center justify-between text-sm bg-[#1e293b] rounded-xl px-3 py-2"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{weatherEmoji[wp.condition]}</span>
-                  <span className="text-gray-300">{wp.location}</span>
-                  <span className="text-gray-500 text-xs">km {wp.km}</span>
+                  <span className="text-slate-300">{wp.location}</span>
+                  <span className="text-slate-500 text-xs">km {wp.km}</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-400">
+                <div className="flex items-center gap-3 text-slate-400">
                   <span>{wp.temperature}&deg;C</span>
                   {wp.impactMinutes > 0 && (
                     <span className="text-orange-400 font-medium">
@@ -122,12 +122,12 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
       <div className="px-4 pb-4">
         <div className="flex items-center gap-3 text-sm">
           <div className="text-center">
-            <div className="text-gray-500 text-xs">ETA originale</div>
-            <div className="font-semibold text-gray-300">{formatTime(originalETA)}</div>
+            <div className="text-slate-500 text-xs">ETA originale</div>
+            <div className="font-semibold text-slate-300">{formatTime(originalETA)}</div>
           </div>
-          <span className="text-gray-500">&rarr;</span>
+          <span className="text-slate-500">&rarr;</span>
           <div className="text-center">
-            <div className="text-gray-500 text-xs">ETA corretta</div>
+            <div className="text-slate-500 text-xs">ETA corretta</div>
             <div className={`font-semibold ${getDelayColor(estimatedDelay)}`}>
               {formatTime(correctedETA)}
             </div>
@@ -151,10 +151,6 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
         </div>
       )}
 
-      {/* Footer */}
-      <div className="text-xs text-gray-500 p-3 border-t border-gray-700">
-        {creditsUsed} credito utilizzato
-      </div>
     </div>
   )
 }

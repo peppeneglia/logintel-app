@@ -16,7 +16,7 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
         <h1 className="text-3xl font-bold text-white">
           Ciao, come posso aiutarti?
         </h1>
-        <p className="text-gray-400 mt-2">
+        <p className="text-slate-400 mt-2">
           Chiedimi previsioni meteo sulle tue rotte, consigli su corridoi
           logistici, o analisi dei percorsi.
         </p>
@@ -26,7 +26,7 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
             <button
               key={text}
               onClick={() => onSuggestionClick(text)}
-              className="p-4 border border-gray-700 rounded-2xl text-left text-sm text-gray-300 hover:bg-gray-800 hover:border-primary-500/50 cursor-pointer transition-all"
+              className="p-4 border border-slate-600 rounded-2xl text-left text-sm text-slate-300 hover:bg-[#334155] hover:border-primary-500/50 cursor-pointer transition-all"
             >
               {text}
             </button>

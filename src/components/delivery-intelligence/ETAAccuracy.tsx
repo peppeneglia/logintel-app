@@ -23,38 +23,38 @@ export function ETAAccuracy() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">ETA Accuracy</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">ETA Accuracy</h1>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
         {summaryCards.map((card) => (
-          <div key={card.label} className="bg-gray-900 rounded-2xl border border-gray-800 p-4">
-            <p className="text-xs text-gray-400">{card.label}</p>
+          <div key={card.label} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
+            <p className="text-xs text-slate-400">{card.label}</p>
             <p className={`text-lg font-bold ${card.color}`}>{card.value}</p>
           </div>
         ))}
       </div>
 
       {/* Per-route table */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4">Accuracy per rotta</h2>
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
+        <h2 className="text-sm font-semibold text-slate-300 mb-4">Accuracy per rotta</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Rotta</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Predizioni</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Errore medio</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Accuracy</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Entro 5 min</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Entro 15 min</th>
+              <tr className="border-b border-[#334155]">
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Rotta</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Predizioni</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Errore medio</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Accuracy</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Entro 5 min</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Entro 15 min</th>
               </tr>
             </thead>
             <tbody>
               {mockETAAccuracy.map((r) => (
-                <tr key={r.route} className="border-b border-gray-800">
+                <tr key={r.route} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{r.route}</td>
-                  <td className="py-3 px-3 text-gray-300">{r.totalPredictions}</td>
+                  <td className="py-3 px-3 text-slate-300">{r.totalPredictions}</td>
                   <td className="py-3 px-3">
                     <span className={`font-semibold ${r.avgErrorMinutes <= 5 ? 'text-emerald-400' : r.avgErrorMinutes <= 10 ? 'text-amber-400' : 'text-red-400'}`}>
                       {r.avgErrorMinutes} min
@@ -65,8 +65,8 @@ export function ETAAccuracy() {
                       {r.accuracyPercent}%
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-gray-300">{r.within5min}%</td>
-                  <td className="py-3 px-3 text-gray-300">{r.within15min}%</td>
+                  <td className="py-3 px-3 text-slate-300">{r.within5min}%</td>
+                  <td className="py-3 px-3 text-slate-300">{r.within15min}%</td>
                 </tr>
               ))}
             </tbody>

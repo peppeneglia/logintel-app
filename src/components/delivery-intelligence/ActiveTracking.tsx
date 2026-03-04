@@ -7,7 +7,7 @@ function TrackingStatusBadge({ status }: { status: string }) {
     ahead: { label: 'In anticipo', style: 'bg-emerald-500/10 text-emerald-400' },
   }
 
-  const { label, style } = config[status] ?? { label: status, style: 'bg-gray-500/10 text-gray-400' }
+  const { label, style } = config[status] ?? { label: status, style: 'bg-slate-500/10 text-slate-400' }
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style}`}>
@@ -20,7 +20,7 @@ function ProgressBar({ percent, status }: { percent: number; status: string }) {
   const barColor = status === 'delayed' ? 'bg-red-400' : status === 'ahead' ? 'bg-emerald-400' : 'bg-primary-400'
 
   return (
-    <div className="w-full bg-gray-800 rounded-full h-2">
+    <div className="w-full bg-[#334155] rounded-full h-2">
       <div
         className={`h-2 rounded-full transition-all ${barColor}`}
         style={{ width: `${percent}%` }}
@@ -32,35 +32,35 @@ function ProgressBar({ percent, status }: { percent: number; status: string }) {
 export function ActiveTracking() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Tracking Attivo</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Tracking Attivo</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {mockActiveTrackings.map((t) => (
-          <div key={t.id} className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+          <div key={t.id} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-white">{t.vehiclePlate}</span>
                 <TrackingStatusBadge status={t.status} />
               </div>
-              <span className="text-xs text-gray-400">ETA: <span className="text-white font-medium">{t.eta}</span></span>
+              <span className="text-xs text-slate-400">ETA: <span className="text-white font-medium">{t.eta}</span></span>
             </div>
 
-            <p className="text-sm text-gray-400 mb-1">
-              Autista: <span className="text-gray-300">{t.driver}</span>
+            <p className="text-sm text-slate-400 mb-1">
+              Autista: <span className="text-slate-300">{t.driver}</span>
             </p>
 
-            <p className="text-sm text-gray-400 mb-1">
-              <span className="text-gray-300">{t.origin}</span>
-              <span className="text-gray-500 mx-1">&rarr;</span>
-              <span className="text-gray-300">{t.destination}</span>
+            <p className="text-sm text-slate-400 mb-1">
+              <span className="text-slate-300">{t.origin}</span>
+              <span className="text-slate-500 mx-1">&rarr;</span>
+              <span className="text-slate-300">{t.destination}</span>
             </p>
 
-            <p className="text-sm text-gray-400 mb-3">
+            <p className="text-sm text-slate-400 mb-3">
               Posizione: <span className="text-white font-medium">{t.currentLocation}</span>
             </p>
 
             <ProgressBar percent={t.progressPercent} status={t.status} />
-            <p className="text-xs text-gray-500 mt-1 text-right">{t.progressPercent}%</p>
+            <p className="text-xs text-slate-500 mt-1 text-right">{t.progressPercent}%</p>
           </div>
         ))}
       </div>

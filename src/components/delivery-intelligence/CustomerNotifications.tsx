@@ -8,7 +8,7 @@ function TypeBadge({ type }: { type: string }) {
     departure: { label: 'Partenza', style: 'bg-primary-500/10 text-primary-400' },
   }
 
-  const { label, style } = config[type] ?? { label: type, style: 'bg-gray-500/10 text-gray-400' }
+  const { label, style } = config[type] ?? { label: type, style: 'bg-slate-500/10 text-slate-400' }
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style}`}>
@@ -21,10 +21,10 @@ function ChannelBadge({ channel }: { channel: string }) {
   const config: Record<string, { label: string; style: string }> = {
     email: { label: 'Email', style: 'bg-blue-500/10 text-blue-400' },
     sms: { label: 'SMS', style: 'bg-purple-500/10 text-purple-400' },
-    webhook: { label: 'Webhook', style: 'bg-gray-500/10 text-gray-400' },
+    webhook: { label: 'Webhook', style: 'bg-slate-500/10 text-slate-400' },
   }
 
-  const { label, style } = config[channel] ?? { label: channel, style: 'bg-gray-500/10 text-gray-400' }
+  const { label, style } = config[channel] ?? { label: channel, style: 'bg-slate-500/10 text-slate-400' }
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style}`}>
@@ -36,29 +36,29 @@ function ChannelBadge({ channel }: { channel: string }) {
 export function CustomerNotifications() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Notifiche Clienti</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Notifiche Clienti</h1>
 
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Cliente</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Tipo</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Messaggio</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Inviata il</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Canale</th>
+              <tr className="border-b border-[#334155]">
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Cliente</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Tipo</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Messaggio</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Inviata il</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Canale</th>
               </tr>
             </thead>
             <tbody>
               {mockCustomerNotifications.map((n) => (
-                <tr key={n.id} className="border-b border-gray-800">
+                <tr key={n.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{n.client}</td>
                   <td className="py-3 px-3"><TypeBadge type={n.type} /></td>
-                  <td className="py-3 px-3 text-gray-300 max-w-xs truncate" title={n.message}>
+                  <td className="py-3 px-3 text-slate-300 max-w-xs truncate" title={n.message}>
                     {n.message}
                   </td>
-                  <td className="py-3 px-3 text-gray-400">{n.sentAt}</td>
+                  <td className="py-3 px-3 text-slate-400">{n.sentAt}</td>
                   <td className="py-3 px-3"><ChannelBadge channel={n.channel} /></td>
                 </tr>
               ))}

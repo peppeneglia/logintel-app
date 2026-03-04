@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { mockRouteComparisons } from '../../data/mockData'
 import { RiskBadge } from '../ui/RiskBadge'
-import { CreditConfirmModal } from '../ui/CreditConfirmModal'
 
 function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60)
@@ -13,57 +12,51 @@ export function CompareRoutes() {
   const [origin, setOrigin] = useState('Bologna')
   const [destination, setDestination] = useState('Napoli')
   const [departureTime, setDepartureTime] = useState('')
-  const [showModal, setShowModal] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setShowModal(true)
-  }
-
-  const handleConfirm = () => {
-    setShowModal(false)
     setShowResults(true)
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Confronta Percorsi</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Confronta Percorsi</h1>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-3">
+      <form onSubmit={handleSubmit} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6 mb-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Origine</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Origine</label>
             <input
               type="text"
               value={origin}
               onChange={(e) => setOrigin(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Destinazione</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Destinazione</label>
             <input
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Data/ora partenza</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Data/ora partenza</label>
             <input
               type="datetime-local"
               value={departureTime}
               onChange={(e) => setDepartureTime(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
         </div>
         <button
           type="submit"
-          className="px-6 py-2.5 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-colors text-sm"
+          className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors text-sm"
         >
           Confronta percorsi
         </button>
@@ -71,27 +64,27 @@ export function CompareRoutes() {
 
       {/* Results */}
       {showResults && (
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-4">
+        <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
+          <h2 className="text-sm font-semibold text-slate-300 mb-4">
             {origin} &rarr; {destination} &mdash; Confronto percorsi
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left py-3 px-3 font-medium text-gray-400">Percorso</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-400">Distanza</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-400">Durata base</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-400">Ritardo meteo</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-400">Rischio</th>
-                  <th className="text-left py-3 px-3 font-medium text-gray-400">ETA</th>
+                <tr className="border-b border-[#334155]">
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Percorso</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Distanza</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Durata base</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Ritardo meteo</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Rischio</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">ETA</th>
                 </tr>
               </thead>
               <tbody>
                 {mockRouteComparisons.map((route, idx) => (
                   <tr
                     key={idx}
-                    className={`border-b border-gray-800 ${route.recommended ? 'bg-emerald-500/5' : ''}`}
+                    className={`border-b border-[#334155] ${route.recommended ? 'bg-emerald-500/5' : ''}`}
                   >
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
@@ -103,8 +96,8 @@ export function CompareRoutes() {
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-gray-400">{route.distance} km</td>
-                    <td className="py-3 px-3 text-gray-400">{formatDuration(route.baseDuration)}</td>
+                    <td className="py-3 px-3 text-slate-400">{route.distance} km</td>
+                    <td className="py-3 px-3 text-slate-400">{formatDuration(route.baseDuration)}</td>
                     <td className="py-3 px-3">
                       <span className={`font-semibold ${route.weatherDelay < 10 ? 'text-emerald-400' : route.weatherDelay <= 30 ? 'text-amber-400' : 'text-red-400'}`}>
                         +{route.weatherDelay} min
@@ -122,12 +115,6 @@ export function CompareRoutes() {
         </div>
       )}
 
-      <CreditConfirmModal
-        isOpen={showModal}
-        creditsRemaining={142}
-        onConfirm={handleConfirm}
-        onCancel={() => setShowModal(false)}
-      />
     </div>
   )
 }

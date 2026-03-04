@@ -11,25 +11,25 @@ export function Profile() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Profilo</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Profilo</h1>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+      <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6">
         <div className="grid gap-5">
           {fields.map((field) => (
             <div key={field.label}>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-slate-400 mb-1">
                 {field.label}
               </label>
               <input
                 type="text"
                 defaultValue={field.value}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+                className="w-full bg-[#334155] border border-slate-600 rounded-xl px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
               />
             </div>
           ))}
         </div>
 
-        <button className="mt-6 px-5 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-medium hover:bg-primary-600 transition-colors">
+        <button className="mt-6 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors">
           Salva modifiche
         </button>
       </div>

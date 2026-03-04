@@ -42,45 +42,45 @@ export function PredictionHistory() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Storico Predizioni</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Storico Predizioni</h1>
 
       {/* Filters */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-3">
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6 mb-3">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Data inizio</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Data inizio</label>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Data fine</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Data fine</label>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Rotta</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Rotta</label>
             <input
               type="text"
               value={routeFilter}
               onChange={(e) => setRouteFilter(e.target.value)}
               placeholder="es. Milano"
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Feedback</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Feedback</label>
             <select
               value={feedbackFilter}
               onChange={(e) => setFeedbackFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             >
               <option value="all">Tutti</option>
               <option value="with">Con feedback</option>
@@ -90,25 +90,25 @@ export function PredictionHistory() {
         </div>
         <button
           onClick={() => {}}
-          className="px-6 py-2.5 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-colors text-sm"
+          className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors text-sm"
         >
           Filtra
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Data richiesta</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Rotta</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Ritardo predetto</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Ritardo effettivo</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400 min-w-[140px]">Confidence</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Accuratezza</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-400">Azioni</th>
+              <tr className="border-b border-[#334155]">
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Data richiesta</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Rotta</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Ritardo predetto</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Ritardo effettivo</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400 min-w-[140px]">Confidence</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Accuratezza</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -118,8 +118,8 @@ export function PredictionHistory() {
                   : null
 
                 return (
-                  <tr key={item.id} className="border-b border-gray-800">
-                    <td className="py-3 px-3 text-gray-400">
+                  <tr key={item.id} className="border-b border-[#334155]">
+                    <td className="py-3 px-3 text-slate-400">
                       {formatDateFull(item.requestedAt)}
                     </td>
                     <td className="py-3 px-3 text-white font-medium">
@@ -130,7 +130,7 @@ export function PredictionHistory() {
                         +{item.estimatedDelay} min
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-gray-400">
+                    <td className="py-3 px-3 text-slate-400">
                       {item.feedbackGiven && item.actualDelay !== undefined
                         ? `+${item.actualDelay} min`
                         : '\u2014'}
@@ -144,12 +144,12 @@ export function PredictionHistory() {
                           &plusmn;{accuracy} min
                         </span>
                       ) : (
-                        <span className="text-gray-500">&mdash;</span>
+                        <span className="text-slate-500">&mdash;</span>
                       )}
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
-                        <button className="px-3 py-1 border border-gray-700 rounded-xl text-xs font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+                        <button className="px-3 py-1 border border-slate-600 rounded-xl text-xs font-medium text-slate-300 hover:bg-[#334155] transition-colors">
                           Dettaglio
                         </button>
                         {!item.feedbackGiven && (
@@ -167,7 +167,7 @@ export function PredictionHistory() {
         </div>
 
         {filteredData.length === 0 && (
-          <div className="text-center py-8 text-gray-500 text-sm">
+          <div className="text-center py-8 text-slate-500 text-sm">
             Nessun risultato trovato con i filtri selezionati.
           </div>
         )}

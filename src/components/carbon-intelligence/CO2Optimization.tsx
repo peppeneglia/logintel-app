@@ -44,7 +44,7 @@ function statusBadge(status: CO2OptType['status']) {
   const styles: Record<CO2OptType['status'], string> = {
     pending: 'bg-amber-500/10 text-amber-400',
     implemented: 'bg-emerald-500/10 text-emerald-400',
-    dismissed: 'bg-gray-500/10 text-gray-400',
+    dismissed: 'bg-slate-500/10 text-slate-400',
   }
   const labels: Record<CO2OptType['status'], string> = {
     pending: 'In attesa',
@@ -79,20 +79,20 @@ export function CO2Optimization() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-3">Ottimizzazione CO2</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Ottimizzazione CO2</h1>
 
       {/* Summary */}
-      <div className="bg-gray-900 rounded-2xl border border-gray-800 p-6 mb-3">
+      <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6 mb-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-400 mb-1">Risparmio potenziale (suggerimenti attivi)</p>
+            <p className="text-sm text-slate-400 mb-1">Risparmio potenziale (suggerimenti attivi)</p>
             <p className="text-3xl font-bold text-emerald-400">{totalPotentialSaving.toLocaleString('it-IT')} <span className="text-lg">kg CO2</span></p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-400 mb-1">Suggerimenti</p>
+            <p className="text-sm text-slate-400 mb-1">Suggerimenti</p>
             <p className="text-lg font-semibold text-white">
               {optimizations.filter((o) => o.status === 'pending').length} attivi
-              <span className="text-gray-500 mx-1">/</span>
+              <span className="text-slate-500 mx-1">/</span>
               {optimizations.length} totali
             </p>
           </div>
@@ -102,9 +102,9 @@ export function CO2Optimization() {
       {/* Optimization cards */}
       <div className="space-y-4">
         {optimizations.map((opt) => (
-          <div key={opt.id} className="bg-gray-900 rounded-2xl border border-gray-800 p-6">
+          <div key={opt.id} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
             <div className="flex items-start justify-between gap-4 mb-3">
-              <p className="text-sm text-gray-300 leading-relaxed flex-1">{opt.suggestion}</p>
+              <p className="text-sm text-slate-300 leading-relaxed flex-1">{opt.suggestion}</p>
               {statusBadge(opt.status)}
             </div>
 
@@ -117,7 +117,7 @@ export function CO2Optimization() {
             </div>
 
             {opt.status === 'pending' && (
-              <div className="flex items-center gap-2 pt-3 border-t border-gray-800">
+              <div className="flex items-center gap-2 pt-3 border-t border-[#334155]">
                 <button
                   onClick={() => handleImplement(opt.id)}
                   className="px-4 py-1.5 bg-emerald-500/15 text-emerald-400 text-sm font-medium rounded-xl hover:bg-emerald-500/25 transition-colors"
@@ -126,7 +126,7 @@ export function CO2Optimization() {
                 </button>
                 <button
                   onClick={() => handleDismiss(opt.id)}
-                  className="px-4 py-1.5 bg-gray-800 text-gray-400 text-sm font-medium rounded-xl hover:bg-gray-700 transition-colors"
+                  className="px-4 py-1.5 bg-[#334155] text-slate-400 text-sm font-medium rounded-xl hover:bg-slate-600 transition-colors"
                 >
                   Scarta
                 </button>

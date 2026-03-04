@@ -14,7 +14,7 @@ const typeIcons: Record<AppNotification['type'], typeof Wrench> = {
 }
 
 const priorityColors: Record<AppNotification['priority'], string> = {
-  low: 'bg-gray-400',
+  low: 'bg-slate-400',
   medium: 'bg-amber-400',
   high: 'bg-red-400',
 }
@@ -58,7 +58,7 @@ export function NotificationsPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-white mb-3">Notifiche</h1>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Notifiche</h1>
 
       {/* Filter tabs */}
       <div className="flex items-center gap-2 mb-3">
@@ -69,11 +69,11 @@ export function NotificationsPage() {
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               filter === tab.key
                 ? 'bg-primary-500/15 text-primary-400'
-                : 'bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                : 'bg-[#1e293b] text-slate-400 hover:bg-[#334155] hover:text-slate-200'
             }`}
           >
             {tab.label}
-            <span className={`ml-1.5 text-xs ${filter === tab.key ? 'text-primary-400/70' : 'text-gray-500'}`}>
+            <span className={`ml-1.5 text-xs ${filter === tab.key ? 'text-primary-400/70' : 'text-slate-500'}`}>
               ({tab.count})
             </span>
           </button>
@@ -83,8 +83,8 @@ export function NotificationsPage() {
       {/* Notification list */}
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-12 text-center">
-            <p className="text-gray-500">Nessuna notifica trovata.</p>
+          <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-12 text-center">
+            <p className="text-slate-500">Nessuna notifica trovata.</p>
           </div>
         ) : (
           filteredNotifications.map((notif) => {
@@ -94,14 +94,14 @@ export function NotificationsPage() {
                 key={notif.id}
                 className={`rounded-2xl border p-5 transition-colors ${
                   notif.read
-                    ? 'bg-gray-900/50 border-gray-800'
-                    : 'bg-gray-900 border-primary-500/30'
+                    ? 'bg-[#1e293b]/50 border-[#334155]'
+                    : 'bg-[#1e293b] border-primary-500/30'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="shrink-0 mt-0.5 p-2 bg-gray-800 rounded-xl">
-                    <Icon size={18} className="text-gray-300" />
+                  <div className="shrink-0 mt-0.5 p-2 bg-[#334155] rounded-xl">
+                    <Icon size={18} className="text-slate-300" />
                   </div>
 
                   {/* Content */}
@@ -109,13 +109,13 @@ export function NotificationsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       {/* Priority dot */}
                       <span className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[notif.priority]}`} />
-                      <h3 className={`text-sm leading-tight truncate ${notif.read ? 'text-gray-300 font-medium' : 'text-white font-semibold'}`}>
+                      <h3 className={`text-sm leading-tight truncate ${notif.read ? 'text-slate-300 font-medium' : 'text-white font-semibold'}`}>
                         {notif.title}
                       </h3>
                     </div>
-                    <p className="text-sm text-gray-400 mb-2 leading-relaxed">{notif.message}</p>
+                    <p className="text-sm text-slate-400 mb-2 leading-relaxed">{notif.message}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{formatRelativeTime(notif.timestamp)}</span>
+                      <span className="text-xs text-slate-500">{formatRelativeTime(notif.timestamp)}</span>
                       {!notif.read && (
                         <button
                           onClick={() => handleMarkAsRead(notif.id)}
