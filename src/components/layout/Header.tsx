@@ -41,7 +41,7 @@ export function Header() {
           className="w-72 flex items-center gap-3 cursor-pointer shrink-0"
           onClick={() => navigate('/')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <defs>
               <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#34d399" />
@@ -56,7 +56,7 @@ export function Header() {
               <circle cx="7" cy="18" r="2"/>
             </g>
           </svg>
-          <span className="text-xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">Logintel</span>
+          <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">Logintel</span>
         </div>
 
         <nav className="hidden xl:flex flex-1 items-center justify-between bg-[#334155]/60 rounded-2xl p-1">
