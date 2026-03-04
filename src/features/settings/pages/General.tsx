@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
-import { useAuthStore } from '../../../stores/authStore'
-import * as settingsService from '../../../services/settings'
+import { useState } from 'react'
+// TODO: Riabilitare salvataggio impostazioni su Supabase quando configurato
+// import { useEffect } from 'react'
+// import { useAuthStore } from '../../../stores/authStore'
+// import * as settingsService from '../../../services/settings'
 
 export function General() {
-  const { user } = useAuthStore()
+  // TODO: Ripristinare lettura/scrittura settings da Supabase
+  // const { user } = useAuthStore()
 
   const [form, setForm] = useState({
     language: 'it',
@@ -15,35 +18,20 @@ export function General() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    if (user) {
-      settingsService.getSettings(user.id).then((s) => {
-        if (s) {
-          setForm({
-            language: s.language,
-            timezone: s.timezone,
-            date_format: s.date_format,
-            unit_system: s.unit_system,
-            currency: s.currency,
-          })
-        }
-      })
-    }
-  }, [user])
+  // TODO: Ripristinare useEffect per caricare settings da Supabase
+  // useEffect(() => {
+  //   if (user) { settingsService.getSettings(user.id).then((s) => { ... }) }
+  // }, [user])
 
   const handleSave = async () => {
-    if (!user) return
     setSaving(true)
     setSaved(false)
-    try {
-      await settingsService.updateSettings(user.id, form)
+    // TODO: Salvare su Supabase con settingsService.updateSettings()
+    setTimeout(() => {
       setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch {
-      // gestione errore
-    } finally {
       setSaving(false)
-    }
+      setTimeout(() => setSaved(false), 3000)
+    }, 500)
   }
 
   const selects = [

@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import type { ChatMessage } from '../../../types'
 import { mockSinglePrediction } from '../../../data/mockData'
 import { WelcomeScreen } from '../components/WelcomeScreen'
 import { MessageList } from '../components/MessageList'
 import { ChatInput } from '../components/ChatInput'
 import { ChatSidebar } from '../components/ChatSidebar'
-import { useAuthStore } from '../../../stores/authStore'
-import * as conversationsService from '../../../services/conversations'
+// TODO: Riabilitare persistenza conversazioni su Supabase quando configurato
+// import { useAuthStore } from '../../../stores/authStore'
+// import * as conversationsService from '../../../services/conversations'
 
 const PREDICTION_KEYWORDS = ['predizione', 'calcola', 'prevedi', 'eta']
 
@@ -50,48 +51,23 @@ interface ConversationItem {
 }
 
 export function ChatPage() {
-  const { user } = useAuthStore()
+  // TODO: Riabilitare persistenza conversazioni su Supabase
+  // const { user } = useAuthStore()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  const [conversations, setConversations] = useState<ConversationItem[]>([])
+  // TODO: Riabilitare caricamento conversazioni da Supabase
+  // const [conversations, setConversations] = useState<ConversationItem[]>([])
+  // const loadConversations = useCallback(async () => {
+  //   if (!user) return
+  //   const data = await conversationsService.getConversations(user.id)
+  //   setConversations(data.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updated_at })))
+  // }, [user])
+  const conversations: ConversationItem[] = []
 
-  // Carica conversazioni da Supabase
-  const loadConversations = useCallback(async () => {
-    if (!user) return
-    try {
-      const data = await conversationsService.getConversations(user.id)
-      setConversations(
-        data.map((c) => ({
-          id: c.id,
-          title: c.title,
-          updatedAt: c.updated_at,
-        }))
-      )
-    } catch {
-      // Fallback: nessuna conversazione
-    }
-  }, [user])
-
-  useEffect(() => {
-    loadConversations()
-  }, [loadConversations])
-
-  async function handleSelectConversation(id: string) {
+  function handleSelectConversation(id: string) {
     setActiveConversationId(id)
-    try {
-      const msgs = await conversationsService.getMessages(id)
-      setMessages(
-        msgs.map((m) => ({
-          id: m.id,
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-          timestamp: new Date(m.created_at),
-          prediction: m.prediction_json as unknown as ChatMessage['prediction'],
-        }))
-      )
-    } catch {
-      setMessages([])
-    }
+    // TODO: Caricare messaggi da Supabase
+    setMessages([])
   }
 
   function handleNewChat() {
@@ -99,36 +75,14 @@ export function ChatPage() {
     setMessages([])
   }
 
-  async function handleSend(text: string) {
+  function handleSend(text: string) {
     const userMsg = createUserMessage(text)
     setMessages((prev) => [...prev, userMsg])
 
-    // Crea conversazione se non esiste
-    let convId = activeConversationId
-    if (!convId && user) {
-      try {
-        const conv = await conversationsService.createConversation(
-          user.id,
-          text.slice(0, 60)
-        )
-        if (conv) {
-          convId = conv.id
-          setActiveConversationId(conv.id)
-          loadConversations()
-        }
-      } catch {
-        // continua senza persistenza
-      }
-    }
-
-    // Salva messaggio utente
-    if (convId) {
-      try {
-        await conversationsService.sendMessage(convId, 'user', text)
-      } catch {
-        // continua
-      }
-    }
+    // TODO: Creare conversazione su Supabase e salvare messaggi
+    // let convId = activeConversationId
+    // if (!convId && user) { ... create conversation ... }
+    // if (convId) { await conversationsService.sendMessage(convId, 'user', text) }
 
     // Genera risposta (mock per ora)
     const isPrediction = isPredictionRequest(text)
@@ -137,23 +91,10 @@ export function ChatPage() {
       : GENERIC_RESPONSES[Math.floor(Math.random() * GENERIC_RESPONSES.length)]
     const prediction = isPrediction ? mockSinglePrediction : undefined
 
-    setTimeout(async () => {
+    setTimeout(() => {
       const assistantMsg = createAssistantMessage(responseContent, prediction)
       setMessages((prev) => [...prev, assistantMsg])
-
-      // Salva risposta assistant
-      if (convId) {
-        try {
-          await conversationsService.sendMessage(
-            convId,
-            'assistant',
-            responseContent,
-            prediction ? (prediction as unknown as Record<string, unknown>) : undefined
-          )
-        } catch {
-          // continua
-        }
-      }
+      // TODO: Salvare risposta assistant su Supabase
     }, 1000)
   }
 

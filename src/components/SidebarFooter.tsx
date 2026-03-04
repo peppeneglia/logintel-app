@@ -1,18 +1,21 @@
 import { useNavigate } from 'react-router-dom'
 import { Bell, Settings, CreditCard, LogOut } from 'lucide-react'
-import { useAuthStore } from '../stores/authStore'
+// TODO: Ripristinare authStore quando Supabase è configurato
+// import { useAuthStore } from '../stores/authStore'
 
 export function SidebarFooter() {
   const navigate = useNavigate()
-  const { profile, signOut } = useAuthStore()
+  // TODO: Ripristinare dati dinamici da Supabase
+  // const { profile, signOut } = useAuthStore()
+  // const handleSignOut = async () => {
+  //   await signOut()
+  //   navigate('/login', { replace: true })
+  // }
+  // const displayName = profile?.name || 'Utente'
+  // const displayCompany = profile?.company || ''
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/login', { replace: true })
-  }
-
-  const displayName = profile?.name || 'Utente'
-  const displayCompany = profile?.company || ''
+  const displayName = 'Francesco Moretti'
+  const displayCompany = 'Logistica Pro S.r.l.'
   const initials = displayName
     .split(' ')
     .map((n) => n[0])
@@ -46,8 +49,9 @@ export function SidebarFooter() {
           <Bell size={16} />
           <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-400 rounded-full" />
         </button>
+        {/* TODO: Riabilitare logout quando Supabase è configurato */}
         <button
-          onClick={handleSignOut}
+          onClick={() => navigate('/login')}
           className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors"
           title="Esci"
         >
@@ -59,17 +63,10 @@ export function SidebarFooter() {
         className="bg-[#334155] rounded-xl p-3 flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-600 transition-colors"
         onClick={() => navigate('/settings/profile')}
       >
-        {profile?.avatar_url ? (
-          <img
-            src={profile.avatar_url}
-            alt={displayName}
-            className="w-9 h-9 rounded-full shrink-0"
-          />
-        ) : (
-          <div className="w-9 h-9 rounded-full shrink-0 bg-primary-500/20 flex items-center justify-center">
-            <span className="text-xs font-semibold text-primary-400">{initials}</span>
-          </div>
-        )}
+        {/* TODO: Ripristinare avatar dinamico da profilo Supabase */}
+        <div className="w-9 h-9 rounded-full shrink-0 bg-primary-500/20 flex items-center justify-center">
+          <span className="text-xs font-semibold text-primary-400">{initials}</span>
+        </div>
         <div>
           <div className="text-sm font-medium text-white leading-tight">{displayName}</div>
           {displayCompany && (

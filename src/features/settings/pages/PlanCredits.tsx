@@ -1,5 +1,6 @@
-import { useAuthStore } from '../../../stores/authStore'
-import { mockCreditUsage } from '../../../data/mockData'
+// TODO: Ripristinare dati piano/crediti da Supabase quando configurato
+// import { useAuthStore } from '../../../stores/authStore'
+import { mockCreditUsage, mockUser } from '../../../data/mockData'
 
 const planNames: Record<string, string> = {
   free: 'Free',
@@ -16,11 +17,15 @@ const planPrices: Record<string, string> = {
 }
 
 export function PlanCredits() {
-  const { profile } = useAuthStore()
+  // TODO: Ripristinare lettura da authStore.profile
+  // const { profile } = useAuthStore()
+  // const plan = profile?.plan || 'free'
+  // const creditsUsed = profile?.credits_used || 0
+  // const creditsTotal = profile?.credits_total || 50
 
-  const plan = profile?.plan || 'free'
-  const creditsUsed = profile?.credits_used || 0
-  const creditsTotal = profile?.credits_total || 50
+  const plan = mockUser.plan
+  const creditsUsed = mockUser.creditsUsed
+  const creditsTotal = mockUser.creditsTotal
   const remaining = creditsTotal - creditsUsed
   const pct = creditsTotal > 0 ? (creditsUsed / creditsTotal) * 100 : 0
 

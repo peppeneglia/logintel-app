@@ -1,48 +1,37 @@
-import { useState, useEffect } from 'react'
-import { useAuthStore } from '../../../stores/authStore'
+import { useState } from 'react'
+// TODO: Riabilitare salvataggio profilo su Supabase quando configurato
+// import { useEffect } from 'react'
+// import { useAuthStore } from '../../../stores/authStore'
 
 export function Profile() {
-  const { profile, updateProfile } = useAuthStore()
+  // TODO: Ripristinare lettura/scrittura profilo da Supabase
+  // const { profile, updateProfile } = useAuthStore()
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    company: '',
-    role: '',
-    fleet_size: '0',
+    name: 'Francesco Moretti',
+    email: 'f.moretti@logisticapro.it',
+    company: 'Logistica Pro S.r.l.',
+    role: 'Fleet Manager',
+    fleet_size: '42',
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    if (profile) {
-      setForm({
-        name: profile.name || '',
-        email: profile.email || '',
-        company: profile.company || '',
-        role: profile.role || '',
-        fleet_size: String(profile.fleet_size || 0),
-      })
-    }
-  }, [profile])
+  // TODO: Ripristinare useEffect per caricare profilo da Supabase
+  // useEffect(() => {
+  //   if (profile) { setForm({ ... }) }
+  // }, [profile])
 
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
-    try {
-      await updateProfile({
-        name: form.name,
-        company: form.company || null,
-        role: form.role || null,
-        fleet_size: parseInt(form.fleet_size) || 0,
-      })
+    // TODO: Salvare su Supabase con updateProfile()
+    // await updateProfile({ name: form.name, company: form.company || null, ... })
+    setTimeout(() => {
       setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch {
-      // errore gestito dallo store
-    } finally {
       setSaving(false)
-    }
+      setTimeout(() => setSaved(false), 3000)
+    }, 500)
   }
 
   const fields = [

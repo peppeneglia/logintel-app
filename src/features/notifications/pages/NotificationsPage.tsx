@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Wrench, ShieldCheck, Package, Monitor, CloudRain } from 'lucide-react'
 import { mockNotifications } from '../../../data/mockNotifications'
 import type { AppNotification } from '../../../data/mockNotifications'
-import { useAuthStore } from '../../../stores/authStore'
-import * as notificationsService from '../../../services/notifications'
+// TODO: Riabilitare notifiche da Supabase quando configurato
+// import { useAuthStore } from '../../../stores/authStore'
+// import * as notificationsService from '../../../services/notifications'
 
 type FilterTab = 'all' | 'unread' | 'high'
 
@@ -37,40 +38,22 @@ function formatRelativeTime(timestamp: string): string {
 }
 
 export function NotificationsPage() {
-  const { user } = useAuthStore()
+  // TODO: Ripristinare caricamento notifiche da Supabase
+  // const { user } = useAuthStore()
   const [filter, setFilter] = useState<FilterTab>('all')
   const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications)
 
-  useEffect(() => {
-    if (!user) return
-    notificationsService.getNotifications(user.id).then((data) => {
-      if (data.length > 0) {
-        // Usa dati reali da Supabase
-        setNotifications(
-          data.map((n) => ({
-            id: n.id,
-            type: n.type,
-            title: n.title,
-            message: n.description,
-            priority: n.priority,
-            read: n.read,
-            timestamp: n.created_at,
-          }))
-        )
-      }
-      // Se nessuna notifica in DB, mantieni i mock
-    })
-  }, [user])
+  // TODO: Riabilitare useEffect per caricare notifiche da Supabase
+  // useEffect(() => {
+  //   if (!user) return
+  //   notificationsService.getNotifications(user.id).then((data) => { ... })
+  // }, [user])
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
-    try {
-      await notificationsService.markAsRead(id)
-    } catch {
-      // fallback locale già applicato
-    }
+    // TODO: Salvare su Supabase con notificationsService.markAsRead(id)
   }
 
   const filteredNotifications = notifications.filter((n) => {
