@@ -23,13 +23,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Forza include_alternatives a false — il backend Railway ha un bug con le alternative
+    const body = { ...req.body, include_alternatives: false }
+
     const response = await fetch(`${apiUrl}/v1/predictions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': apiKey,
       },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify(body),
     })
 
     if (!response.ok) {
