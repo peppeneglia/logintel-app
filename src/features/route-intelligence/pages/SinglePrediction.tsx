@@ -107,6 +107,11 @@ export function SinglePrediction() {
     e.preventDefault()
     if (!origin.trim() || !destination.trim() || !departureTime) return
 
+    if (new Date(departureTime) <= new Date()) {
+      setError('La data e ora di partenza devono essere nel futuro')
+      return
+    }
+
     setLoading(true)
     setError('')
     setShowResult(false)
