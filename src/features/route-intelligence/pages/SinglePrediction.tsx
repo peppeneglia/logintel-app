@@ -18,6 +18,20 @@ const weatherEmoji: Record<string, string> = {
   clouds: '\u2601\uFE0F',
 }
 
+const confidenceLevelIT: Record<string, string> = {
+  high: 'Alta',
+  good: 'Buona',
+  moderate: 'Moderata',
+  low: 'Bassa',
+}
+
+const roadTypeIT: Record<string, string> = {
+  highway: 'Autostrada',
+  state_road: 'Strada statale',
+  provincial: 'Provinciale',
+  mountain: 'Montagna',
+}
+
 function getDelayColor(delay: number): string {
   if (delay < 10) return 'text-emerald-400'
   if (delay < 30) return 'text-amber-400'
@@ -47,6 +61,9 @@ export function SinglePrediction() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [apiResult, setApiResult] = useState<PredictionResponse | null>(null)
+  const [submittedOrigin, setSubmittedOrigin] = useState('')
+  const [submittedDestination, setSubmittedDestination] = useState('')
+  const [submittedDeparture, setSubmittedDeparture] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,6 +80,10 @@ export function SinglePrediction() {
       }, 1000)
       return
     }
+
+    setSubmittedOrigin(origin)
+    setSubmittedDestination(destination)
+    setSubmittedDeparture(departureTime)
 
     try {
       const result = await predictRoute(origin, destination, departureTime)
@@ -85,7 +106,7 @@ export function SinglePrediction() {
   const lastSegmentArrival = result?.segments.length
     ? new Date(result.segments[result.segments.length - 1].estimated_arrival)
     : null
-  const departureDate = departureTime ? new Date(departureTime) : null
+  const departureDate = submittedDeparture ? new Date(submittedDeparture) : null
   const baseDurationMinutes = lastSegmentArrival && departureDate
     ? Math.round((lastSegmentArrival.getTime() - departureDate.getTime()) / 60_000) - (result?.total_delay_minutes ?? 0)
     : 0
@@ -259,8 +280,8 @@ export function SinglePrediction() {
         <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-lg font-semibold text-white">{origin} &rarr; {destination}</h2>
-              <p className="text-sm text-slate-500">{departureTime.replace('T', ' ')}</p>
+              <h2 className="text-lg font-semibold text-white">{submittedOrigin} &rarr; {submittedDestination}</h2>
+              <p className="text-sm text-slate-500">{submittedDeparture.replace('T', ' ')}</p>
             </div>
           </div>
 
@@ -273,7 +294,7 @@ export function SinglePrediction() {
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-2">Confidenza</p>
               <ConfidenceBar value={result.confidence.overall} />
-              <p className="text-xs text-slate-500 mt-1 capitalize">Livello: {result.confidence.level}</p>
+              <p className="text-xs text-slate-500 mt-1">Livello: {confidenceLevelIT[result.confidence.level] || result.confidence.level}</p>
             </div>
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-1">Distanza totale</p>
@@ -302,7 +323,7 @@ export function SinglePrediction() {
                     <tr key={seg.index} className="border-b border-[#334155]">
                       <td className="py-2 px-3 text-slate-400">{seg.index + 1}</td>
                       <td className="py-2 px-3 text-white">{seg.length_km.toFixed(1)} km</td>
-                      <td className="py-2 px-3 text-slate-400 capitalize">{seg.factors.road_type?.replace(/_/g, ' ') || '—'}</td>
+                      <td className="py-2 px-3 text-slate-400">{roadTypeIT[seg.factors.road_type as string] || seg.factors.road_type || '—'}</td>
                       <td className="py-2 px-3 text-slate-400">{Math.round(seg.factors.altitude_m)} m</td>
                       <td className="py-2 px-3">
                         {seg.weather.length > 0 ? seg.weather.map((w, i) => (
