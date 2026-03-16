@@ -1,4 +1,6 @@
 import { mockTachographRecords } from '../../../data/mockComplianceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)
@@ -19,6 +21,10 @@ const downloadLabel: Record<string, string> = {
 }
 
 export function Tachograph() {
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockTachographRecords : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Tachigrafo</h1>
@@ -40,7 +46,9 @@ export function Tachograph() {
               </tr>
             </thead>
             <tbody>
-              {mockTachographRecords.map((record) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={8} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((record) => (
                 <tr key={record.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{record.driver}</td>
                   <td className="py-3 px-3 text-slate-300">{record.vehiclePlate}</td>
@@ -64,6 +72,7 @@ export function Tachograph() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

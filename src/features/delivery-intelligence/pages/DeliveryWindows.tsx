@@ -1,4 +1,6 @@
 import { mockDeliveryWindows } from '../../../data/mockDeliveryData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function WindowStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; style: string }> = {
@@ -17,6 +19,10 @@ function WindowStatusBadge({ status }: { status: string }) {
 }
 
 export function DeliveryWindows() {
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockDeliveryWindows : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Finestre di Consegna</h1>
@@ -35,7 +41,9 @@ export function DeliveryWindows() {
               </tr>
             </thead>
             <tbody>
-              {mockDeliveryWindows.map((w) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((w) => (
                 <tr key={w.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{w.client}</td>
                   <td className="py-3 px-3 text-slate-300">{w.address}</td>
@@ -49,6 +57,7 @@ export function DeliveryWindows() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

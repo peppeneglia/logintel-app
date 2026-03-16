@@ -4,7 +4,8 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          name: string
+          first_name: string
+          last_name: string
           email: string
           company: string | null
           role: string | null
@@ -18,7 +19,8 @@ export interface Database {
         }
         Insert: {
           id: string
-          name: string
+          first_name: string
+          last_name: string
           email: string
           company?: string | null
           role?: string | null
@@ -29,7 +31,8 @@ export interface Database {
           avatar_url?: string | null
         }
         Update: {
-          name?: string
+          first_name?: string
+          last_name?: string
           email?: string
           company?: string | null
           role?: string | null

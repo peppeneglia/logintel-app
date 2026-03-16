@@ -1,4 +1,6 @@
 import { mockDeliveries } from '../../../data/mockDeliveryData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusLabel: Record<string, string> = {
   on_time: 'Puntuale',
@@ -25,7 +27,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function DeliveryPerformance() {
-  const completed = mockDeliveries.filter((d) => d.status === 'on_time' || d.status === 'late' || d.status === 'early')
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockDeliveries : []
+  const completed = data.filter((d) => d.status === 'on_time' || d.status === 'late' || d.status === 'early')
   const onTime = completed.filter((d) => d.status === 'on_time' || d.status === 'early')
   const late = completed.filter((d) => d.status === 'late')
   const avgDelay = late.length > 0
@@ -36,7 +41,7 @@ export function DeliveryPerformance() {
   const latePercent = completed.length > 0 ? Math.round((late.length / completed.length) * 100) : 0
 
   const summaryCards = [
-    { label: 'Totale consegne', value: mockDeliveries.length.toString(), color: 'text-white' },
+    { label: 'Totale consegne', value: data.length.toString(), color: 'text-white' },
     { label: 'Puntuali', value: `${onTimePercent}%`, color: 'text-emerald-400' },
     { label: 'In ritardo', value: `${latePercent}%`, color: 'text-red-400' },
     { label: 'Ritardo medio', value: `${avgDelay} min`, color: 'text-amber-400' },
@@ -72,7 +77,9 @@ export function DeliveryPerformance() {
               </tr>
             </thead>
             <tbody>
-              {mockDeliveries.map((d) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((d) => (
                 <tr key={d.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{d.client}</td>
                   <td className="py-3 px-3 text-slate-300">{d.origin} &rarr; {d.destination}</td>
@@ -94,6 +101,7 @@ export function DeliveryPerformance() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

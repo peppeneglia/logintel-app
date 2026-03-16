@@ -11,7 +11,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4 py-4">
       {/* Background subtle glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-3xl" />
@@ -21,10 +21,10 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div
-          className="flex items-center justify-center gap-3 mb-8 cursor-pointer"
+          className="flex items-center justify-center gap-2.5 mb-5 cursor-pointer"
           onClick={() => navigate('/')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <defs>
               <linearGradient id="auth-logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#34d399" />
@@ -39,16 +39,16 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
               <circle cx="7" cy="18" r="2"/>
             </g>
           </svg>
-          <span className="text-3xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
+          <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
             Logintel
           </span>
         </div>
 
         {/* Card */}
-        <div className="card-accent bg-[#1e293b] border border-[#334155] rounded-2xl p-8">
+        <div className="card-accent bg-[#1e293b] border border-[#334155] rounded-2xl p-6">
           {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-1">{title}</h1>
+          <div className="text-center mb-5">
+            <h1 className="text-xl font-bold text-white mb-0.5">{title}</h1>
             <p className="text-sm text-slate-400">{subtitle}</p>
           </div>
 
@@ -56,7 +56,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-xs text-slate-600">
+        <p className="mt-4 text-center text-xs text-slate-600">
           &copy; 2026 Logintel &mdash; Logistic Intelligence Platform
         </p>
       </div>

@@ -1,6 +1,11 @@
 import { mockEmissionsHistory } from '../../../data/mockCarbonData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 export function EmissionsHistory() {
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockEmissionsHistory : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Storico Emissioni</h1>
@@ -19,10 +24,12 @@ export function EmissionsHistory() {
               </tr>
             </thead>
             <tbody>
-              {mockEmissionsHistory.map((entry) => {
+              {data.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((entry) => {
                 const delta = entry.co2Tons - entry.target
                 const isAbove = delta > 0
-                const maxVal = Math.max(...mockEmissionsHistory.map((e) => Math.max(e.co2Tons, e.target)))
+                const maxVal = Math.max(...data.map((e) => Math.max(e.co2Tons, e.target)))
 
                 return (
                   <tr key={entry.month} className="border-b border-[#334155] last:border-b-0">
@@ -64,29 +71,32 @@ export function EmissionsHistory() {
         </div>
 
         {/* Summary */}
-        <div className="mt-6 pt-4 border-t border-[#334155]">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <p className="text-xs text-slate-400 mb-1">Media emissioni</p>
-              <p className="text-lg font-semibold text-white">
-                {(mockEmissionsHistory.reduce((s, e) => s + e.co2Tons, 0) / mockEmissionsHistory.length).toFixed(1)} ton/mese
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 mb-1">Mesi sotto target</p>
-              <p className="text-lg font-semibold text-emerald-400">
-                {mockEmissionsHistory.filter((e) => e.co2Tons <= e.target).length} / {mockEmissionsHistory.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 mb-1">Trend ultimi 6 mesi</p>
-              <p className="text-lg font-semibold text-emerald-400">
-                -{(mockEmissionsHistory[0].co2Tons - mockEmissionsHistory[mockEmissionsHistory.length - 1].co2Tons).toFixed(1)} ton
-              </p>
+        {data.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-[#334155]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Media emissioni</p>
+                <p className="text-lg font-semibold text-white">
+                  {(data.reduce((s, e) => s + e.co2Tons, 0) / data.length).toFixed(1)} ton/mese
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Mesi sotto target</p>
+                <p className="text-lg font-semibold text-emerald-400">
+                  {data.filter((e) => e.co2Tons <= e.target).length} / {data.length}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Trend ultimi 6 mesi</p>
+                <p className="text-lg font-semibold text-emerald-400">
+                  -{(data[0].co2Tons - data[data.length - 1].co2Tons).toFixed(1)} ton
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

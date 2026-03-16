@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { Wrench, ShieldCheck, Package, Monitor, CloudRain } from 'lucide-react'
 import { mockNotifications } from '../../../data/mockNotifications'
 import type { AppNotification } from '../../../data/mockNotifications'
-// TODO: Riabilitare notifiche da Supabase quando configurato
-// import { useAuthStore } from '../../../stores/authStore'
-// import * as notificationsService from '../../../services/notifications'
+import { useAuthStore } from '../../../stores/authStore'
 
 type FilterTab = 'all' | 'unread' | 'high'
 
@@ -38,10 +36,9 @@ function formatRelativeTime(timestamp: string): string {
 }
 
 export function NotificationsPage() {
-  // TODO: Ripristinare caricamento notifiche da Supabase
-  // const { user } = useAuthStore()
+  const isDemo = useAuthStore((s) => s.isDemo)
   const [filter, setFilter] = useState<FilterTab>('all')
-  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications)
+  const [notifications, setNotifications] = useState<AppNotification[]>(isDemo ? mockNotifications : [])
 
   // TODO: Riabilitare useEffect per caricare notifiche da Supabase
   // useEffect(() => {

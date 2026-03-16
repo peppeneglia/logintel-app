@@ -52,4 +52,19 @@
     background: linear-gradient(to right, #34d399, #06b6d4);
     border-radius: 1rem 1rem 0 0;
   }
+
+  .animate-in {
+    animation: slideIn 0.3s ease-out;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

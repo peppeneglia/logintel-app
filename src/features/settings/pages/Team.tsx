@@ -1,3 +1,5 @@
+import { useAuthStore } from '../../../stores/authStore'
+
 const mockTeamMembers = [
   {
     id: 'tm-001',
@@ -62,8 +64,11 @@ const statusLabel: Record<string, string> = {
 }
 
 export function Team() {
-  const active = mockTeamMembers.filter((m) => m.status === 'active').length
-  const invited = mockTeamMembers.filter((m) => m.status === 'invited').length
+  const isDemo = useAuthStore((s) => s.isDemo)
+
+  const members = isDemo ? mockTeamMembers : []
+  const active = members.filter((m) => m.status === 'active').length
+  const invited = members.filter((m) => m.status === 'invited').length
 
   return (
     <div>
@@ -73,7 +78,7 @@ export function Team() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Membri totali</p>
-          <p className="text-xl font-bold text-white">{mockTeamMembers.length}</p>
+          <p className="text-xl font-bold text-white">{members.length}</p>
         </div>
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Attivi</p>
@@ -93,34 +98,38 @@ export function Team() {
             Invita membro
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#334155]">
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Nome</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Email</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Ruolo</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Ultimo accesso</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Stato</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockTeamMembers.map((member) => (
-                <tr key={member.id} className="border-b border-[#334155]">
-                  <td className="py-3 px-3 text-white font-medium">{member.name}</td>
-                  <td className="py-3 px-3 text-slate-400">{member.email}</td>
-                  <td className="py-3 px-3 text-slate-300">{member.role}</td>
-                  <td className="py-3 px-3 text-slate-400">{member.lastAccess}</td>
-                  <td className="py-3 px-3">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[member.status]}`}>
-                      {statusLabel[member.status]}
-                    </span>
-                  </td>
+        {members.length === 0 ? (
+          <p className="text-sm text-slate-500 py-4">Nessun membro nel team.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#334155]">
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Nome</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Email</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Ruolo</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Ultimo accesso</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Stato</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {members.map((member) => (
+                  <tr key={member.id} className="border-b border-[#334155]">
+                    <td className="py-3 px-3 text-white font-medium">{member.name}</td>
+                    <td className="py-3 px-3 text-slate-400">{member.email}</td>
+                    <td className="py-3 px-3 text-slate-300">{member.role}</td>
+                    <td className="py-3 px-3 text-slate-400">{member.lastAccess}</td>
+                    <td className="py-3 px-3">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[member.status]}`}>
+                        {statusLabel[member.status]}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,4 +1,6 @@
 import { mockMaintenanceAlerts } from '../../../data/mockFleetData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const riskBadge: Record<string, string> = {
   low: 'bg-emerald-500/10 text-emerald-400',
@@ -33,9 +35,11 @@ function formatDate(dateStr: string): string {
 }
 
 export function PredictiveMaintenance() {
-  const highCount = mockMaintenanceAlerts.filter((a) => a.risk === 'high').length
-  const mediumCount = mockMaintenanceAlerts.filter((a) => a.risk === 'medium').length
-  const pendingCount = mockMaintenanceAlerts.filter((a) => a.status === 'pending').length
+  const { isDemo, show, close } = useUnavailable()
+  const alerts = isDemo ? mockMaintenanceAlerts : []
+  const highCount = alerts.filter((a) => a.risk === 'high').length
+  const mediumCount = alerts.filter((a) => a.risk === 'medium').length
+  const pendingCount = alerts.filter((a) => a.status === 'pending').length
 
   return (
     <div>
@@ -73,7 +77,7 @@ export function PredictiveMaintenance() {
               </tr>
             </thead>
             <tbody>
-              {mockMaintenanceAlerts.map((alert) => (
+              {alerts.length > 0 ? alerts.map((alert) => (
                 <tr key={alert.id} className="border-b border-[#334155]">
                   <td className="py-2.5 px-3 font-medium text-white">{alert.vehiclePlate}</td>
                   <td className="py-2.5 px-3 text-slate-300">{alert.component}</td>
@@ -92,11 +96,14 @@ export function PredictiveMaintenance() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-500">Nessun avviso di manutenzione.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

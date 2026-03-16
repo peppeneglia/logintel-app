@@ -1,4 +1,6 @@
 import { mockVehicleAllocations } from '../../../data/mockFleetData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusBadge: Record<string, string> = {
   scheduled: 'bg-primary-500/10 text-primary-400',
@@ -29,9 +31,11 @@ function formatDateTime(dateStr: string): string {
 }
 
 export function VehicleAllocation() {
-  const scheduledCount = mockVehicleAllocations.filter((a) => a.status === 'scheduled').length
-  const inTransitCount = mockVehicleAllocations.filter((a) => a.status === 'in_transit').length
-  const completedCount = mockVehicleAllocations.filter((a) => a.status === 'completed').length
+  const { isDemo, show, close } = useUnavailable()
+  const allocations = isDemo ? mockVehicleAllocations : []
+  const scheduledCount = allocations.filter((a) => a.status === 'scheduled').length
+  const inTransitCount = allocations.filter((a) => a.status === 'in_transit').length
+  const completedCount = allocations.filter((a) => a.status === 'completed').length
 
   return (
     <div>
@@ -68,7 +72,7 @@ export function VehicleAllocation() {
               </tr>
             </thead>
             <tbody>
-              {mockVehicleAllocations.map((alloc) => (
+              {allocations.length > 0 ? allocations.map((alloc) => (
                 <tr key={alloc.id} className="border-b border-[#334155]">
                   <td className="py-2.5 px-3 font-medium text-white">{alloc.vehiclePlate}</td>
                   <td className="py-2.5 px-3 text-slate-300">{alloc.route}</td>
@@ -80,11 +84,14 @@ export function VehicleAllocation() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={5} className="py-8 text-center text-sm text-slate-500">Nessuna assegnazione registrata.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

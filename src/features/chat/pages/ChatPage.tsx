@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import type { ChatMessage } from '../../../types'
-import { mockSinglePrediction } from '../../../data/mockData'
+import { mockSinglePrediction, mockConversations } from '../../../data/mockData'
+import { useAuthStore } from '../../../stores/authStore'
 import { WelcomeScreen } from '../components/WelcomeScreen'
 import { MessageList } from '../components/MessageList'
 import { ChatInput } from '../components/ChatInput'
 import { ChatSidebar } from '../components/ChatSidebar'
-// TODO: Riabilitare persistenza conversazioni su Supabase quando configurato
-// import { useAuthStore } from '../../../stores/authStore'
-// import * as conversationsService from '../../../services/conversations'
+import { sendChatMessage } from '../../../services/api'
 
 const PREDICTION_KEYWORDS = ['predizione', 'calcola', 'prevedi', 'eta']
 
@@ -38,36 +37,37 @@ function createAssistantMessage(
   }
 }
 
-const GENERIC_RESPONSES = [
-  'Le condizioni meteo lungo i corridoi principali sono nella norma per questa settimana. Non si prevedono particolari criticit\u00e0 sulle tratte autostradali del Nord Italia. Per il Centro-Sud, attenzione a possibili piogge tra marted\u00ec e mercoled\u00ec nella zona appenninica.',
-  'I corridoi alpini al momento sono tutti percorribili senza restrizioni particolari. Il Brennero e il Frejus presentano condizioni stabili. Ti consiglio comunque di monitorare le previsioni 24h prima della partenza per eventuali variazioni.',
-  'Per le rotte che hai indicato, le condizioni generali sono buone. La visibilit\u00e0 potrebbe ridursi nelle prime ore del mattino nella Pianura Padana per banchi di nebbia, ma dovrebbero dissolversi entro le 10:00. Posso calcolare una predizione dettagliata se vuoi.',
-]
-
 interface ConversationItem {
   id: string
   title: string
   updatedAt: string
 }
 
+function getDemoConversations(): ConversationItem[] {
+  return mockConversations.map((c) => ({
+    id: c.id,
+    title: c.title,
+    updatedAt: c.createdAt.toISOString(),
+  }))
+}
+
 export function ChatPage() {
-  // TODO: Riabilitare persistenza conversazioni su Supabase
-  // const { user } = useAuthStore()
+  const isDemo = useAuthStore((s) => s.isDemo)
+
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-  // TODO: Riabilitare caricamento conversazioni da Supabase
-  // const [conversations, setConversations] = useState<ConversationItem[]>([])
-  // const loadConversations = useCallback(async () => {
-  //   if (!user) return
-  //   const data = await conversationsService.getConversations(user.id)
-  //   setConversations(data.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updated_at })))
-  // }, [user])
-  const conversations: ConversationItem[] = []
+  const [isLoading, setIsLoading] = useState(false)
+
+  const conversations: ConversationItem[] = isDemo ? getDemoConversations() : []
 
   function handleSelectConversation(id: string) {
     setActiveConversationId(id)
-    // TODO: Caricare messaggi da Supabase
-    setMessages([])
+    if (isDemo) {
+      const conv = mockConversations.find((c) => c.id === id)
+      setMessages(conv ? conv.messages : [])
+    } else {
+      setMessages([])
+    }
   }
 
   function handleNewChat() {
@@ -75,27 +75,44 @@ export function ChatPage() {
     setMessages([])
   }
 
-  function handleSend(text: string) {
+  async function handleSend(text: string) {
     const userMsg = createUserMessage(text)
     setMessages((prev) => [...prev, userMsg])
+    setIsLoading(true)
 
-    // TODO: Creare conversazione su Supabase e salvare messaggi
-    // let convId = activeConversationId
-    // if (!convId && user) { ... create conversation ... }
-    // if (convId) { await conversationsService.sendMessage(convId, 'user', text) }
-
-    // Genera risposta (mock per ora)
     const isPrediction = isPredictionRequest(text)
-    const responseContent = isPrediction
-      ? 'Ecco la predizione per la tua rotta:'
-      : GENERIC_RESPONSES[Math.floor(Math.random() * GENERIC_RESPONSES.length)]
-    const prediction = isPrediction ? mockSinglePrediction : undefined
 
-    setTimeout(() => {
+    try {
+      const history = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }))
+
+      const { response: responseText } = await sendChatMessage(text, history)
+
+      const prediction = isPrediction && isDemo ? mockSinglePrediction : undefined
+      const content = isPrediction && isDemo
+        ? `${responseText}\n\nEcco la predizione per la tua rotta:`
+        : responseText
+
+      const assistantMsg = createAssistantMessage(content, prediction)
+      setMessages((prev) => [...prev, assistantMsg])
+    } catch {
+      const FALLBACK_RESPONSES = [
+        'Le condizioni meteo lungo i corridoi principali sono nella norma per questa settimana. Non si prevedono particolari criticità sulle tratte autostradali del Nord Italia.',
+        'I corridoi alpini al momento sono tutti percorribili senza restrizioni particolari. Il Brennero e il Frejus presentano condizioni stabili.',
+        'Per le rotte che hai indicato, le condizioni generali sono buone. Posso calcolare una predizione dettagliata se vuoi.',
+      ]
+      const responseContent = isPrediction && isDemo
+        ? 'Ecco la predizione per la tua rotta:'
+        : FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)]
+      const prediction = isPrediction && isDemo ? mockSinglePrediction : undefined
+
       const assistantMsg = createAssistantMessage(responseContent, prediction)
       setMessages((prev) => [...prev, assistantMsg])
-      // TODO: Salvare risposta assistant su Supabase
-    }, 1000)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   function handleSuggestionClick(text: string) {
@@ -118,7 +135,7 @@ export function ChatPage() {
           <MessageList messages={messages} />
         )}
 
-        <ChatInput onSend={handleSend} />
+        <ChatInput onSend={handleSend} disabled={isLoading} />
       </div>
     </div>
   )

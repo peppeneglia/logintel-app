@@ -1,4 +1,6 @@
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusBadge: Record<string, string> = {
   valid: 'bg-emerald-500/10 text-emerald-400',
@@ -43,11 +45,12 @@ function daysLeftColor(days: number): string {
 }
 
 export function DocumentExpiry() {
-  const sorted = [...mockDocumentExpiries].sort((a, b) => a.daysLeft - b.daysLeft)
+  const { isDemo, show, close } = useUnavailable()
+  const documents = isDemo ? [...mockDocumentExpiries].sort((a, b) => a.daysLeft - b.daysLeft) : []
 
-  const expiredCount = sorted.filter((d) => d.status === 'expired').length
-  const expiringCount = sorted.filter((d) => d.status === 'expiring').length
-  const validCount = sorted.filter((d) => d.status === 'valid').length
+  const expiredCount = documents.filter((d) => d.status === 'expired').length
+  const expiringCount = documents.filter((d) => d.status === 'expiring').length
+  const validCount = documents.filter((d) => d.status === 'valid').length
 
   return (
     <div>
@@ -85,7 +88,7 @@ export function DocumentExpiry() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((doc) => {
+              {documents.length > 0 ? documents.map((doc) => {
                 const rowHighlight =
                   doc.status === 'expired'
                     ? 'bg-red-500/5'
@@ -112,11 +115,14 @@ export function DocumentExpiry() {
                     </td>
                   </tr>
                 )
-              })}
+              }) : (
+                <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-500">Nessun documento registrato.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

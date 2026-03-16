@@ -1,5 +1,7 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { mockRouteEmissions } from '../../../data/mockCarbonData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function TrendIcon({ trend }: { trend: 'up' | 'down' | 'stable' }) {
   if (trend === 'up') return <TrendingUp size={16} className="text-red-400" />
@@ -14,6 +16,9 @@ function trendLabel(trend: 'up' | 'down' | 'stable') {
 }
 
 export function RouteEmissions() {
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockRouteEmissions : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Emissioni per Rotta</h1>
@@ -33,7 +38,9 @@ export function RouteEmissions() {
               </tr>
             </thead>
             <tbody>
-              {mockRouteEmissions.map((row) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((row) => (
                 <tr key={row.route} className="border-b border-[#334155] last:border-b-0">
                   <td className="py-3 px-3 text-white font-medium">{row.route}</td>
                   <td className="py-3 px-3 text-slate-300 text-right">{row.distance}</td>
@@ -55,6 +62,7 @@ export function RouteEmissions() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

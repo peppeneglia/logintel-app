@@ -1,9 +1,14 @@
 import { mockCostPerKm } from '../../../data/mockFinanceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 export function CostAnalysis() {
-  const avgCostPerKm = mockCostPerKm.reduce((sum, r) => sum + r.costoPerKm, 0) / mockCostPerKm.length
-  const totalCosts = mockCostPerKm.reduce((sum, r) => sum + r.totale, 0)
-  const totalFuel = mockCostPerKm.reduce((sum, r) => sum + r.carburante, 0)
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockCostPerKm : []
+
+  const avgCostPerKm = data.length ? data.reduce((sum, r) => sum + r.costoPerKm, 0) / data.length : 0
+  const totalCosts = data.reduce((sum, r) => sum + r.totale, 0)
+  const totalFuel = data.reduce((sum, r) => sum + r.carburante, 0)
 
   return (
     <div>
@@ -43,7 +48,9 @@ export function CostAnalysis() {
               </tr>
             </thead>
             <tbody>
-              {mockCostPerKm.map((r) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={8} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((r) => (
                 <tr key={r.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{r.veicolo}</td>
                   <td className="py-3 px-3 text-slate-400">{r.periodo}</td>
@@ -67,6 +74,7 @@ export function CostAnalysis() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

@@ -1,37 +1,47 @@
-import { useState } from 'react'
-// TODO: Riabilitare salvataggio impostazioni su Supabase quando configurato
-// import { useEffect } from 'react'
-// import { useAuthStore } from '../../../stores/authStore'
-// import * as settingsService from '../../../services/settings'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
+import { useAuthStore } from '../../../stores/authStore'
+
+const STORAGE_KEY = 'logintel-settings'
+
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) return JSON.parse(saved)
+  } catch { /* ignore */ }
+  return null
+}
+
+const defaultSettings = {
+  language: 'it',
+  timezone: 'Europe/Rome',
+  date_format: 'dd/MM/yyyy',
+  unit_system: 'metric',
+  currency: 'EUR',
+}
 
 export function General() {
-  // TODO: Ripristinare lettura/scrittura settings da Supabase
-  // const { user } = useAuthStore()
-
-  const [form, setForm] = useState({
-    language: 'it',
-    timezone: 'Europe/Rome',
-    date_format: 'dd/MM/yyyy',
-    unit_system: 'metric',
-    currency: 'EUR',
-  })
+  const navigate = useNavigate()
+  const { signOut, isDemo } = useAuthStore()
+  const [form, setForm] = useState(defaultSettings)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  // TODO: Ripristinare useEffect per caricare settings da Supabase
-  // useEffect(() => {
-  //   if (user) { settingsService.getSettings(user.id).then((s) => { ... }) }
-  // }, [user])
+  useEffect(() => {
+    const stored = loadSettings()
+    if (stored) setForm((prev) => ({ ...prev, ...stored }))
+  }, [])
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setSaving(true)
     setSaved(false)
-    // TODO: Salvare su Supabase con settingsService.updateSettings()
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(form))
     setTimeout(() => {
       setSaved(true)
       setSaving(false)
       setTimeout(() => setSaved(false), 3000)
-    }, 500)
+    }, 300)
   }
 
   const selects = [
@@ -112,6 +122,20 @@ export function General() {
             <span className="text-sm text-emerald-400">Salvato con successo</span>
           )}
         </div>
+      </div>
+
+      {/* Logout */}
+      <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 mt-4">
+        <button
+          onClick={async () => {
+            await signOut()
+            navigate('/login', { replace: true })
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+        >
+          <LogOut size={16} />
+          {isDemo ? 'Esci dalla demo' : 'Esci dal tuo account'}
+        </button>
       </div>
     </div>
   )

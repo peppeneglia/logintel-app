@@ -1,10 +1,27 @@
 import { mockESGMetrics, mockEmissionsHistory } from '../../../data/mockCarbonData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
+
+const emptyMetrics = {
+  totalEmissionsTons: 0,
+  reductionPercent: 0,
+  targetTons: 0,
+  fleetEfficiency: 0,
+  greenTripsPercent: 0,
+}
 
 export function ESGReport() {
-  const metrics = mockESGMetrics
-  const currentVsTarget = ((metrics.totalEmissionsTons / metrics.targetTons) * 100).toFixed(1)
+  const { isDemo, show, close } = useUnavailable()
+  const metrics = isDemo ? mockESGMetrics : emptyMetrics
+  const historyData = isDemo ? mockEmissionsHistory : []
 
-  const maxTons = Math.max(...mockEmissionsHistory.map((m) => Math.max(m.co2Tons, m.target)))
+  const currentVsTarget = metrics.targetTons > 0
+    ? ((metrics.totalEmissionsTons / metrics.targetTons) * 100).toFixed(1)
+    : '0.0'
+
+  const maxTons = historyData.length > 0
+    ? Math.max(...historyData.map((m) => Math.max(m.co2Tons, m.target)))
+    : 1
 
   return (
     <div>
@@ -45,78 +62,85 @@ export function ESGReport() {
         <div className="w-full bg-[#334155] rounded-full h-4 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${
-              metrics.totalEmissionsTons <= metrics.targetTons ? 'bg-emerald-500' : 'bg-amber-500'
+              metrics.targetTons === 0 || metrics.totalEmissionsTons <= metrics.targetTons ? 'bg-emerald-500' : 'bg-amber-500'
             }`}
-            style={{ width: `${Math.min(100, (metrics.totalEmissionsTons / metrics.targetTons) * 100)}%` }}
+            style={{ width: `${metrics.targetTons > 0 ? Math.min(100, (metrics.totalEmissionsTons / metrics.targetTons) * 100) : 0}%` }}
           />
         </div>
         <div className="flex justify-between mt-2">
           <span className="text-xs text-slate-400">0 ton</span>
           <span className="text-xs text-slate-400">{metrics.targetTons} ton (target)</span>
         </div>
-        {metrics.totalEmissionsTons > metrics.targetTons ? (
+        {metrics.targetTons > 0 && metrics.totalEmissionsTons > metrics.targetTons ? (
           <p className="text-sm text-amber-400 mt-3">
             Superamento target di {(metrics.totalEmissionsTons - metrics.targetTons).toFixed(1)} tonnellate.
             Necessario ridurre di {(((metrics.totalEmissionsTons - metrics.targetTons) / metrics.totalEmissionsTons) * 100).toFixed(1)}% per rientrare.
           </p>
-        ) : (
+        ) : metrics.targetTons > 0 ? (
           <p className="text-sm text-emerald-400 mt-3">
             Sotto il target di {(metrics.targetTons - metrics.totalEmissionsTons).toFixed(1)} tonnellate. Ottimo lavoro!
           </p>
-        )}
+        ) : null}
       </div>
 
       {/* Monthly comparison chart */}
       <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
         <h2 className="text-base font-semibold text-white mb-4">Confronto mensile emissioni vs target</h2>
-        <div className="space-y-4">
-          {mockEmissionsHistory.map((entry) => {
-            const actualWidth = (entry.co2Tons / maxTons) * 100
-            const targetWidth = (entry.target / maxTons) * 100
-            const isAbove = entry.co2Tons > entry.target
+        {historyData.length === 0 ? (
+          <p className="text-slate-500 text-center py-6">Nessun dato disponibile.</p>
+        ) : (
+          <>
+            <div className="space-y-4">
+              {historyData.map((entry) => {
+                const actualWidth = (entry.co2Tons / maxTons) * 100
+                const targetWidth = (entry.target / maxTons) * 100
+                const isAbove = entry.co2Tons > entry.target
 
-            return (
-              <div key={entry.month}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm text-slate-300 w-24 shrink-0">{entry.month}</span>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className={isAbove ? 'text-red-400' : 'text-emerald-400'}>
-                      {entry.co2Tons} ton
-                    </span>
-                    <span className="text-slate-500">target: {entry.target} ton</span>
+                return (
+                  <div key={entry.month}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm text-slate-300 w-24 shrink-0">{entry.month}</span>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className={isAbove ? 'text-red-400' : 'text-emerald-400'}>
+                          {entry.co2Tons} ton
+                        </span>
+                        <span className="text-slate-500">target: {entry.target} ton</span>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      {/* Target bar (background) */}
+                      <div
+                        className="h-3 bg-slate-600 rounded-full"
+                        style={{ width: `${targetWidth}%` }}
+                      />
+                      {/* Actual bar (overlay) */}
+                      <div
+                        className={`absolute top-0 h-3 rounded-full ${isAbove ? 'bg-red-500/70' : 'bg-emerald-500/70'}`}
+                        style={{ width: `${actualWidth}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="relative">
-                  {/* Target bar (background) */}
-                  <div
-                    className="h-3 bg-slate-600 rounded-full"
-                    style={{ width: `${targetWidth}%` }}
-                  />
-                  {/* Actual bar (overlay) */}
-                  <div
-                    className={`absolute top-0 h-3 rounded-full ${isAbove ? 'bg-red-500/70' : 'bg-emerald-500/70'}`}
-                    style={{ width: `${actualWidth}%` }}
-                  />
-                </div>
+                )
+              })}
+            </div>
+            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#334155]">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-emerald-500/70" />
+                <span className="text-xs text-slate-400">Emissioni (sotto target)</span>
               </div>
-            )
-          })}
-        </div>
-        <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[#334155]">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500/70" />
-            <span className="text-xs text-slate-400">Emissioni (sotto target)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/70" />
-            <span className="text-xs text-slate-400">Emissioni (sopra target)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-slate-600" />
-            <span className="text-xs text-slate-400">Target</span>
-          </div>
-        </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/70" />
+                <span className="text-xs text-slate-400">Emissioni (sopra target)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-slate-600" />
+                <span className="text-xs text-slate-400">Target</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

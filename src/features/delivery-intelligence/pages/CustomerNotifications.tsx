@@ -1,4 +1,6 @@
 import { mockCustomerNotifications } from '../../../data/mockDeliveryData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function TypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; style: string }> = {
@@ -34,6 +36,10 @@ function ChannelBadge({ channel }: { channel: string }) {
 }
 
 export function CustomerNotifications() {
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockCustomerNotifications : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Notifiche Clienti</h1>
@@ -51,7 +57,9 @@ export function CustomerNotifications() {
               </tr>
             </thead>
             <tbody>
-              {mockCustomerNotifications.map((n) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={5} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((n) => (
                 <tr key={n.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{n.client}</td>
                   <td className="py-3 px-3"><TypeBadge type={n.type} /></td>
@@ -66,6 +74,7 @@ export function CustomerNotifications() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

@@ -1,9 +1,14 @@
 import { mockClientProfitability } from '../../../data/mockFinanceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 export function ClientProfitability() {
-  const totalRevenue = mockClientProfitability.reduce((sum, r) => sum + r.ricavoTotale, 0)
-  const totalProfit = mockClientProfitability.reduce((sum, r) => sum + r.profitto, 0)
-  const avgMargin = mockClientProfitability.reduce((sum, r) => sum + r.marginePct, 0) / mockClientProfitability.length
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockClientProfitability : []
+
+  const totalRevenue = data.reduce((sum, r) => sum + r.ricavoTotale, 0)
+  const totalProfit = data.reduce((sum, r) => sum + r.profitto, 0)
+  const avgMargin = data.length ? data.reduce((sum, r) => sum + r.marginePct, 0) / data.length : 0
 
   return (
     <div>
@@ -41,7 +46,9 @@ export function ClientProfitability() {
               </tr>
             </thead>
             <tbody>
-              {mockClientProfitability.map((r) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((r) => (
                 <tr key={r.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{r.cliente}</td>
                   <td className="py-3 px-3 text-slate-300 text-right">{r.tratte}</td>
@@ -63,6 +70,7 @@ export function ClientProfitability() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

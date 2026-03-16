@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { mockComplianceDocuments } from '../../../data/mockComplianceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusBadge: Record<string, string> = {
   valid: 'bg-emerald-500/10 text-emerald-400',
@@ -21,12 +23,15 @@ function daysToExpiry(expiryDate: string): number {
 }
 
 export function DocumentsLicenses() {
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
+  const allData = isDemo ? mockComplianceDocuments : []
   const filtered =
     statusFilter === 'all'
-      ? mockComplianceDocuments
-      : mockComplianceDocuments.filter((d) => d.status === statusFilter)
+      ? allData
+      : allData.filter((d) => d.status === statusFilter)
 
   return (
     <div>
@@ -64,7 +69,9 @@ export function DocumentsLicenses() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((doc) => {
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : filtered.map((doc) => {
                 const days = daysToExpiry(doc.expiryDate)
                 return (
                   <tr key={doc.id} className="border-b border-[#334155]">
@@ -100,6 +107,7 @@ export function DocumentsLicenses() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

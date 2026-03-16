@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { mockPredictionHistory } from '../../../data/mockData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
 
 function formatDateFull(date: Date): string {
@@ -16,6 +18,7 @@ function formatDateFull(date: Date): string {
 }
 
 export function PredictionHistory() {
+  const { isDemo, show, guard, close } = useUnavailable()
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [routeFilter, setRouteFilter] = useState('')
@@ -39,6 +42,10 @@ export function PredictionHistory() {
     }
     return true
   })
+
+  const handleFilter = () => {
+    if (guard()) return
+  }
 
   return (
     <div>
@@ -89,7 +96,7 @@ export function PredictionHistory() {
           </div>
         </div>
         <button
-          onClick={() => {}}
+          onClick={handleFilter}
           className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors text-sm"
         >
           Filtra
@@ -112,66 +119,76 @@ export function PredictionHistory() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((item) => {
-                const accuracy = item.feedbackGiven && item.actualDelay !== undefined
-                  ? Math.abs(item.estimatedDelay - item.actualDelay)
-                  : null
+              {isDemo ? (
+                filteredData.map((item) => {
+                  const accuracy = item.feedbackGiven && item.actualDelay !== undefined
+                    ? Math.abs(item.estimatedDelay - item.actualDelay)
+                    : null
 
-                return (
-                  <tr key={item.id} className="border-b border-[#334155]">
-                    <td className="py-3 px-3 text-slate-400">
-                      {formatDateFull(item.requestedAt)}
-                    </td>
-                    <td className="py-3 px-3 text-white font-medium">
-                      {item.origin} &rarr; {item.destination}
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className={`font-semibold ${item.estimatedDelay < 10 ? 'text-emerald-400' : item.estimatedDelay <= 30 ? 'text-amber-400' : 'text-red-400'}`}>
-                        +{item.estimatedDelay} min
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 text-slate-400">
-                      {item.feedbackGiven && item.actualDelay !== undefined
-                        ? `+${item.actualDelay} min`
-                        : '\u2014'}
-                    </td>
-                    <td className="py-3 px-3">
-                      <ConfidenceBar value={item.confidence} size="sm" />
-                    </td>
-                    <td className="py-3 px-3">
-                      {accuracy !== null ? (
-                        <span className={`font-medium ${accuracy <= 5 ? 'text-emerald-400' : accuracy <= 15 ? 'text-amber-400' : 'text-red-400'}`}>
-                          &plusmn;{accuracy} min
+                  return (
+                    <tr key={item.id} className="border-b border-[#334155]">
+                      <td className="py-3 px-3 text-slate-400">
+                        {formatDateFull(item.requestedAt)}
+                      </td>
+                      <td className="py-3 px-3 text-white font-medium">
+                        {item.origin} &rarr; {item.destination}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className={`font-semibold ${item.estimatedDelay < 10 ? 'text-emerald-400' : item.estimatedDelay <= 30 ? 'text-amber-400' : 'text-red-400'}`}>
+                          +{item.estimatedDelay} min
                         </span>
-                      ) : (
-                        <span className="text-slate-500">&mdash;</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-2">
-                        <button className="px-3 py-1 border border-slate-600 rounded-xl text-xs font-medium text-slate-300 hover:bg-[#334155] transition-colors">
-                          Dettaglio
-                        </button>
-                        {!item.feedbackGiven && (
-                          <button className="px-3 py-1 border border-primary-500 rounded-xl text-xs font-medium text-primary-400 hover:bg-primary-500/10 transition-colors">
-                            Feedback
-                          </button>
+                      </td>
+                      <td className="py-3 px-3 text-slate-400">
+                        {item.feedbackGiven && item.actualDelay !== undefined
+                          ? `+${item.actualDelay} min`
+                          : '\u2014'}
+                      </td>
+                      <td className="py-3 px-3">
+                        <ConfidenceBar value={item.confidence} size="sm" />
+                      </td>
+                      <td className="py-3 px-3">
+                        {accuracy !== null ? (
+                          <span className={`font-medium ${accuracy <= 5 ? 'text-emerald-400' : accuracy <= 15 ? 'text-amber-400' : 'text-red-400'}`}>
+                            &plusmn;{accuracy} min
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">&mdash;</span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2">
+                          <button className="px-3 py-1 border border-slate-600 rounded-xl text-xs font-medium text-slate-300 hover:bg-[#334155] transition-colors">
+                            Dettaglio
+                          </button>
+                          {!item.feedbackGiven && (
+                            <button className="px-3 py-1 border border-primary-500 rounded-xl text-xs font-medium text-primary-400 hover:bg-primary-500/10 transition-colors">
+                              Feedback
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan={7}>
+                    <p className="text-sm text-slate-500 py-8 text-center">Nessun dato disponibile.</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        {filteredData.length === 0 && (
+        {isDemo && filteredData.length === 0 && (
           <div className="text-center py-8 text-slate-500 text-sm">
             Nessun risultato trovato con i filtri selezionati.
           </div>
         )}
       </div>
+
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

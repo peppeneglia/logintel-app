@@ -1,6 +1,13 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Layout } from './Layout'
 
+// Auth
+import { LoginPage } from '../features/auth/pages/LoginPage'
+import { RegisterPage } from '../features/auth/pages/RegisterPage'
+import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
+import { ProtectedRoute } from '../features/auth/ProtectedRoute'
+
 // Chat
 import { ChatPage } from '../features/chat/pages/ChatPage'
 
@@ -64,13 +71,6 @@ import { ApiKey } from '../features/settings/pages/ApiKey'
 import { Billing } from '../features/settings/pages/Billing'
 import { Team } from '../features/settings/pages/Team'
 
-// TODO: Riabilitare auth pages e ProtectedRoute quando Supabase è configurato
-// import { LoginPage } from '../features/auth/pages/LoginPage'
-// import { RegisterPage } from '../features/auth/pages/RegisterPage'
-// import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage'
-// import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage'
-// import { ProtectedRoute } from '../features/auth/ProtectedRoute'
-
 function AppLayout() {
   return (
     <Layout>
@@ -82,91 +82,93 @@ function AppLayout() {
 function App() {
   return (
     <Routes>
-      {/* TODO: Riabilitare auth routes quando Supabase è configurato */}
-      {/* <Route path="/login" element={<LoginPage />} /> */}
-      {/* <Route path="/register" element={<RegisterPage />} /> */}
-      {/* <Route path="/forgot-password" element={<ForgotPasswordPage />} /> */}
-      {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
+      {/* Auth routes (pubbliche) */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {/* TODO: Wrappare con <ProtectedRoute /> quando auth è attiva */}
-      <Route element={<AppLayout />}>
-        {/* Home — Chat */}
-        <Route path="/" element={<ChatPage />} />
+      {/* Dashboard routes (protette) */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          {/* Home — Chat */}
+          <Route path="/" element={<ChatPage />} />
 
-        {/* Route Intelligence */}
-        <Route path="/route-intelligence" element={<RouteIntelligencePage />}>
-          <Route index element={<Navigate to="single" replace />} />
-          <Route path="single" element={<SinglePrediction />} />
-          <Route path="weekly" element={<WeeklyPlan />} />
-          <Route path="compare" element={<CompareRoutes />} />
-          <Route path="report" element={<ETAReport />} />
-          <Route path="history" element={<PredictionHistory />} />
+          {/* Route Intelligence */}
+          <Route path="/route-intelligence" element={<RouteIntelligencePage />}>
+            <Route index element={<Navigate to="single" replace />} />
+            <Route path="single" element={<SinglePrediction />} />
+            <Route path="weekly" element={<WeeklyPlan />} />
+            <Route path="compare" element={<CompareRoutes />} />
+            <Route path="report" element={<ETAReport />} />
+            <Route path="history" element={<PredictionHistory />} />
+          </Route>
+
+          {/* Fleet Intelligence */}
+          <Route path="/fleet-intelligence" element={<FleetIntelligencePage />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<FleetOverview />} />
+            <Route path="maintenance" element={<PredictiveMaintenance />} />
+            <Route path="allocation" element={<VehicleAllocation />} />
+            <Route path="costs" element={<OperationalCosts />} />
+            <Route path="documents" element={<DocumentExpiry />} />
+          </Route>
+
+          {/* Delivery Intelligence */}
+          <Route path="/delivery-intelligence" element={<DeliveryIntelligencePage />}>
+            <Route index element={<Navigate to="performance" replace />} />
+            <Route path="performance" element={<DeliveryPerformance />} />
+            <Route path="tracking" element={<ActiveTracking />} />
+            <Route path="windows" element={<DeliveryWindows />} />
+            <Route path="notifications" element={<CustomerNotifications />} />
+            <Route path="accuracy" element={<ETAAccuracy />} />
+          </Route>
+
+          {/* Compliance Intelligence */}
+          <Route path="/compliance-intelligence" element={<ComplianceIntelligencePage />}>
+            <Route index element={<Navigate to="hours" replace />} />
+            <Route path="hours" element={<DrivingHours />} />
+            <Route path="tachograph" element={<Tachograph />} />
+            <Route path="documents" element={<DocumentsLicenses />} />
+            <Route path="adr" element={<ADRRegulations />} />
+            <Route path="report" element={<ComplianceReport />} />
+          </Route>
+
+          {/* Finance Intelligence */}
+          <Route path="/finance-intelligence" element={<FinanceIntelligencePage />}>
+            <Route index element={<Navigate to="margins" replace />} />
+            <Route path="margins" element={<RouteMargins />} />
+            <Route path="costs" element={<CostAnalysis />} />
+            <Route path="profitability" element={<ClientProfitability />} />
+            <Route path="budget" element={<BudgetForecast />} />
+            <Route path="penalties" element={<PenaltiesBilling />} />
+          </Route>
+
+          {/* Carbon Intelligence */}
+          <Route path="/carbon-intelligence" element={<CarbonIntelligencePage />}>
+            <Route index element={<Navigate to="routes" replace />} />
+            <Route path="routes" element={<RouteEmissions />} />
+            <Route path="vehicles" element={<VehicleEmissions />} />
+            <Route path="esg" element={<ESGReport />} />
+            <Route path="optimization" element={<CO2Optimization />} />
+            <Route path="history" element={<EmissionsHistory />} />
+          </Route>
+
+          {/* Settings */}
+          <Route path="/settings" element={<SettingsPage />}>
+            <Route index element={<Navigate to="general" replace />} />
+            <Route path="general" element={<General />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="plan" element={<PlanCredits />} />
+            <Route path="apikey" element={<ApiKey />} />
+            <Route path="team" element={<Team />} />
+            <Route path="billing" element={<Billing />} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-
-        {/* Fleet Intelligence */}
-        <Route path="/fleet-intelligence" element={<FleetIntelligencePage />}>
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="overview" element={<FleetOverview />} />
-          <Route path="maintenance" element={<PredictiveMaintenance />} />
-          <Route path="allocation" element={<VehicleAllocation />} />
-          <Route path="costs" element={<OperationalCosts />} />
-          <Route path="documents" element={<DocumentExpiry />} />
-        </Route>
-
-        {/* Delivery Intelligence */}
-        <Route path="/delivery-intelligence" element={<DeliveryIntelligencePage />}>
-          <Route index element={<Navigate to="performance" replace />} />
-          <Route path="performance" element={<DeliveryPerformance />} />
-          <Route path="tracking" element={<ActiveTracking />} />
-          <Route path="windows" element={<DeliveryWindows />} />
-          <Route path="notifications" element={<CustomerNotifications />} />
-          <Route path="accuracy" element={<ETAAccuracy />} />
-        </Route>
-
-        {/* Compliance Intelligence */}
-        <Route path="/compliance-intelligence" element={<ComplianceIntelligencePage />}>
-          <Route index element={<Navigate to="hours" replace />} />
-          <Route path="hours" element={<DrivingHours />} />
-          <Route path="tachograph" element={<Tachograph />} />
-          <Route path="documents" element={<DocumentsLicenses />} />
-          <Route path="adr" element={<ADRRegulations />} />
-          <Route path="report" element={<ComplianceReport />} />
-        </Route>
-
-        {/* Finance Intelligence */}
-        <Route path="/finance-intelligence" element={<FinanceIntelligencePage />}>
-          <Route index element={<Navigate to="margins" replace />} />
-          <Route path="margins" element={<RouteMargins />} />
-          <Route path="costs" element={<CostAnalysis />} />
-          <Route path="profitability" element={<ClientProfitability />} />
-          <Route path="budget" element={<BudgetForecast />} />
-          <Route path="penalties" element={<PenaltiesBilling />} />
-        </Route>
-
-        {/* Carbon Intelligence */}
-        <Route path="/carbon-intelligence" element={<CarbonIntelligencePage />}>
-          <Route index element={<Navigate to="routes" replace />} />
-          <Route path="routes" element={<RouteEmissions />} />
-          <Route path="vehicles" element={<VehicleEmissions />} />
-          <Route path="esg" element={<ESGReport />} />
-          <Route path="optimization" element={<CO2Optimization />} />
-          <Route path="history" element={<EmissionsHistory />} />
-        </Route>
-
-        {/* Settings */}
-        <Route path="/settings" element={<SettingsPage />}>
-          <Route index element={<Navigate to="general" replace />} />
-          <Route path="general" element={<General />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="plan" element={<PlanCredits />} />
-          <Route path="apikey" element={<ApiKey />} />
-          <Route path="team" element={<Team />} />
-          <Route path="billing" element={<Billing />} />
-        </Route>
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   )

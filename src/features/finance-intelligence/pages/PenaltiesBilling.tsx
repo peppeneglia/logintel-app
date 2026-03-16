@@ -1,4 +1,6 @@
 import { mockPenaltyRecords } from '../../../data/mockFinanceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const tipoBadge: Record<string, string> = {
   subita: 'bg-red-500/10 text-red-400',
@@ -11,8 +13,11 @@ const tipoLabel: Record<string, string> = {
 }
 
 export function PenaltiesBilling() {
-  const penaliSubite = mockPenaltyRecords.filter((r) => r.tipo === 'subita')
-  const penaliEvitate = mockPenaltyRecords.filter((r) => r.tipo === 'evitata')
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockPenaltyRecords : []
+
+  const penaliSubite = data.filter((r) => r.tipo === 'subita')
+  const penaliEvitate = data.filter((r) => r.tipo === 'evitata')
   const totaleSubite = penaliSubite.reduce((sum, r) => sum + r.importo, 0)
   const totaleEvitate = penaliEvitate.reduce((sum, r) => sum + r.importo, 0)
 
@@ -53,7 +58,9 @@ export function PenaltiesBilling() {
               </tr>
             </thead>
             <tbody>
-              {mockPenaltyRecords.map((r) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={5} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((r) => (
                 <tr key={r.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3">
                     <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${tipoBadge[r.tipo]}`}>
@@ -72,6 +79,7 @@ export function PenaltiesBilling() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

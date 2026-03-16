@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, UserPlus, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, UserPlus, CheckCircle, AlertCircle } from 'lucide-react'
 import { AuthLayout } from '../components/AuthLayout'
 import { useAuthStore } from '../../../stores/authStore'
 
 export function RegisterPage() {
-  const { signUp, signInWithGoogle } = useAuthStore()
+  const { signUp } = useAuthStore()
 
   const [form, setForm] = useState({
-    name: '',
-    email: '',
+    firstName: '',
+    lastName: '',
     company: '',
+    email: '',
     password: '',
     confirmPassword: '',
   })
@@ -20,24 +21,58 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
+    setFieldErrors((prev) => ({ ...prev, [field]: '' }))
+  }
 
   const passwordsMatch = form.password === form.confirmPassword
-  const passwordLongEnough = form.password.length >= 8
+  const hasMinLength = form.password.length >= 8
+  const hasUppercase = /[A-Z]/.test(form.password)
+  const hasLowercase = /[a-z]/.test(form.password)
+  const hasNumber = /[0-9]/.test(form.password)
+  const passwordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber
+
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {}
+    if (!form.firstName.trim()) errors.firstName = 'Inserisci il nome'
+    if (!form.lastName.trim()) errors.lastName = 'Inserisci il cognome'
+    if (!form.email.trim()) {
+      errors.email = 'Inserisci la tua email'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      errors.email = 'Inserisci un indirizzo email valido'
+    }
+    if (!form.password) {
+      errors.password = 'Scegli una password'
+    } else if (!passwordValid) {
+      errors.password = 'Minimo 8 caratteri, una maiuscola, una minuscola e un numero'
+    }
+    if (!form.confirmPassword) {
+      errors.confirmPassword = 'Conferma la password'
+    } else if (!passwordsMatch) {
+      errors.confirmPassword = 'Le password non corrispondono'
+    }
+    if (!acceptTerms) {
+      errors.terms = 'Devi accettare i termini per continuare'
+    }
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!passwordsMatch || !passwordLongEnough || !acceptTerms) return
+    if (!validate()) return
 
     setLoading(true)
     setError('')
     try {
       const { needsConfirmation } = await signUp({
-        email: form.email,
+        email: form.email.trim(),
         password: form.password,
-        name: form.name,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
         company: form.company,
       })
       if (needsConfirmation) {
@@ -55,15 +90,15 @@ export function RegisterPage() {
     }
   }
 
-  const handleGoogleSignUp = async () => {
-    try {
-      await signInWithGoogle()
-    } catch {
-      setError('Errore durante la registrazione con Google')
-    }
+  const handleGoogleSignUp = () => {
+    setError('Ancora non disponibile')
   }
 
-  // Success state: email confirmation needed
+  const inputClass = (field: string) =>
+    `w-full px-3 py-2.5 bg-[#334155] border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-colors ${
+      fieldErrors[field] ? 'border-red-500/60 focus:border-red-500' : 'border-slate-600 focus:border-primary-500'
+    }`
+
   if (success) {
     return (
       <AuthLayout
@@ -85,6 +120,7 @@ export function RegisterPage() {
         </div>
         <Link
           to="/login"
+          replace
           className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-semibold hover:from-emerald-600 hover:to-emerald-800 transition-colors"
         >
           Vai al login
@@ -98,72 +134,91 @@ export function RegisterPage() {
       title="Crea il tuo account"
       subtitle="Inizia a ottimizzare la tua logistica con l'AI"
     >
-      <form onSubmit={handleSubmit} className="grid gap-4">
+      <form onSubmit={handleSubmit} noValidate className="grid gap-3.5">
         {/* Error */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-center gap-2.5">
+            <AlertCircle size={16} className="text-red-400 shrink-0" />
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
 
-        {/* Name + Company */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Nome + Cognome */}
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Nome completo
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Nome</label>
             <input
               type="text"
-              value={form.name}
-              onChange={update('name')}
-              placeholder="Mario Rossi"
-              required
-              className="w-full px-3 py-2.5 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
+              value={form.firstName}
+              onChange={update('firstName')}
+              placeholder="Mario"
+              className={inputClass('firstName')}
             />
+            {fieldErrors.firstName && (
+              <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle size={12} />
+                {fieldErrors.firstName}
+              </p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Azienda
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Cognome</label>
             <input
               type="text"
-              value={form.company}
-              onChange={update('company')}
-              placeholder="Nome azienda"
-              className="w-full px-3 py-2.5 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
+              value={form.lastName}
+              onChange={update('lastName')}
+              placeholder="Rossi"
+              className={inputClass('lastName')}
             />
+            {fieldErrors.lastName && (
+              <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+                <AlertCircle size={12} />
+                {fieldErrors.lastName}
+              </p>
+            )}
           </div>
+        </div>
+
+        {/* Azienda */}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Azienda</label>
+          <input
+            type="text"
+            value={form.company}
+            onChange={update('company')}
+            placeholder="Nome azienda (opzionale)"
+            className={inputClass('company')}
+          />
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
-            Email aziendale
-          </label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Email aziendale</label>
           <input
             type="email"
             value={form.email}
             onChange={update('email')}
             placeholder="nome@azienda.it"
-            required
-            className="w-full px-3 py-2.5 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
+            className={inputClass('email')}
           />
+          {fieldErrors.email && (
+            <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+              <AlertCircle size={12} />
+              {fieldErrors.email}
+            </p>
+          )}
         </div>
 
         {/* Password */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
-            Password
-          </label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
               value={form.password}
               onChange={update('password')}
               placeholder="Minimo 8 caratteri"
-              required
-              minLength={8}
-              className="w-full px-3 py-2.5 pr-10 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
+              className={`${inputClass('password')} pr-10`}
             />
             <button
               type="button"
@@ -173,28 +228,24 @@ export function RegisterPage() {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {form.password.length > 0 && !passwordLongEnough && (
-            <p className="mt-1 text-xs text-amber-400">La password deve contenere almeno 8 caratteri</p>
+          {fieldErrors.password && (
+            <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+              <AlertCircle size={12} />
+              {fieldErrors.password}
+            </p>
           )}
         </div>
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">
-            Conferma password
-          </label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Conferma password</label>
           <div className="relative">
             <input
               type={showConfirm ? 'text' : 'password'}
               value={form.confirmPassword}
               onChange={update('confirmPassword')}
               placeholder="Ripeti la password"
-              required
-              className={`w-full px-3 py-2.5 pr-10 bg-[#334155] border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-colors ${
-                form.confirmPassword.length > 0 && !passwordsMatch
-                  ? 'border-red-500/60 focus:border-red-500'
-                  : 'border-slate-600 focus:border-primary-500'
-              }`}
+              className={`${inputClass('confirmPassword')} pr-10`}
             />
             <button
               type="button"
@@ -204,31 +255,42 @@ export function RegisterPage() {
               {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {form.confirmPassword.length > 0 && !passwordsMatch && (
-            <p className="mt-1 text-xs text-red-400">Le password non corrispondono</p>
+          {fieldErrors.confirmPassword && (
+            <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+              <AlertCircle size={12} />
+              {fieldErrors.confirmPassword}
+            </p>
           )}
         </div>
 
         {/* Terms */}
-        <label className="flex items-start gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-[#334155] text-primary-500 focus:ring-primary-500/30 focus:ring-offset-0"
-          />
-          <span className="text-sm text-slate-400 leading-tight">
-            Accetto i{' '}
-            <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Termini di servizio</span>
-            {' '}e la{' '}
-            <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Privacy Policy</span>
-          </span>
-        </label>
+        <div>
+          <label className="flex items-start gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={acceptTerms}
+              onChange={(e) => { setAcceptTerms(e.target.checked); setFieldErrors((p) => ({ ...p, terms: '' })) }}
+              className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-[#334155] text-primary-500 focus:ring-primary-500/30 focus:ring-offset-0"
+            />
+            <span className="text-sm text-slate-400 leading-tight">
+              Accetto i{' '}
+              <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Termini di servizio</span>
+              {' '}e la{' '}
+              <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Privacy Policy</span>
+            </span>
+          </label>
+          {fieldErrors.terms && (
+            <p className="mt-1 ml-6 text-xs text-red-400 flex items-center gap-1">
+              <AlertCircle size={12} />
+              {fieldErrors.terms}
+            </p>
+          )}
+        </div>
 
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || !acceptTerms || !passwordsMatch || !passwordLongEnough}
+          disabled={loading}
           className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-semibold hover:from-emerald-600 hover:to-emerald-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
@@ -243,7 +305,7 @@ export function RegisterPage() {
       </form>
 
       {/* Divider */}
-      <div className="relative my-6">
+      <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-[#334155]" />
         </div>
@@ -268,9 +330,9 @@ export function RegisterPage() {
       </button>
 
       {/* Login link */}
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-5 text-center text-sm text-slate-500">
         Hai già un account?{' '}
-        <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
+        <Link to="/login" replace className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
           Accedi
         </Link>
       </p>

@@ -1,4 +1,6 @@
 import { mockDrivingHours } from '../../../data/mockComplianceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)
@@ -19,9 +21,13 @@ const statusLabel: Record<string, string> = {
 }
 
 export function DrivingHours() {
-  const compliant = mockDrivingHours.filter((r) => r.status === 'compliant').length
-  const warning = mockDrivingHours.filter((r) => r.status === 'warning').length
-  const violation = mockDrivingHours.filter((r) => r.status === 'violation').length
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockDrivingHours : []
+
+  const compliant = data.filter((r) => r.status === 'compliant').length
+  const warning = data.filter((r) => r.status === 'warning').length
+  const violation = data.filter((r) => r.status === 'violation').length
 
   return (
     <div>
@@ -60,7 +66,9 @@ export function DrivingHours() {
               </tr>
             </thead>
             <tbody>
-              {mockDrivingHours.map((record) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((record) => (
                 <tr key={record.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{record.driver}</td>
                   <td className="py-3 px-3 text-slate-400">{record.date}</td>
@@ -79,6 +87,7 @@ export function DrivingHours() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

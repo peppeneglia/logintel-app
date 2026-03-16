@@ -1,9 +1,14 @@
 import { mockRouteMargins } from '../../../data/mockFinanceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 export function RouteMargins() {
-  const avgMargin = mockRouteMargins.reduce((sum, r) => sum + r.marginePct, 0) / mockRouteMargins.length
-  const totalRevenue = mockRouteMargins.reduce((sum, r) => sum + r.ricavo, 0)
-  const totalProfit = mockRouteMargins.reduce((sum, r) => sum + r.margine, 0)
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockRouteMargins : []
+
+  const avgMargin = data.length ? data.reduce((sum, r) => sum + r.marginePct, 0) / data.length : 0
+  const totalRevenue = data.reduce((sum, r) => sum + r.ricavo, 0)
+  const totalProfit = data.reduce((sum, r) => sum + r.margine, 0)
 
   return (
     <div>
@@ -41,7 +46,9 @@ export function RouteMargins() {
               </tr>
             </thead>
             <tbody>
-              {mockRouteMargins.map((r) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((r) => (
                 <tr key={r.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{r.rotta}</td>
                   <td className="py-3 px-3 text-slate-300 text-right">{r.km}</td>
@@ -63,6 +70,7 @@ export function RouteMargins() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

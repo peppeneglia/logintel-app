@@ -1,11 +1,15 @@
 import { mockOperationalCosts } from '../../../data/mockFleetData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
 }
 
 export function OperationalCosts() {
-  const totals = mockOperationalCosts.reduce(
+  const { isDemo, show, close } = useUnavailable()
+  const costs = isDemo ? mockOperationalCosts : []
+  const totals = costs.reduce(
     (acc, c) => ({
       fuelCost: acc.fuelCost + c.fuelCost,
       maintenanceCost: acc.maintenanceCost + c.maintenanceCost,
@@ -61,34 +65,41 @@ export function OperationalCosts() {
               </tr>
             </thead>
             <tbody>
-              {mockOperationalCosts.map((cost) => (
-                <tr key={cost.vehiclePlate} className="border-b border-[#334155]">
-                  <td className="py-2.5 px-3 font-medium text-white">{cost.vehiclePlate}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.fuelCost)}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.maintenanceCost)}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.tollCost)}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.insuranceCost)}</td>
-                  <td className="py-2.5 px-3 text-right font-semibold text-white">{euro(cost.totalCost)}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-300">{cost.km.toLocaleString('it-IT')}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-400">{euro(cost.costPerKm)}</td>
-                </tr>
-              ))}
+              {costs.length > 0 ? (
+                <>
+                  {costs.map((cost) => (
+                    <tr key={cost.vehiclePlate} className="border-b border-[#334155]">
+                      <td className="py-2.5 px-3 font-medium text-white">{cost.vehiclePlate}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.fuelCost)}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.maintenanceCost)}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.tollCost)}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.insuranceCost)}</td>
+                      <td className="py-2.5 px-3 text-right font-semibold text-white">{euro(cost.totalCost)}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-300">{cost.km.toLocaleString('it-IT')}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-400">{euro(cost.costPerKm)}</td>
+                    </tr>
+                  ))}
 
-              {/* Total Row */}
-              <tr className="border-t-2 border-slate-600">
-                <td className="py-3 px-3 font-bold text-white">TOTALE</td>
-                <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.fuelCost)}</td>
-                <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.maintenanceCost)}</td>
-                <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.tollCost)}</td>
-                <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.insuranceCost)}</td>
-                <td className="py-3 px-3 text-right font-bold text-primary-400">{euro(totals.totalCost)}</td>
-                <td className="py-3 px-3 text-right font-semibold text-white">{totals.km.toLocaleString('it-IT')}</td>
-                <td className="py-3 px-3 text-right font-semibold text-emerald-400">{euro(avgCostPerKm)}</td>
-              </tr>
+                  {/* Total Row */}
+                  <tr className="border-t-2 border-slate-600">
+                    <td className="py-3 px-3 font-bold text-white">TOTALE</td>
+                    <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.fuelCost)}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.maintenanceCost)}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.tollCost)}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-white">{euro(totals.insuranceCost)}</td>
+                    <td className="py-3 px-3 text-right font-bold text-primary-400">{euro(totals.totalCost)}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-white">{totals.km.toLocaleString('it-IT')}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-emerald-400">{euro(avgCostPerKm)}</td>
+                  </tr>
+                </>
+              ) : (
+                <tr><td colSpan={8} className="py-8 text-center text-sm text-slate-500">Nessun costo operativo registrato.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

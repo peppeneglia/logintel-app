@@ -1,9 +1,14 @@
 import { mockBudgetVsActual } from '../../../data/mockFinanceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 export function BudgetForecast() {
-  const totalBudget = mockBudgetVsActual.reduce((sum, r) => sum + r.budget, 0)
-  const totalActual = mockBudgetVsActual.reduce((sum, r) => sum + r.actual, 0)
-  const overBudgetMonths = mockBudgetVsActual.filter((r) => r.varianza > 0).length
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockBudgetVsActual : []
+
+  const totalBudget = data.reduce((sum, r) => sum + r.budget, 0)
+  const totalActual = data.reduce((sum, r) => sum + r.actual, 0)
+  const overBudgetMonths = data.filter((r) => r.varianza > 0).length
 
   return (
     <div>
@@ -21,7 +26,7 @@ export function BudgetForecast() {
         </div>
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Mesi sopra budget</p>
-          <p className="text-xl font-bold text-amber-400">{overBudgetMonths} / {mockBudgetVsActual.length}</p>
+          <p className="text-xl font-bold text-amber-400">{overBudgetMonths} / {data.length}</p>
         </div>
       </div>
 
@@ -40,7 +45,9 @@ export function BudgetForecast() {
               </tr>
             </thead>
             <tbody>
-              {mockBudgetVsActual.map((r) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={5} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((r) => (
                 <tr key={r.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{r.mese}</td>
                   <td className="py-3 px-3 text-slate-300 text-right">€{r.budget.toLocaleString('it-IT')}</td>
@@ -63,6 +70,7 @@ export function BudgetForecast() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

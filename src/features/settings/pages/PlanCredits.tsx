@@ -1,6 +1,5 @@
-// TODO: Ripristinare dati piano/crediti da Supabase quando configurato
-// import { useAuthStore } from '../../../stores/authStore'
-import { mockCreditUsage, mockUser } from '../../../data/mockData'
+import { useAuthStore } from '../../../stores/authStore'
+import { mockCreditUsage } from '../../../data/mockData'
 
 const planNames: Record<string, string> = {
   free: 'Free',
@@ -17,15 +16,11 @@ const planPrices: Record<string, string> = {
 }
 
 export function PlanCredits() {
-  // TODO: Ripristinare lettura da authStore.profile
-  // const { profile } = useAuthStore()
-  // const plan = profile?.plan || 'free'
-  // const creditsUsed = profile?.credits_used || 0
-  // const creditsTotal = profile?.credits_total || 50
+  const { profile, isDemo } = useAuthStore()
 
-  const plan = mockUser.plan
-  const creditsUsed = mockUser.creditsUsed
-  const creditsTotal = mockUser.creditsTotal
+  const plan = profile?.plan || 'free'
+  const creditsUsed = profile?.credits_used || 0
+  const creditsTotal = profile?.credits_total || 200
   const remaining = creditsTotal - creditsUsed
   const pct = creditsTotal > 0 ? (creditsUsed / creditsTotal) * 100 : 0
 
@@ -37,8 +32,8 @@ export function PlanCredits() {
       <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 mb-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">Piano {planNames[plan]}</h2>
-            <p className="text-slate-400 text-sm">{planPrices[plan]}</p>
+            <h2 className="text-lg font-semibold text-white">Piano {planNames[plan] || plan}</h2>
+            <p className="text-slate-400 text-sm">{planPrices[plan] || 'Gratuito'}</p>
           </div>
           <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-semibold">
             Attivo
@@ -61,26 +56,28 @@ export function PlanCredits() {
         </div>
       </div>
 
-      {/* Usage history — still mock until usage tracking is built */}
-      <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 mb-3">
-        <h2 className="text-lg font-semibold text-white mb-4">Storico consumi</h2>
-        <div className="space-y-3">
-          {mockCreditUsage.map((entry) => (
-            <div key={entry.month} className="flex items-center gap-3">
-              <span className="text-sm text-slate-400 w-24">{entry.month}</span>
-              <div className="flex-1 h-5 bg-[#334155] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary-500 rounded-full transition-all"
-                  style={{ width: `${(entry.used / creditsTotal) * 100}%` }}
-                />
+      {/* Usage history — only in demo */}
+      {isDemo && (
+        <div className="bg-[#1e293b] border border-[#334155] rounded-2xl p-6 mb-3">
+          <h2 className="text-lg font-semibold text-white mb-4">Storico consumi</h2>
+          <div className="space-y-3">
+            {mockCreditUsage.map((entry) => (
+              <div key={entry.month} className="flex items-center gap-3">
+                <span className="text-sm text-slate-400 w-24">{entry.month}</span>
+                <div className="flex-1 h-5 bg-[#334155] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary-500 rounded-full transition-all"
+                    style={{ width: `${(entry.used / creditsTotal) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-white w-10 text-right">
+                  {entry.used}
+                </span>
               </div>
-              <span className="text-sm font-medium text-white w-10 text-right">
-                {entry.used}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <button className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors">
         Upgrade piano

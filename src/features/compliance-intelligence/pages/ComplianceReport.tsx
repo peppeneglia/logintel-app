@@ -1,4 +1,6 @@
 import { mockComplianceScores } from '../../../data/mockComplianceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusColor: Record<string, string> = {
   good: 'bg-emerald-500',
@@ -25,9 +27,13 @@ const statusLabel: Record<string, string> = {
 }
 
 export function ComplianceReport() {
-  const totalScore = mockComplianceScores.reduce((sum, s) => sum + s.score, 0)
-  const totalMax = mockComplianceScores.reduce((sum, s) => sum + s.maxScore, 0)
-  const overallPercentage = Math.round((totalScore / totalMax) * 100)
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockComplianceScores : []
+
+  const totalScore = data.reduce((sum, s) => sum + s.score, 0)
+  const totalMax = data.reduce((sum, s) => sum + s.maxScore, 0)
+  const overallPercentage = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0
 
   const overallStatus =
     overallPercentage >= 85 ? 'good' : overallPercentage >= 70 ? 'attention' : 'critical'
@@ -56,31 +62,38 @@ export function ComplianceReport() {
       </div>
 
       {/* Category scores */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {mockComplianceScores.map((item) => {
-          const pct = Math.round((item.score / item.maxScore) * 100)
-          return (
-            <div key={item.category} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-white">{item.category}</h3>
-                <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[item.status]}`}>
-                  {statusLabel[item.status]}
-                </span>
+      {data.length === 0 ? (
+        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
+          <p className="text-sm text-slate-500">Nessun dato disponibile.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data.map((item) => {
+            const pct = Math.round((item.score / item.maxScore) * 100)
+            return (
+              <div key={item.category} className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-white">{item.category}</h3>
+                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[item.status]}`}>
+                    {statusLabel[item.status]}
+                  </span>
+                </div>
+                <div className="flex items-end gap-2 mb-3">
+                  <span className="text-lg font-bold text-white">{item.score}</span>
+                  <span className="text-sm text-slate-400 mb-0.5">/ {item.maxScore}</span>
+                </div>
+                <div className={`w-full h-2 rounded-full ${statusTrack[item.status]}`}>
+                  <div
+                    className={`h-2 rounded-full transition-all ${statusColor[item.status]}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
               </div>
-              <div className="flex items-end gap-2 mb-3">
-                <span className="text-lg font-bold text-white">{item.score}</span>
-                <span className="text-sm text-slate-400 mb-0.5">/ {item.maxScore}</span>
-              </div>
-              <div className={`w-full h-2 rounded-full ${statusTrack[item.status]}`}>
-                <div
-                  className={`h-2 rounded-full transition-all ${statusColor[item.status]}`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

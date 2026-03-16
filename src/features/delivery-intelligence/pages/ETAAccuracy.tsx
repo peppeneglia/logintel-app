@@ -1,17 +1,23 @@
 import { mockETAAccuracy } from '../../../data/mockDeliveryData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 export function ETAAccuracy() {
-  const totalPredictions = mockETAAccuracy.reduce((sum, r) => sum + r.totalPredictions, 0)
-  const weightedError = mockETAAccuracy.reduce((sum, r) => sum + r.avgErrorMinutes * r.totalPredictions, 0)
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockETAAccuracy : []
+
+  const totalPredictions = data.reduce((sum, r) => sum + r.totalPredictions, 0)
+  const weightedError = data.reduce((sum, r) => sum + r.avgErrorMinutes * r.totalPredictions, 0)
   const avgError = totalPredictions > 0 ? (weightedError / totalPredictions).toFixed(1) : '0'
 
-  const weightedAccuracy = mockETAAccuracy.reduce((sum, r) => sum + r.accuracyPercent * r.totalPredictions, 0)
+  const weightedAccuracy = data.reduce((sum, r) => sum + r.accuracyPercent * r.totalPredictions, 0)
   const avgAccuracy = totalPredictions > 0 ? Math.round(weightedAccuracy / totalPredictions) : 0
 
-  const weightedW5 = mockETAAccuracy.reduce((sum, r) => sum + r.within5min * r.totalPredictions, 0)
+  const weightedW5 = data.reduce((sum, r) => sum + r.within5min * r.totalPredictions, 0)
   const avgW5 = totalPredictions > 0 ? Math.round(weightedW5 / totalPredictions) : 0
 
-  const weightedW15 = mockETAAccuracy.reduce((sum, r) => sum + r.within15min * r.totalPredictions, 0)
+  const weightedW15 = data.reduce((sum, r) => sum + r.within15min * r.totalPredictions, 0)
   const avgW15 = totalPredictions > 0 ? Math.round(weightedW15 / totalPredictions) : 0
 
   const summaryCards = [
@@ -51,7 +57,9 @@ export function ETAAccuracy() {
               </tr>
             </thead>
             <tbody>
-              {mockETAAccuracy.map((r) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={6} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((r) => (
                 <tr key={r.route} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium">{r.route}</td>
                   <td className="py-3 px-3 text-slate-300">{r.totalPredictions}</td>
@@ -73,6 +81,7 @@ export function ETAAccuracy() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

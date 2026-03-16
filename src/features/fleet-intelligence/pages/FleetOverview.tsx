@@ -1,5 +1,7 @@
 import { Truck, CheckCircle, Wrench, XCircle } from 'lucide-react'
 import { mockFleetVehicles } from '../../../data/mockFleetData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusBadge: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400',
@@ -20,10 +22,12 @@ function fuelBarColor(level: number): string {
 }
 
 export function FleetOverview() {
-  const totalVehicles = mockFleetVehicles.length
-  const activeCount = mockFleetVehicles.filter((v) => v.status === 'active').length
-  const maintenanceCount = mockFleetVehicles.filter((v) => v.status === 'maintenance').length
-  const inactiveCount = mockFleetVehicles.filter((v) => v.status === 'inactive').length
+  const { isDemo, show, close } = useUnavailable()
+  const vehicles = isDemo ? mockFleetVehicles : []
+  const totalVehicles = vehicles.length
+  const activeCount = vehicles.filter((v) => v.status === 'active').length
+  const maintenanceCount = vehicles.filter((v) => v.status === 'maintenance').length
+  const inactiveCount = vehicles.filter((v) => v.status === 'inactive').length
 
   const summaryCards = [
     { label: 'Totale Veicoli', value: totalVehicles, icon: Truck, color: 'text-primary-400' },
@@ -71,7 +75,7 @@ export function FleetOverview() {
               </tr>
             </thead>
             <tbody>
-              {mockFleetVehicles.map((v) => (
+              {vehicles.length > 0 ? vehicles.map((v) => (
                 <tr key={v.id} className="border-b border-[#334155]">
                   <td className="py-2.5 px-3 font-medium text-white">{v.plate}</td>
                   <td className="py-2.5 px-3 text-slate-300">{v.model}</td>
@@ -96,11 +100,14 @@ export function FleetOverview() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-500">Nessun veicolo registrato.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

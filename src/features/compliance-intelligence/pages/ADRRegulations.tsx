@@ -1,4 +1,6 @@
 import { mockADRShipments } from '../../../data/mockComplianceData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 const statusBadge: Record<string, string> = {
   compliant: 'bg-emerald-500/10 text-emerald-400',
@@ -13,6 +15,10 @@ const statusLabel: Record<string, string> = {
 }
 
 export function ADRRegulations() {
+  const { isDemo, show, guard: _guard, close } = useUnavailable()
+
+  const data = isDemo ? mockADRShipments : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Normative ADR</h1>
@@ -34,7 +40,9 @@ export function ADRRegulations() {
               </tr>
             </thead>
             <tbody>
-              {mockADRShipments.map((shipment) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={8} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((shipment) => (
                 <tr key={shipment.id} className="border-b border-[#334155]">
                   <td className="py-3 px-3 text-white font-medium font-mono text-xs">{shipment.unNumber}</td>
                   <td className="py-3 px-3 text-slate-300">{shipment.adrClass}</td>
@@ -54,6 +62,7 @@ export function ADRRegulations() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

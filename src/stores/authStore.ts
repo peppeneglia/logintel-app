@@ -10,8 +10,11 @@ interface AuthState {
   profile: Profile | null
   loading: boolean
   initialized: boolean
+  isDemo: boolean
 
-  initialize: () => Promise<void>
+  initialize: () => Promise<{ unsubscribe: () => void } | undefined>
+  setDemo: () => void
+  setBypass: () => void
   fetchProfile: (userId: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (data: authService.SignUpData) => Promise<{ needsConfirmation: boolean }>
@@ -19,6 +22,7 @@ interface AuthState {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateProfile: (data: Partial<Profile>) => Promise<void>
+  deleteAccount: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -26,6 +30,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   loading: true,
   initialized: false,
+  isDemo: false,
+
+  setBypass: () => {
+    set({
+      isDemo: false,
+      user: { id: 'bypass-user', email: 'utente@logintel.it' },
+      profile: {
+        id: 'bypass-user',
+        first_name: 'Utente',
+        last_name: 'Logintel',
+        email: 'utente@logintel.it',
+        company: 'Logintel',
+        role: 'Fleet Manager',
+        fleet_size: 24,
+        plan: 'pro',
+        credits_used: 0,
+        credits_total: 1000,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Profile,
+      loading: false,
+      initialized: true,
+    })
+  },
+
+  setDemo: () => {
+    set({
+      isDemo: true,
+      user: { id: 'demo-user', email: 'demo@logintel.it' },
+      profile: {
+        id: 'demo-user',
+        first_name: 'Utente',
+        last_name: 'Demo',
+        email: 'demo@logintel.it',
+        company: 'Demo S.r.l.',
+        role: 'Fleet Manager',
+        fleet_size: 24,
+        plan: 'free',
+        credits_used: 58,
+        credits_total: 200,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as Profile,
+      loading: false,
+      initialized: true,
+    })
+  },
 
   initialize: async () => {
     try {
@@ -44,7 +97,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     // Ascolta cambi di stato auth
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         set({
           user: { id: session.user.id, email: session.user.email || '' },
@@ -54,6 +107,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: null, profile: null })
       }
     })
+
+    return subscription
   },
 
   fetchProfile: async (userId: string) => {
@@ -85,13 +140,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true })
     try {
       const result = await authService.signUp(data)
-      // Se l'email confirmation è abilitata, l'utente deve confermare
-      const needsConfirmation = !result.session
-      if (result.user && result.session) {
+      const confirmed = result.user?.email_confirmed_at != null
+      if (result.user && result.session && confirmed) {
         set({ user: { id: result.user.id, email: result.user.email || '' } })
         await get().fetchProfile(result.user.id)
       }
-      return { needsConfirmation }
+      return { needsConfirmation: !confirmed }
     } finally {
       set({ loading: false })
     }
@@ -99,12 +153,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithGoogle: async () => {
     await authService.signInWithGoogle()
-    // Il redirect OAuth gestisce il resto
   },
 
   signOut: async () => {
-    await authService.signOut()
-    set({ user: null, profile: null })
+    const { isDemo } = get()
+    if (!isDemo) {
+      await authService.signOut()
+    }
+    set({ user: null, profile: null, isDemo: false })
   },
 
   resetPassword: async (email: string) => {
@@ -112,6 +168,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   updateProfile: async (data: Partial<Profile>) => {
+    const { isDemo } = get()
+    if (isDemo) {
+      // In demo mode, aggiorna solo lo stato locale
+      const current = get().profile
+      if (current) {
+        set({ profile: { ...current, ...data } as Profile })
+      }
+      return
+    }
+
     const userId = get().user?.id
     if (!userId) return
 
@@ -125,5 +191,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!error && updated) {
       set({ profile: updated as Profile })
     }
+  },
+
+  deleteAccount: async () => {
+    const { isDemo } = get()
+    if (isDemo) return
+
+    await authService.deleteAccount()
+    set({ user: null, profile: null, isDemo: false })
   },
 }))

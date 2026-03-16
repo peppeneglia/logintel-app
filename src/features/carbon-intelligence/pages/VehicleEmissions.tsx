@@ -1,4 +1,6 @@
 import { mockVehicleEmissions } from '../../../data/mockCarbonData'
+import { useUnavailable } from '../../../hooks/useUnavailable'
+import { UnavailableToast } from '../../../components/UnavailableToast'
 
 function euroClassBadge(euroClass: string) {
   if (euroClass === 'Euro 6') return 'bg-emerald-500/10 text-emerald-400'
@@ -7,6 +9,9 @@ function euroClassBadge(euroClass: string) {
 }
 
 export function VehicleEmissions() {
+  const { isDemo, show, close } = useUnavailable()
+  const data = isDemo ? mockVehicleEmissions : []
+
   return (
     <div>
       <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Emissioni per Veicolo</h1>
@@ -26,7 +31,9 @@ export function VehicleEmissions() {
               </tr>
             </thead>
             <tbody>
-              {mockVehicleEmissions.map((v) => (
+              {data.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
+              ) : data.map((v) => (
                 <tr key={v.vehiclePlate} className="border-b border-[#334155] last:border-b-0">
                   <td className="py-3 px-3 text-white font-medium">{v.vehiclePlate}</td>
                   <td className="py-3 px-3 text-slate-300">{v.model}</td>
@@ -45,6 +52,7 @@ export function VehicleEmissions() {
           </table>
         </div>
       </div>
+      <UnavailableToast show={show} onClose={close} />
     </div>
   )
 }

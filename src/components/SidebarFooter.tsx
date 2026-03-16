@@ -1,21 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 import { Bell, Settings, CreditCard, LogOut } from 'lucide-react'
-// TODO: Ripristinare authStore quando Supabase è configurato
-// import { useAuthStore } from '../stores/authStore'
+import { useAuthStore } from '../stores/authStore'
 
 export function SidebarFooter() {
   const navigate = useNavigate()
-  // TODO: Ripristinare dati dinamici da Supabase
-  // const { profile, signOut } = useAuthStore()
-  // const handleSignOut = async () => {
-  //   await signOut()
-  //   navigate('/login', { replace: true })
-  // }
-  // const displayName = profile?.name || 'Utente'
-  // const displayCompany = profile?.company || ''
+  const { profile, signOut, isDemo } = useAuthStore()
 
-  const displayName = 'Francesco Moretti'
-  const displayCompany = 'Logistica Pro S.r.l.'
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login', { replace: true })
+  }
+
+  const displayName = profile ? `${profile.first_name} ${profile.last_name}`.trim() || 'Utente' : 'Utente'
+  const displayCompany = profile?.company || ''
   const initials = displayName
     .split(' ')
     .map((n) => n[0])
@@ -47,13 +44,12 @@ export function SidebarFooter() {
           title="Notifiche"
         >
           <Bell size={16} />
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-400 rounded-full" />
+          {isDemo && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-400 rounded-full" />}
         </button>
-        {/* TODO: Riabilitare logout quando Supabase è configurato */}
         <button
-          onClick={() => navigate('/login')}
+          onClick={handleSignOut}
           className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors"
-          title="Esci"
+          title={isDemo ? 'Esci dalla demo' : 'Esci'}
         >
           <LogOut size={16} />
         </button>
@@ -63,7 +59,6 @@ export function SidebarFooter() {
         className="bg-[#334155] rounded-xl p-3 flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-600 transition-colors"
         onClick={() => navigate('/settings/profile')}
       >
-        {/* TODO: Ripristinare avatar dinamico da profilo Supabase */}
         <div className="w-9 h-9 rounded-full shrink-0 bg-primary-500/20 flex items-center justify-center">
           <span className="text-xs font-semibold text-primary-400">{initials}</span>
         </div>
