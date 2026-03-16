@@ -32,8 +32,8 @@ function summarizeWeather(conditions: { condition: WeatherCondition }[]): string
 
 export function ETAReport() {
   const { isDemo, show, guard, close } = useUnavailable()
-  const [dateFrom, setDateFrom] = useState(isDemo ? '2026-02-18' : '')
-  const [dateTo, setDateTo] = useState(isDemo ? '2026-02-24' : '')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [format, setFormat] = useState('pdf')
 
   const reportData = mockPredictionHistory.slice(0, 5)
