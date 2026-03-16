@@ -97,6 +97,7 @@ export function SinglePrediction() {
   const [vehicleType, setVehicleType] = useState('truck_standard')
   const [showResult, setShowResult] = useState(isDemo)
   const [loading, setLoading] = useState(false)
+  const [showSkeleton, setShowSkeleton] = useState(false)
   const [error, setError] = useState('')
   const [apiResult, setApiResult] = useState<PredictionResponse | null>(null)
   const [submittedOrigin, setSubmittedOrigin] = useState('')
@@ -127,6 +128,9 @@ export function SinglePrediction() {
     setSubmittedOrigin(origin)
     setSubmittedDestination(destination)
     setSubmittedDeparture(departureTime)
+    setShowSkeleton(false)
+
+    const skeletonTimer = setTimeout(() => setShowSkeleton(true), 2000)
 
     try {
       const result = await predictRoute(origin, destination, departureTime)
@@ -135,6 +139,8 @@ export function SinglePrediction() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella predizione')
     } finally {
+      clearTimeout(skeletonTimer)
+      setShowSkeleton(false)
       setLoading(false)
     }
   }
@@ -224,11 +230,54 @@ export function SinglePrediction() {
         </div>
       )}
 
-      {/* Loading */}
-      {loading && (
+      {/* Loading — spinner iniziale, poi skeleton dopo 2s */}
+      {loading && !showSkeleton && (
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-12 text-center">
           <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-3" />
           <p className="text-sm text-slate-500">Calcolo predizione in corso...</p>
+        </div>
+      )}
+
+      {loading && showSkeleton && submittedOrigin && (
+        <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6 animate-pulse">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-white">{submittedOrigin} &rarr; {submittedDestination}</h2>
+              <p className="text-sm text-slate-500">{submittedDeparture.replace('T', ' ')}</p>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-4">
+            <p className="text-sm text-slate-400 mb-2">Calcolo ETA in corso...</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <p className="text-xs text-slate-500">Partenza</p>
+                <p className="text-lg font-bold text-white">{submittedDeparture.replace('T', ' ')}</p>
+              </div>
+              <span className="text-slate-500 text-xl">&rarr;</span>
+              <div>
+                <p className="text-xs text-slate-500">Arrivo</p>
+                <div className="h-6 w-32 bg-slate-700 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+            <div className="bg-[#334155] rounded-xl p-4">
+              <p className="text-sm text-slate-400 mb-2">Ritardo stimato</p>
+              <div className="h-10 w-24 bg-slate-700 rounded animate-pulse" />
+            </div>
+            <div className="bg-[#334155] rounded-xl p-4">
+              <p className="text-sm text-slate-400 mb-2">Confidenza</p>
+              <div className="h-4 w-full bg-slate-700 rounded animate-pulse" />
+            </div>
+            <div className="bg-[#334155] rounded-xl p-4">
+              <p className="text-sm text-slate-400 mb-2">Distanza totale</p>
+              <div className="h-8 w-20 bg-slate-700 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2 py-4">
+            <div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" />
+            <p className="text-sm text-slate-500">Analisi meteo e percorso in corso...</p>
+          </div>
         </div>
       )}
 
@@ -328,15 +377,23 @@ export function SinglePrediction() {
             </div>
           </div>
 
-          {/* ETA completo — in alto, grande */}
-          {correctedETA && (
+          {/* ETA — da partenza a arrivo */}
+          {departureDate && correctedETA && (
             <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-4">
-              <p className="text-sm text-slate-400 mb-1">Arrivo previsto (ETA completo)</p>
-              <p className="text-3xl font-bold text-white">{formatDateTime(correctedETA)}</p>
-              {originalETA && result.total_delay_minutes > 0 && (
-                <p className="text-sm text-slate-400 mt-1">
-                  Senza ritardi: {formatDateTime(originalETA)}
-                  <span className="text-red-400 font-semibold ml-2">+{Math.round(result.total_delay_minutes)} min</span>
+              <div className="flex items-center gap-6">
+                <div>
+                  <p className="text-xs text-slate-500">Partenza</p>
+                  <p className="text-2xl font-bold text-white">{formatDateTime(departureDate)}</p>
+                </div>
+                <span className="text-slate-500 text-2xl">&rarr;</span>
+                <div>
+                  <p className="text-xs text-slate-500">Arrivo</p>
+                  <p className="text-2xl font-bold text-white">{formatDateTime(correctedETA)}</p>
+                </div>
+              </div>
+              {result.total_delay_minutes > 0 && (
+                <p className="text-sm text-slate-400 mt-2">
+                  Ritardo meteo: <span className="text-red-400 font-semibold">+{Math.round(result.total_delay_minutes)} min</span>
                 </p>
               )}
             </div>
