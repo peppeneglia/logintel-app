@@ -350,7 +350,7 @@ export function WeeklyPlan() {
                               <th className="text-left py-2 px-3 font-medium text-slate-400">Altitudine</th>
                               <th className="text-left py-2 px-3 font-medium text-slate-400">Meteo</th>
                               <th className="text-left py-2 px-3 font-medium text-slate-400">Ritardo</th>
-                              <th className="text-left py-2 px-3 font-medium text-slate-400">Arrivo</th>
+                              <th className="text-left py-2 px-3 font-medium text-slate-400">Orario</th>
                             </tr>
                           </thead>
                           <tbody>
