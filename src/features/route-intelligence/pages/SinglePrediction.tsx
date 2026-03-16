@@ -55,6 +55,12 @@ function getWeatherColor(severity: string): string {
   return 'text-red-400' // heavy, very_heavy
 }
 
+function getDelayColor(delay: number): string {
+  if (delay < 10) return 'text-emerald-400'
+  if (delay < 30) return 'text-amber-400'
+  return 'text-red-400'
+}
+
 function translateWeather(type: string, severity: string): string {
   const typeIt = weatherTypeIT[type] || type
   const sevIt = severityIT[severity] || severity
