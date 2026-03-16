@@ -156,13 +156,7 @@ export function SinglePrediction() {
     ? new Date(result.segments[result.segments.length - 1].estimated_arrival)
     : null
   const departureDate = submittedDeparture ? new Date(submittedDeparture) : null
-  const baseDurationMinutes = lastSegmentArrival && departureDate
-    ? Math.round((lastSegmentArrival.getTime() - departureDate.getTime()) / 60_000) - (result?.total_delay_minutes ?? 0)
-    : 0
   const correctedETA = lastSegmentArrival
-  const originalETA = departureDate && baseDurationMinutes
-    ? new Date(departureDate.getTime() + baseDurationMinutes * 60_000)
-    : null
 
   return (
     <div>
