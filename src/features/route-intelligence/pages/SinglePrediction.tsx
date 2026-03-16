@@ -4,6 +4,7 @@ import { useAuthStore } from '../../../stores/authStore'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
 import type { CitySelection } from '../../../components/CityAutocomplete'
+import { RouteMap } from '../../../components/RouteMap'
 import { predictRoute } from '../../../services/api'
 import type { PredictionResponse } from '../../../services/api'
 import type { WeatherCondition } from '../../../types'
@@ -107,6 +108,8 @@ export function SinglePrediction() {
   const [submittedOrigin, setSubmittedOrigin] = useState('')
   const [submittedDestination, setSubmittedDestination] = useState('')
   const [submittedDeparture, setSubmittedDeparture] = useState('')
+  const [bestTimeLoading, setBestTimeLoading] = useState(false)
+  const [bestTimeResult, setBestTimeResult] = useState<{ time: string; delay: number; all: { time: string; delay: number }[] } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -133,6 +136,7 @@ export function SinglePrediction() {
     setSubmittedDestination(destination)
     setSubmittedDeparture(departureTime)
     setShowSkeleton(false)
+    setBestTimeResult(null)
 
     const skeletonTimer = setTimeout(() => setShowSkeleton(true), 2000)
 
@@ -149,6 +153,57 @@ export function SinglePrediction() {
       clearTimeout(skeletonTimer)
       setShowSkeleton(false)
       setLoading(false)
+    }
+  }
+
+  const handleSuggestBestTime = async () => {
+    if (!submittedDeparture) return
+
+    setBestTimeLoading(true)
+    setBestTimeResult(null)
+
+    const base = new Date(submittedDeparture)
+    const offsets = [-2, -1, 1, 2]
+    const times = offsets
+      .map((h) => new Date(base.getTime() + h * 3600_000))
+      .filter((d) => d > new Date()) // solo orari futuri
+      .map((d) => {
+        const yyyy = d.getFullYear()
+        const mm = String(d.getMonth() + 1).padStart(2, '0')
+        const dd = String(d.getDate()).padStart(2, '0')
+        const hh = String(d.getHours()).padStart(2, '0')
+        const min = String(d.getMinutes()).padStart(2, '0')
+        return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+      })
+
+    if (times.length === 0) {
+      setBestTimeLoading(false)
+      return
+    }
+
+    const originArg = originCoords ? { lat: originCoords.lat, lon: originCoords.lon } : submittedOrigin
+    const destArg = destinationCoords ? { lat: destinationCoords.lat, lon: destinationCoords.lon } : submittedDestination
+
+    try {
+      const results = await Promise.all(
+        times.map((t) => predictRoute(originArg, destArg, t, false))
+      )
+
+      const entries = times.map((t, i) => ({
+        time: t,
+        delay: results[i].total_delay_minutes,
+      }))
+
+      const allEntries = [
+        { time: submittedDeparture, delay: apiResult!.total_delay_minutes },
+        ...entries,
+      ].sort((a, b) => a.delay - b.delay)
+
+      setBestTimeResult({ time: allEntries[0].time, delay: allEntries[0].delay, all: allEntries })
+    } catch {
+      // silently fail
+    } finally {
+      setBestTimeLoading(false)
     }
   }
 
@@ -464,6 +519,49 @@ export function SinglePrediction() {
               </table>
             </div>
           </div>
+
+          {/* Mappa del percorso */}
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-300 mb-3">Mappa del percorso</h3>
+            <RouteMap key={result.id} segments={result.segments} />
+          </div>
+
+          {/* Suggerisci orario migliore */}
+          {result.total_delay_minutes > 5 && (
+            <div className="mb-3">
+              <button
+                onClick={handleSuggestBestTime}
+                disabled={bestTimeLoading}
+                className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-700 text-white font-medium rounded-xl hover:from-cyan-600 hover:to-cyan-800 transition-colors disabled:opacity-60 text-sm"
+              >
+                {bestTimeLoading ? 'Analisi orari in corso...' : 'Suggerisci orario migliore'}
+              </button>
+            </div>
+          )}
+
+          {bestTimeResult && (
+            <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-4 mb-3">
+              <h3 className="text-sm font-semibold text-cyan-400 mb-3">Analisi orari alternativi</h3>
+              <div className="space-y-2">
+                {bestTimeResult.all.map((entry, i) => {
+                  const isBest = entry.time === bestTimeResult.time
+                  const isCurrent = entry.time === submittedDeparture
+                  return (
+                    <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-xl ${isBest ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-[#334155]'}`}>
+                      <div className="flex items-center gap-2">
+                        {isBest && <span className="text-emerald-400 text-xs font-bold">MIGLIORE</span>}
+                        {isCurrent && !isBest && <span className="text-slate-500 text-xs">(attuale)</span>}
+                        <span className="text-sm text-white">{entry.time.replace('T', ' ')}</span>
+                      </div>
+                      <span className={`text-sm font-semibold ${entry.delay > 5 ? 'text-red-400' : 'text-emerald-400'}`}>
+                        +{Math.round(entry.delay)} min
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Alternatives */}
           {result.alternatives && result.alternatives.length > 0 && (
