@@ -18,6 +18,23 @@ const weatherEmoji: Record<string, string> = {
   clouds: '\u2601\uFE0F',
 }
 
+const weatherTypeIT: Record<string, string> = {
+  rain: 'Pioggia',
+  snow: 'Neve',
+  wind: 'Vento',
+  fog: 'Nebbia',
+  storm: 'Temporale',
+  clouds: 'Nuvoloso',
+  clear: 'Sereno',
+}
+
+const severityIT: Record<string, string> = {
+  light: 'leggera',
+  moderate: 'moderata',
+  heavy: 'forte',
+  very_heavy: 'molto forte',
+}
+
 const confidenceLevelIT: Record<string, string> = {
   high: 'Alta',
   good: 'Buona',
@@ -32,11 +49,26 @@ const roadTypeIT: Record<string, string> = {
   mountain: 'Montagna',
 }
 
-function getDelayColor(delay: number): string {
-  if (delay < 10) return 'text-emerald-400'
-  if (delay < 30) return 'text-amber-400'
-  if (delay < 60) return 'text-orange-400'
-  return 'text-red-400'
+function getWeatherColor(severity: string): string {
+  if (severity === 'light') return 'text-amber-400'
+  if (severity === 'moderate') return 'text-amber-400'
+  return 'text-red-400' // heavy, very_heavy
+}
+
+function translateWeather(type: string, severity: string): string {
+  const typeIt = weatherTypeIT[type] || type
+  const sevIt = severityIT[severity] || severity
+  return `${typeIt} ${sevIt}`
+}
+
+function isNightTime(dateStr: string): boolean {
+  const date = new Date(dateStr)
+  const hour = date.getHours()
+  return hour < 6 || hour >= 21
+}
+
+function getClearEmoji(dateStr: string): string {
+  return isNightTime(dateStr) ? '\uD83C\uDF19' : '\u2600\uFE0F'
 }
 
 function formatDateTime(date: Date): string {
@@ -278,18 +310,32 @@ export function SinglePrediction() {
       {/* API result (real users) */}
       {!isDemo && showResult && !loading && result && (
         <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-white">{submittedOrigin} &rarr; {submittedDestination}</h2>
               <p className="text-sm text-slate-500">{submittedDeparture.replace('T', ' ')}</p>
             </div>
           </div>
 
-          {/* Delay + Confidence */}
+          {/* ETA completo — in alto, grande */}
+          {correctedETA && (
+            <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-4">
+              <p className="text-sm text-slate-400 mb-1">Arrivo previsto (ETA completo)</p>
+              <p className="text-3xl font-bold text-white">{formatDateTime(correctedETA)}</p>
+              {originalETA && result.total_delay_minutes > 0 && (
+                <p className="text-sm text-slate-400 mt-1">
+                  Senza ritardi: {formatDateTime(originalETA)}
+                  <span className="text-red-400 font-semibold ml-2">+{Math.round(result.total_delay_minutes)} min</span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Delay + Confidence + Distanza */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-1">Ritardo stimato</p>
-              <p className={`text-4xl font-bold ${getDelayColor(result.total_delay_minutes)}`}>+{Math.round(result.total_delay_minutes)} min</p>
+              <p className={`text-4xl font-bold ${result.total_delay_minutes > 0 ? 'text-red-400' : 'text-emerald-400'}`}>+{Math.round(result.total_delay_minutes)} min</p>
             </div>
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-2">Confidenza</p>
@@ -329,13 +375,17 @@ export function SinglePrediction() {
                         {seg.weather.length > 0 ? seg.weather.map((w, i) => (
                           <span key={i} className="inline-flex items-center gap-1 mr-2">
                             <span>{weatherEmoji[w.type] || '\u2600\uFE0F'}</span>
-                            <span className="text-slate-400 text-xs">{w.description}</span>
+                            <span className={`text-xs ${getWeatherColor(w.severity)}`}>{translateWeather(w.type, w.severity)}</span>
                           </span>
-                        )) : <span className="text-emerald-400 text-xs">Sereno</span>}
+                        )) : (
+                          <span className="text-emerald-400 text-xs">
+                            {getClearEmoji(seg.estimated_arrival)} Sereno
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 px-3">
                         {seg.delay_minutes > 0 ? (
-                          <span className={`font-semibold ${getDelayColor(seg.delay_minutes)}`}>+{seg.delay_minutes.toFixed(1)} min</span>
+                          <span className="font-semibold text-red-400">+{seg.delay_minutes.toFixed(1)} min</span>
                         ) : (
                           <span className="text-emerald-400">0 min</span>
                         )}
@@ -366,23 +416,6 @@ export function SinglePrediction() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* ETAs */}
-          {originalETA && correctedETA && (
-            <div className="bg-[#334155] rounded-xl p-4 mb-3">
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-xs text-slate-400">ETA originale</p>
-                  <p className="text-sm font-medium text-slate-300">{formatDateTime(originalETA)}</p>
-                </div>
-                <span className="text-slate-500">&rarr;</span>
-                <div>
-                  <p className="text-xs text-slate-400">ETA corretta</p>
-                  <p className="text-sm font-semibold text-white">{formatDateTime(correctedETA)}</p>
-                </div>
               </div>
             </div>
           )}
