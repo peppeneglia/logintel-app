@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { mockRouteComparisons } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
 import { RiskBadge } from '../../../components/RiskBadge'
+import { CityAutocomplete } from '../../../components/CityAutocomplete'
+import type { CitySelection } from '../../../components/CityAutocomplete'
 import { predictRoute } from '../../../services/api'
 import type { PredictionResponse } from '../../../services/api'
 
@@ -70,7 +72,9 @@ function predictionToDisplayRoutes(pred: PredictionResponse, origin: string, des
 export function CompareRoutes() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const [origin, setOrigin] = useState(isDemo ? 'Bologna' : '')
+  const [originCoords, setOriginCoords] = useState<CitySelection | null>(null)
   const [destination, setDestination] = useState(isDemo ? 'Napoli' : '')
+  const [destinationCoords, setDestinationCoords] = useState<CitySelection | null>(null)
   const [departureTime, setDepartureTime] = useState(isDemo ? '2026-02-25T08:00' : '')
   const [showResults, setShowResults] = useState(isDemo)
   const [loading, setLoading] = useState(false)
@@ -99,7 +103,9 @@ export function CompareRoutes() {
     }
 
     try {
-      const pred = await predictRoute(origin, destination, departureTime, true)
+      const originArg = originCoords ? { lat: originCoords.lat, lon: originCoords.lon } : origin
+      const destArg = destinationCoords ? { lat: destinationCoords.lat, lon: destinationCoords.lon } : destination
+      const pred = await predictRoute(originArg, destArg, departureTime, true)
       setApiRoutes(predictionToDisplayRoutes(pred, origin, destination, departureTime))
       setShowResults(true)
     } catch (err) {
@@ -119,11 +125,11 @@ export function CompareRoutes() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Origine</label>
-            <input type="text" value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="es. Bologna" className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+            <CityAutocomplete value={origin} onChange={(val, coords) => { setOrigin(val); setOriginCoords(coords) }} placeholder="es. Bologna" className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Destinazione</label>
-            <input type="text" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="es. Napoli" className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
+            <CityAutocomplete value={destination} onChange={(val, coords) => { setDestination(val); setDestinationCoords(coords) }} placeholder="es. Napoli" className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Data/ora partenza</label>

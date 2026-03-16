@@ -84,14 +84,14 @@ async function apiCall<T>(endpoint: string, body: unknown): Promise<T> {
 // ── Prediction functions ──
 
 export async function predictRoute(
-  originCity: string,
-  destinationCity: string,
+  originInput: string | Coordinate,
+  destinationInput: string | Coordinate,
   departureTime: string,
   includeAlternatives = true
 ): Promise<PredictionResponse> {
   const [origin, destination] = await Promise.all([
-    geocode(originCity),
-    geocode(destinationCity),
+    typeof originInput === 'string' ? geocode(originInput) : Promise.resolve(originInput),
+    typeof destinationInput === 'string' ? geocode(destinationInput) : Promise.resolve(destinationInput),
   ])
 
   const isoTime = departureTime.includes('+') || departureTime.includes('Z')

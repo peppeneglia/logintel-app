@@ -3,6 +3,8 @@ import { mockWeeklyPlan } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
 import { RiskBadge } from '../../../components/RiskBadge'
+import { CityAutocomplete } from '../../../components/CityAutocomplete'
+import type { CitySelection } from '../../../components/CityAutocomplete'
 import { predictRoute } from '../../../services/api'
 import type { PredictionResponse } from '../../../services/api'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
@@ -99,7 +101,9 @@ function formatDateTime(date: Date): string {
 
 interface RouteInput {
   origin: string
+  originCoords: CitySelection | null
   destination: string
+  destinationCoords: CitySelection | null
   day: string
   time: string
 }
@@ -124,7 +128,7 @@ export function WeeklyPlan() {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
 
   const [routes, setRoutes] = useState<RouteInput[]>([
-    { origin: '', destination: '', day: '', time: '' },
+    { origin: '', originCoords: null, destination: '', destinationCoords: null, day: '', time: '' },
   ])
 
   const updateRoute = (idx: number, field: keyof RouteInput, value: string) => {
@@ -156,7 +160,9 @@ export function WeeklyPlan() {
       const results = await Promise.all(
         validRoutes.map(async (r) => {
           const departureTime = getNextDateForDay(r.day, r.time)
-          const pred = await predictRoute(r.origin, r.destination, departureTime, false)
+          const originArg = r.originCoords ? { lat: r.originCoords.lat, lon: r.originCoords.lon } : r.origin
+          const destArg = r.destinationCoords ? { lat: r.destinationCoords.lat, lon: r.destinationCoords.lon } : r.destination
+          const pred = await predictRoute(originArg, destArg, departureTime, false)
           return {
             origin: r.origin,
             destination: r.destination,
@@ -192,8 +198,18 @@ export function WeeklyPlan() {
           {routes.map((route, idx) => (
             <div key={idx} className="flex items-center gap-3">
               <div className="grid grid-cols-4 gap-3 flex-1">
-                <input type="text" value={route.origin} onChange={(e) => updateRoute(idx, 'origin', e.target.value)} placeholder="Origine" className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
-                <input type="text" value={route.destination} onChange={(e) => updateRoute(idx, 'destination', e.target.value)} placeholder="Destinazione" className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
+                <CityAutocomplete
+                  value={route.origin}
+                  onChange={(val, coords) => setRoutes((prev) => prev.map((r, i) => i === idx ? { ...r, origin: val, originCoords: coords ?? r.originCoords } : r))}
+                  placeholder="Origine"
+                  className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                />
+                <CityAutocomplete
+                  value={route.destination}
+                  onChange={(val, coords) => setRoutes((prev) => prev.map((r, i) => i === idx ? { ...r, destination: val, destinationCoords: coords ?? r.destinationCoords } : r))}
+                  placeholder="Destinazione"
+                  className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+                />
                 <input type="text" value={route.day} onChange={(e) => updateRoute(idx, 'day', e.target.value)} placeholder="es. Lunedi" className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
                 <input type="text" value={route.time} onChange={(e) => updateRoute(idx, 'time', e.target.value)} placeholder="es. 06:00" className="px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
               </div>
@@ -208,7 +224,7 @@ export function WeeklyPlan() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setRoutes((prev) => [...prev, { origin: '', destination: '', day: '', time: '' }])}
+            onClick={() => setRoutes((prev) => [...prev, { origin: '', originCoords: null, destination: '', destinationCoords: null, day: '', time: '' }])}
             className="px-4 py-2 border border-slate-600 rounded-xl text-sm font-medium text-slate-300 hover:bg-[#334155] transition-colors"
           >
             Aggiungi rotta
