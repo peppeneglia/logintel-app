@@ -58,8 +58,18 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
       )
       if (!res.ok) return
       const data: NominatimResult[] = await res.json()
-      setSuggestions(data)
-      setOpen(data.length > 0)
+      // Deduplica per nome città + paese
+      const seen = new Set<string>()
+      const unique = data.filter((item) => {
+        const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality || item.display_name.split(',')[0]
+        const country = item.address?.country || ''
+        const key = `${city}|${country}`.toLowerCase()
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      setSuggestions(unique)
+      setOpen(unique.length > 0)
     } catch {
       // abort or network error — ignore
     } finally {
