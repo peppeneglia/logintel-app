@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 
 interface Props {
   date: string        // YYYY-MM-DD
@@ -9,143 +9,235 @@ interface Props {
 }
 
 const inputClass =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
+  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 caret-transparent select-none'
 
-function formatDateDigits(raw: string): string {
-  let out = ''
-  for (let i = 0; i < raw.length && i < 8; i++) {
-    if (i === 2 || i === 4) out += '/'
-    out += raw[i]
+// ── Mask logic ──
+// Date mask: DD/MM/YYYY  →  digit positions: 0,1, /2, 3,4, /5, 6,7,8,9
+// Time mask: HH:MM       →  digit positions: 0,1, :2, 3,4
+
+const DATE_TEMPLATE = '__/__/____'
+const TIME_TEMPLATE = '__:__'
+
+// Maps display position → digit index (skipping separators)
+const DATE_DIGIT_POSITIONS = [0, 1, 3, 4, 6, 7, 8, 9] // display positions that are digits
+const TIME_DIGIT_POSITIONS = [0, 1, 3, 4]
+
+function digitIndexToDisplayPos(digitIdx: number, positions: number[]): number {
+  return positions[digitIdx] ?? positions[positions.length - 1]
+}
+
+function displayPosToDigitIndex(displayPos: number, positions: number[]): number {
+  const idx = positions.indexOf(displayPos)
+  if (idx >= 0) return idx
+  // Snap to nearest digit position
+  for (let i = 0; i < positions.length; i++) {
+    if (positions[i] >= displayPos) return i
   }
-  return out
+  return positions.length - 1
 }
 
-function formatTimeDigits(raw: string): string {
-  let out = ''
-  for (let i = 0; i < raw.length && i < 4; i++) {
-    if (i === 2) out += ':'
-    out += raw[i]
+function buildDisplay(digits: string[], template: string, positions: number[]): string {
+  const chars = template.split('')
+  for (let i = 0; i < positions.length; i++) {
+    chars[positions[i]] = digits[i] || '_'
   }
-  return out
+  return chars.join('')
 }
 
-function rawToISODate(raw: string): string {
-  if (raw.length < 8) return ''
-  return `${raw.slice(4, 8)}-${raw.slice(2, 4)}-${raw.slice(0, 2)}`
-}
-
-function isoToRawDate(iso: string): string {
-  if (!iso || iso.length < 10) return ''
+function isoDateToDigits(iso: string): string[] {
+  if (!iso || iso.length < 10) return Array(8).fill('')
   const [yyyy, mm, dd] = iso.split('-')
-  return `${dd}${mm}${yyyy}`
+  return [...dd, ...mm, ...yyyy]
 }
 
-function rawToISOTime(raw: string): string {
-  if (raw.length < 4) return ''
-  return `${raw.slice(0, 2)}:${raw.slice(2, 4)}`
+function digitsToISODate(digits: string[]): string {
+  if (digits.some((d) => !d)) return ''
+  const dd = digits[0] + digits[1]
+  const mm = digits[2] + digits[3]
+  const yyyy = digits[4] + digits[5] + digits[6] + digits[7]
+  return `${yyyy}-${mm}-${dd}`
 }
 
-function isoToRawTime(iso: string): string {
-  if (!iso) return ''
-  return iso.replace(':', '')
+function isoTimeToDigits(iso: string): string[] {
+  if (!iso || iso.length < 5) return Array(4).fill('')
+  return [...iso.replace(':', '')]
 }
 
-function MaskedInput({
-  rawValue,
-  onRawChange,
-  format,
-  maxDigits,
-  placeholder,
+function digitsToISOTime(digits: string[]): string {
+  if (digits.some((d) => !d)) return ''
+  return `${digits[0]}${digits[1]}:${digits[2]}${digits[3]}`
+}
+
+// ── Masked Input Component ──
+
+function MaskedField({
+  digits,
+  onDigitsChange,
+  template,
+  digitPositions,
+  numDigits,
+  label,
 }: {
-  rawValue: string
-  onRawChange: (raw: string) => void
-  format: (raw: string) => string
-  maxDigits: number
-  placeholder: string
+  digits: string[]
+  onDigitsChange: (digits: string[]) => void
+  template: string
+  digitPositions: number[]
+  numDigits: number
+  label: string
 }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [cursorDigitIdx, setCursorDigitIdx] = useState(0)
+
+  const syncCursor = useCallback(() => {
+    const el = inputRef.current
+    if (!el) return
+    const displayPos = digitIndexToDisplayPos(cursorDigitIdx, digitPositions)
+    requestAnimationFrame(() => {
+      el.setSelectionRange(displayPos, displayPos + 1)
+    })
+  }, [cursorDigitIdx, digitPositions])
+
+  useEffect(() => {
+    syncCursor()
+  }, [cursorDigitIdx, digits, syncCursor])
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      e.preventDefault()
-      if (rawValue.length > 0) onRawChange(rawValue.slice(0, -1))
-      return
-    }
-    if (e.key === 'Delete') {
-      e.preventDefault()
-      onRawChange('')
-      return
-    }
-    if (['Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return
+    if (e.key === 'Tab' || e.key === 'Enter') return // let browser handle
+
     e.preventDefault()
-    if (!/^[0-9]$/.test(e.key)) return
-    if (rawValue.length >= maxDigits) return
-    onRawChange(rawValue + e.key)
+
+    if (e.key === 'Backspace') {
+      if (digits[cursorDigitIdx]) {
+        // Clear current digit
+        const next = [...digits]
+        next[cursorDigitIdx] = ''
+        onDigitsChange(next)
+      } else if (cursorDigitIdx > 0) {
+        // Move back and clear
+        const prev = cursorDigitIdx - 1
+        const next = [...digits]
+        next[prev] = ''
+        onDigitsChange(next)
+        setCursorDigitIdx(prev)
+      }
+      return
+    }
+
+    if (e.key === 'Delete') {
+      // Clear current digit
+      const next = [...digits]
+      next[cursorDigitIdx] = ''
+      onDigitsChange(next)
+      return
+    }
+
+    if (e.key === 'ArrowLeft') {
+      setCursorDigitIdx(Math.max(0, cursorDigitIdx - 1))
+      return
+    }
+
+    if (e.key === 'ArrowRight') {
+      setCursorDigitIdx(Math.min(numDigits - 1, cursorDigitIdx + 1))
+      return
+    }
+
+    // Digit input
+    if (/^[0-9]$/.test(e.key)) {
+      const next = [...digits]
+      next[cursorDigitIdx] = e.key
+      onDigitsChange(next)
+      // Advance cursor
+      if (cursorDigitIdx < numDigits - 1) {
+        setCursorDigitIdx(cursorDigitIdx + 1)
+      }
+    }
   }
+
+  const handleClick = () => {
+    const el = inputRef.current
+    if (!el) return
+    const pos = el.selectionStart ?? 0
+    const digitIdx = displayPosToDigitIndex(pos, digitPositions)
+    setCursorDigitIdx(digitIdx)
+  }
+
+  const handleFocus = () => {
+    // Find first empty digit, or start at 0
+    const firstEmpty = digits.findIndex((d) => !d)
+    setCursorDigitIdx(firstEmpty >= 0 ? firstEmpty : 0)
+  }
+
+  const display = buildDisplay(digits, template, digitPositions)
 
   return (
-    <input
-      type="text"
-      inputMode="numeric"
-      value={format(rawValue)}
-      onKeyDown={handleKeyDown}
-      onChange={() => {}}
-      placeholder={placeholder}
-      className={inputClass}
-    />
+    <div>
+      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        value={display}
+        onKeyDown={handleKeyDown}
+        onClick={handleClick}
+        onFocus={handleFocus}
+        onChange={() => {}}
+        className={inputClass}
+      />
+    </div>
   )
 }
 
-export function DateTimeInput({ date, time, onDateChange, onTimeChange, className }: Props) {
-  // Internal raw digit state — survives partial input
-  const [dateRaw, setDateRaw] = useState(() => isoToRawDate(date))
-  const [timeRaw, setTimeRaw] = useState(() => isoToRawTime(time))
+// ── Exported Component ──
 
-  // Sync from parent when external value changes (e.g. demo prefill)
+export function DateTimeInput({ date, time, onDateChange, onTimeChange, className }: Props) {
+  const [dateDigits, setDateDigits] = useState<string[]>(() => isoDateToDigits(date))
+  const [timeDigits, setTimeDigits] = useState<string[]>(() => isoTimeToDigits(time))
+
+  // Sync from parent on external change
   useEffect(() => {
-    const parentRaw = isoToRawDate(date)
-    if (parentRaw && parentRaw !== dateRaw) setDateRaw(parentRaw)
+    const parentDigits = isoDateToDigits(date)
+    if (parentDigits.join('') && parentDigits.join('') !== dateDigits.join('')) {
+      setDateDigits(parentDigits)
+    }
   }, [date])
 
   useEffect(() => {
-    const parentRaw = isoToRawTime(time)
-    if (parentRaw && parentRaw !== timeRaw) setTimeRaw(parentRaw)
+    const parentDigits = isoTimeToDigits(time)
+    if (parentDigits.join('') && parentDigits.join('') !== timeDigits.join('')) {
+      setTimeDigits(parentDigits)
+    }
   }, [time])
 
-  const handleDateRaw = (raw: string) => {
-    setDateRaw(raw)
-    const iso = rawToISODate(raw)
-    if (iso) onDateChange(iso)
-    else if (raw.length === 0) onDateChange('')
+  const handleDateDigits = (digits: string[]) => {
+    setDateDigits(digits)
+    const iso = digitsToISODate(digits)
+    onDateChange(iso)
   }
 
-  const handleTimeRaw = (raw: string) => {
-    setTimeRaw(raw)
-    const iso = rawToISOTime(raw)
-    if (iso) onTimeChange(iso)
-    else if (raw.length === 0) onTimeChange('')
+  const handleTimeDigits = (digits: string[]) => {
+    setTimeDigits(digits)
+    const iso = digitsToISOTime(digits)
+    onTimeChange(iso)
   }
 
   return (
     <div className={`grid grid-cols-2 gap-2 ${className || ''}`}>
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Data partenza</label>
-        <MaskedInput
-          rawValue={dateRaw}
-          onRawChange={handleDateRaw}
-          format={formatDateDigits}
-          maxDigits={8}
-          placeholder="GG/MM/AAAA"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Ora partenza</label>
-        <MaskedInput
-          rawValue={timeRaw}
-          onRawChange={handleTimeRaw}
-          format={formatTimeDigits}
-          maxDigits={4}
-          placeholder="HH:MM"
-        />
-      </div>
+      <MaskedField
+        digits={dateDigits}
+        onDigitsChange={handleDateDigits}
+        template={DATE_TEMPLATE}
+        digitPositions={DATE_DIGIT_POSITIONS}
+        numDigits={8}
+        label="Data partenza"
+      />
+      <MaskedField
+        digits={timeDigits}
+        onDigitsChange={handleTimeDigits}
+        template={TIME_TEMPLATE}
+        digitPositions={TIME_DIGIT_POSITIONS}
+        numDigits={4}
+        label="Ora partenza"
+      />
     </div>
   )
 }
