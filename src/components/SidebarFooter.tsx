@@ -1,10 +1,18 @@
 import { useNavigate } from 'react-router-dom'
-import { Bell, Settings, CreditCard, LogOut } from 'lucide-react'
+import { Bell, Settings, LogOut } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { useCredits } from '../hooks/useCredits'
+
+function creditBarColor(pct: number): string {
+  if (pct > 50) return 'bg-emerald-500'
+  if (pct > 20) return 'bg-amber-500'
+  return 'bg-red-500'
+}
 
 export function SidebarFooter() {
   const navigate = useNavigate()
   const { profile, signOut, isDemo } = useAuthStore()
+  const { creditsRemaining, dailyLimit, totalAvailable } = useCredits()
 
   const handleSignOut = async () => {
     await signOut()
@@ -20,8 +28,39 @@ export function SidebarFooter() {
     .toUpperCase()
     .slice(0, 2)
 
+  const pct = dailyLimit > 0 ? (creditsRemaining / dailyLimit) * 100 : 0
+
   return (
     <div className="mt-auto p-3 flex flex-col gap-2">
+      {/* Credit counter */}
+      <button
+        onClick={() => navigate('/settings/plan')}
+        className="bg-[#334155] rounded-xl px-3 py-2.5 hover:bg-slate-600 transition-colors text-left"
+      >
+        {isDemo ? (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">Modalità demo</span>
+            <span className="text-xs text-emerald-400 font-medium">{totalAvailable.toLocaleString('it-IT')} crediti</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-slate-400">Crediti oggi</span>
+              <span className="text-xs font-medium text-white">
+                {creditsRemaining.toLocaleString('it-IT')} / {dailyLimit.toLocaleString('it-IT')}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${creditBarColor(pct)}`}
+                style={{ width: `${Math.min(100, pct)}%` }}
+              />
+            </div>
+          </>
+        )}
+      </button>
+
+      {/* Action buttons */}
       <div className="bg-[#334155] rounded-xl p-2 flex items-center">
         <button
           onClick={() => navigate('/settings')}
@@ -30,13 +69,6 @@ export function SidebarFooter() {
         >
           <Settings size={18} />
           <span>Impostazioni</span>
-        </button>
-        <button
-          onClick={() => navigate('/settings/plan')}
-          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-600 rounded-lg transition-colors"
-          title="Piano e Crediti"
-        >
-          <CreditCard size={16} />
         </button>
         <button
           onClick={() => navigate('/settings/notifications')}
@@ -55,6 +87,7 @@ export function SidebarFooter() {
         </button>
       </div>
 
+      {/* User profile */}
       <div
         className="bg-[#334155] rounded-xl p-3 flex items-center justify-center gap-3 cursor-pointer hover:bg-slate-600 transition-colors"
         onClick={() => navigate('/settings/profile')}

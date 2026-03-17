@@ -10,9 +10,12 @@ export interface Database {
           company: string | null
           role: string | null
           fleet_size: number
-          plan: 'free' | 'starter' | 'pro' | 'enterprise'
-          credits_used: number
-          credits_total: number
+          plan: 'free' | 'pro' | 'team' | 'enterprise'
+          credits_remaining: number
+          credits_daily_limit: number
+          credits_reset_at: string
+          extra_credits: number
+          extra_credits_expire_at: string | null
           avatar_url: string | null
           created_at: string
           updated_at: string
@@ -25,9 +28,12 @@ export interface Database {
           company?: string | null
           role?: string | null
           fleet_size?: number
-          plan?: 'free' | 'starter' | 'pro' | 'enterprise'
-          credits_used?: number
-          credits_total?: number
+          plan?: 'free' | 'pro' | 'team' | 'enterprise'
+          credits_remaining?: number
+          credits_daily_limit?: number
+          credits_reset_at?: string
+          extra_credits?: number
+          extra_credits_expire_at?: string | null
           avatar_url?: string | null
         }
         Update: {
@@ -37,9 +43,12 @@ export interface Database {
           company?: string | null
           role?: string | null
           fleet_size?: number
-          plan?: 'free' | 'starter' | 'pro' | 'enterprise'
-          credits_used?: number
-          credits_total?: number
+          plan?: 'free' | 'pro' | 'team' | 'enterprise'
+          credits_remaining?: number
+          credits_daily_limit?: number
+          credits_reset_at?: string
+          extra_credits?: number
+          extra_credits_expire_at?: string | null
           avatar_url?: string | null
         }
         Relationships: []
@@ -120,7 +129,7 @@ export interface Database {
           destination: string
           departure_time: string
           result_json: Record<string, unknown>
-          credits_used: number
+          credits_cost: number
           feedback_delay: number | null
           feedback_given: boolean
           created_at: string
@@ -131,7 +140,7 @@ export interface Database {
           destination: string
           departure_time: string
           result_json: Record<string, unknown>
-          credits_used?: number
+          credits_cost?: number
           feedback_delay?: number | null
           feedback_given?: boolean
         }

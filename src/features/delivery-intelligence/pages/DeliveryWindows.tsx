@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { Clock, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockDeliveryWindows } from '../../../data/mockDeliveryData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
 import {
   getDeliveries,
@@ -69,6 +71,7 @@ type FormState = typeof emptyForm
 export function DeliveryWindows() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { canAfford, consume } = useCredits()
 
   const [deliveries, setDeliveries] = useState<DeliveryRow[]>([])
   const [windowRows, setWindowRows] = useState<DeliveryWindowRow[]>([])
@@ -94,6 +97,7 @@ export function DeliveryWindows() {
         allWindows.push(...w)
       }
       setWindowRows(allWindows)
+      await consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
     } finally {
       setLoading(false)
     }
@@ -177,7 +181,13 @@ export function DeliveryWindows() {
       if (editingId) {
         await updateDeliveryWindow(editingId, input)
       } else {
+        if (!canAfford(CREDIT_COSTS.DELIVERY_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una finestra' }])
+          setSaving(false)
+          return
+        }
         await addDeliveryWindow(input)
+        await consume(CREDIT_COSTS.DELIVERY_ADD, 'DELIVERY_ADD')
       }
       closeModal()
       await fetchData()

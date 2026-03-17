@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getRouteMargins, computeMargin } from '../../../services/finance'
 import type { RouteMarginRow } from '../../../services/finance'
 import { mockClientProfitability } from '../../../data/mockFinanceData'
@@ -62,6 +64,7 @@ function aggregateByCustomer(rows: RouteMarginRow[]): ClientDisplayRow[] {
 export function ClientProfitability() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { consume } = useCredits()
 
   const [supabaseRows, setSupabaseRows] = useState<RouteMarginRow[]>([])
 
@@ -69,6 +72,7 @@ export function ClientProfitability() {
     if (isDemo || !userId) return
     const data = await getRouteMargins(userId)
     setSupabaseRows(data)
+    await consume(CREDIT_COSTS.FINANCE_CLIENTS_LOAD, 'FINANCE_CLIENTS_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {

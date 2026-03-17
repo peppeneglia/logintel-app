@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { Clock, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockDrivingHours } from '../../../data/mockComplianceData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
 import {
   getDrivingHours, addDrivingHoursRecord, updateDrivingHoursRecord, deleteDrivingHoursRecord,
@@ -99,6 +101,7 @@ const emptyForm: DisplayRecord = {
 export function DrivingHours() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DrivingHoursRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -116,6 +119,7 @@ export function DrivingHours() {
     try {
       const rows = await getDrivingHours(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.COMPLIANCE_HOURS_LOAD, 'COMPLIANCE_HOURS_LOAD')
     } finally {
       setLoading(false)
     }
@@ -192,7 +196,13 @@ export function DrivingHours() {
       if (editingId) {
         await updateDrivingHoursRecord(editingId, input)
       } else {
+        if (!canAfford(CREDIT_COSTS.COMPLIANCE_HOURS_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un record' }])
+          setSaving(false)
+          return
+        }
         await addDrivingHoursRecord(input)
+        await consume(CREDIT_COSTS.COMPLIANCE_HOURS_ADD, 'COMPLIANCE_HOURS_ADD')
       }
       closeModal()
       await fetchData()

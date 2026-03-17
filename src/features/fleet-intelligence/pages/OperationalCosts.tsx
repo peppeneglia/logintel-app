@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getOperationalCosts, addOperationalCost, updateOperationalCost, deleteOperationalCost } from '../../../services/fleet'
 import type { OperationalCostRow, OperationalCostInput } from '../../../services/fleet'
 import { mockOperationalCosts } from '../../../data/mockFleetData'
@@ -53,6 +55,7 @@ function computeCostPerKm(row: { fuel_cost: number; maintenance_cost: number; to
 export function OperationalCosts() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<OperationalCostRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
@@ -68,6 +71,7 @@ export function OperationalCosts() {
     if (isDemo || !userId) return
     const rows = await getOperationalCosts(userId)
     setSupabaseData(rows)
+    await consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {
@@ -139,8 +143,14 @@ export function OperationalCosts() {
 
     if (editingId) {
       await updateOperationalCost(editingId, form)
+      await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
     } else {
+      if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
+        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un costo' }])
+        return
+      }
       await addOperationalCost(form)
+      await consume(CREDIT_COSTS.FLEET_VEHICLE_ADD, 'FLEET_VEHICLE_ADD')
     }
     closeModal()
     await fetchData()

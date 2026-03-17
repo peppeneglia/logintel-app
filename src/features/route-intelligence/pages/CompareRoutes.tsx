@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { mockRouteComparisons } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { RiskBadge } from '../../../components/RiskBadge'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
 import type { CitySelection } from '../../../components/CityAutocomplete'
@@ -71,6 +73,7 @@ function predictionToDisplayRoutes(pred: PredictionResponse, origin: string, des
 
 export function CompareRoutes() {
   const isDemo = useAuthStore((s) => s.isDemo)
+  const { canAfford, consume } = useCredits()
   const [origin, setOrigin] = useState(isDemo ? 'Bologna' : '')
   const [originCoords, setOriginCoords] = useState<CitySelection | null>(null)
   const [destination, setDestination] = useState(isDemo ? 'Napoli' : '')
@@ -78,6 +81,7 @@ export function CompareRoutes() {
   const [departureTime, setDepartureTime] = useState(isDemo ? '2026-02-25T08:00' : '')
   const [showResults, setShowResults] = useState(isDemo)
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(false)
   const [error, setError] = useState('')
   const [apiRoutes, setApiRoutes] = useState<DisplayRoute[]>([])
 
@@ -90,11 +94,20 @@ export function CompareRoutes() {
       return
     }
 
+    if (!canAfford(CREDIT_COSTS.COMPARE_ROUTES)) {
+      console.warn('Crediti insufficienti per COMPARE_ROUTES')
+      setError('Crediti insufficienti per eseguire questa operazione')
+      return
+    }
+
     setLoading(true)
+    setCooldown(true)
+    setTimeout(() => setCooldown(false), 3000)
     setError('')
     setShowResults(false)
 
     if (isDemo) {
+      await consume(CREDIT_COSTS.COMPARE_ROUTES, 'COMPARE_ROUTES')
       setTimeout(() => {
         setLoading(false)
         setShowResults(true)
@@ -108,6 +121,7 @@ export function CompareRoutes() {
       const pred = await predictRoute(originArg, destArg, departureTime, true)
       setApiRoutes(predictionToDisplayRoutes(pred, origin, destination, departureTime))
       setShowResults(true)
+      await consume(CREDIT_COSTS.COMPARE_ROUTES, 'COMPARE_ROUTES')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nel confronto rotte')
     } finally {
@@ -136,7 +150,7 @@ export function CompareRoutes() {
             <input type="datetime-local" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500" />
           </div>
         </div>
-        <button type="submit" disabled={loading} className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors text-sm disabled:opacity-60">
+        <button type="submit" disabled={loading || cooldown} className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors text-sm disabled:opacity-60">
           {loading ? 'Calcolo in corso...' : 'Confronta percorsi'}
         </button>
       </form>

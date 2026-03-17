@@ -5,6 +5,38 @@
 -- ============================================================
 
 -- ────────────────────────────────────────────────────────────
+-- PROFILES — migrate credits model
+-- Run this ONCE on existing databases to add new columns.
+-- ────────────────────────────────────────────────────────────
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS credits_remaining integer DEFAULT 500;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS credits_daily_limit integer DEFAULT 500;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS credits_reset_at timestamptz DEFAULT now();
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS extra_credits integer DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS extra_credits_expire_at timestamptz;
+
+-- Drop old columns if they exist (safe — only removes if present)
+-- ALTER TABLE profiles DROP COLUMN IF EXISTS credits_used;
+-- ALTER TABLE profiles DROP COLUMN IF EXISTS credits_total;
+
+-- ────────────────────────────────────────────────────────────
+-- CREDIT TRANSACTIONS
+-- ────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS credit_transactions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users NOT NULL,
+  amount integer NOT NULL,
+  action_type text NOT NULL,
+  balance_after integer NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE credit_transactions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "user_owns_transactions" ON credit_transactions
+  FOR ALL USING (auth.uid() = user_id);
+
+-- ────────────────────────────────────────────────────────────
 -- FLEET INTELLIGENCE
 -- ────────────────────────────────────────────────────────────
 

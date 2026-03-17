@@ -24,7 +24,7 @@ export async function savePrediction(
   destination: string,
   departureTime: string,
   resultJson: Record<string, unknown>,
-  creditsUsed = 1
+  creditsCost = 50
 ): Promise<Prediction | null> {
   const { data, error } = await supabase
     .from('predictions')
@@ -34,7 +34,7 @@ export async function savePrediction(
       destination,
       departure_time: departureTime,
       result_json: resultJson,
-      credits_used: creditsUsed,
+      credits_cost: creditsCost,
     })
     .select()
     .single()

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { AlertTriangle, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockADRShipments } from '../../../data/mockComplianceData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
 import { getADRShipments, addADRShipment, updateADRShipment, deleteADRShipment } from '../../../services/compliance'
 import type { ADRShipmentRow, ADRShipmentInput } from '../../../services/compliance'
@@ -85,6 +87,7 @@ const emptyForm = {
 export function ADRRegulations() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<ADRShipmentRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -102,6 +105,7 @@ export function ADRRegulations() {
     try {
       const rows = await getADRShipments(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.COMPLIANCE_HOURS_LOAD, 'COMPLIANCE_HOURS_LOAD')
     } finally {
       setLoading(false)
     }
@@ -180,7 +184,13 @@ export function ADRRegulations() {
       if (editingId) {
         await updateADRShipment(editingId, input)
       } else {
+        if (!canAfford(CREDIT_COSTS.COMPLIANCE_HOURS_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una spedizione' }])
+          setSaving(false)
+          return
+        }
         await addADRShipment(input)
+        await consume(CREDIT_COSTS.COMPLIANCE_HOURS_ADD, 'COMPLIANCE_HOURS_ADD')
       }
       closeModal()
       await fetchData()

@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { mockSinglePrediction, mockDemoPrediction } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
 import type { CitySelection } from '../../../components/CityAutocomplete'
@@ -92,6 +94,7 @@ function formatDateTime(date: Date): string {
 
 export function SinglePrediction() {
   const isDemo = useAuthStore((s) => s.isDemo)
+  const { canAfford, consume } = useCredits()
 
   const [origin, setOrigin] = useState(isDemo ? 'Milano' : '')
   const [originCoords, setOriginCoords] = useState<CitySelection | null>(null)
@@ -101,6 +104,7 @@ export function SinglePrediction() {
   const [vehicleType, setVehicleType] = useState('truck_standard')
   const [showResult, setShowResult] = useState(isDemo)
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(false)
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [error, setError] = useState('')
   const [apiResult, setApiResult] = useState<PredictionResponse | null>(null)
@@ -119,11 +123,20 @@ export function SinglePrediction() {
       return
     }
 
+    if (!canAfford(CREDIT_COSTS.SINGLE_PREDICTION)) {
+      console.warn('Crediti insufficienti per SINGLE_PREDICTION')
+      setError('Crediti insufficienti per eseguire questa operazione')
+      return
+    }
+
     setLoading(true)
+    setCooldown(true)
+    setTimeout(() => setCooldown(false), 3000)
     setError('')
     setShowResult(false)
 
     if (isDemo) {
+      await consume(CREDIT_COSTS.SINGLE_PREDICTION, 'SINGLE_PREDICTION')
       setTimeout(() => {
         setLoading(false)
         setShowResult(true)
@@ -144,6 +157,7 @@ export function SinglePrediction() {
       const result = await predictRoute(originArg, destArg, departureTime)
       setApiResult(result)
       setShowResult(true)
+      await consume(CREDIT_COSTS.SINGLE_PREDICTION, 'SINGLE_PREDICTION')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella predizione')
     } finally {
@@ -154,9 +168,6 @@ export function SinglePrediction() {
 
   const handleSuggestBestTime = async () => {
     if (!submittedDeparture) return
-
-    setBestTimeLoading(true)
-    setBestTimeResult(null)
 
     const base = new Date(submittedDeparture)
     const offsets = [-2, -1, 1, 2]
@@ -172,10 +183,16 @@ export function SinglePrediction() {
         return `${yyyy}-${mm}-${dd}T${hh}:${min}`
       })
 
-    if (times.length === 0) {
-      setBestTimeLoading(false)
+    if (times.length === 0) return
+
+    const totalCost = CREDIT_COSTS.SINGLE_PREDICTION * times.length
+    if (!canAfford(totalCost)) {
+      console.warn('Crediti insufficienti per suggerimento orari migliori')
       return
     }
+
+    setBestTimeLoading(true)
+    setBestTimeResult(null)
 
     const originArg = originCoords ? { lat: originCoords.lat, lon: originCoords.lon } : submittedOrigin
     const destArg = destinationCoords ? { lat: destinationCoords.lat, lon: destinationCoords.lon } : submittedDestination
@@ -196,6 +213,7 @@ export function SinglePrediction() {
       ].sort((a, b) => a.delay - b.delay)
 
       setBestTimeResult({ time: allEntries[0].time, delay: allEntries[0].delay, all: allEntries })
+      await consume(totalCost, 'SINGLE_PREDICTION')
     } catch {
       // silently fail
     } finally {
@@ -266,7 +284,7 @@ export function SinglePrediction() {
         </div>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || cooldown}
           className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors disabled:opacity-60"
         >
           {loading ? 'Calcolo in corso...' : 'Calcola predizione'}

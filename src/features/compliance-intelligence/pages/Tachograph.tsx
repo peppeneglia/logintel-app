@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { mockTachographRecords } from '../../../data/mockComplianceData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getDrivingHours, checkDrivingViolation } from '../../../services/compliance'
 import type { DrivingHoursRow } from '../../../services/compliance'
 
@@ -74,6 +76,7 @@ function formatMinutes(minutes: number): string {
 export function Tachograph() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DrivingHoursRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -86,6 +89,7 @@ export function Tachograph() {
     try {
       const rows = await getDrivingHours(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.COMPLIANCE_TACHOGRAPH_LOAD, 'COMPLIANCE_TACHOGRAPH_LOAD')
     } finally {
       setLoading(false)
     }

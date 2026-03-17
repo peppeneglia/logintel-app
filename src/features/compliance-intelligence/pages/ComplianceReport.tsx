@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { mockComplianceScores } from '../../../data/mockComplianceData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import {
   getComplianceDocuments, getDrivingHours, getADRShipments,
   computeDocumentStatus, checkDrivingViolation,
@@ -90,6 +92,7 @@ function computeScores(
 export function ComplianceReport() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseDocs, setSupabaseDocs] = useState<ComplianceDocumentRow[]>([])
   const [supabaseHours, setSupabaseHours] = useState<DrivingHoursRow[]>([])
@@ -110,6 +113,7 @@ export function ComplianceReport() {
       setSupabaseDocs(docs)
       setSupabaseHours(hours)
       setSupabaseShipments(shipments)
+      await consume(CREDIT_COSTS.COMPLIANCE_REPORT_LOAD, 'COMPLIANCE_REPORT_LOAD')
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Truck } from 'lucide-react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { mockVehicleEmissions } from '../../../data/mockCarbonData'
 import { getEmissionsRecords, carbonScore } from '../../../services/carbon'
 import type { EmissionsRecordRow } from '../../../services/carbon'
@@ -88,6 +90,7 @@ function aggregateByVehicle(records: EmissionsRecordRow[]): DisplayVehicle[] {
 export function VehicleEmissions() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -98,6 +101,7 @@ export function VehicleEmissions() {
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.CARBON_EMISSIONS_LOAD, 'CARBON_EMISSIONS_LOAD')
     } finally {
       setLoading(false)
     }

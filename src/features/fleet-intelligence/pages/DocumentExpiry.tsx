@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getDocumentExpiries, addDocumentExpiry, updateDocumentExpiry, deleteDocumentExpiry } from '../../../services/fleet'
 import type { DocumentExpiryRow, DocumentExpiryInput } from '../../../services/fleet'
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
@@ -87,6 +89,7 @@ function mapMockToRow(m: (typeof mockDocumentExpiries)[number]): DocumentExpiryR
 export function DocumentExpiry() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DocumentExpiryRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
@@ -110,6 +113,7 @@ export function DocumentExpiry() {
     if (isDemo || !userId) return
     const rows = await getDocumentExpiries(userId)
     setSupabaseData(rows)
+    await consume(CREDIT_COSTS.FLEET_DOCUMENT_LOAD, 'FLEET_DOCUMENT_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {
@@ -170,8 +174,14 @@ export function DocumentExpiry() {
     }
     if (editingId) {
       await updateDocumentExpiry(editingId, payload)
+      await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
     } else {
+      if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
+        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un documento' }])
+        return
+      }
       await addDocumentExpiry(payload)
+      await consume(CREDIT_COSTS.FLEET_VEHICLE_ADD, 'FLEET_VEHICLE_ADD')
     }
     closeModal()
     await fetchData()

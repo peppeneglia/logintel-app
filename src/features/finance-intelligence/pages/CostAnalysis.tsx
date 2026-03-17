@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getOperationalCosts } from '../../../services/fleet'
 import type { OperationalCostRow } from '../../../services/fleet'
 import { mockCostPerKm } from '../../../data/mockFinanceData'
@@ -55,6 +57,7 @@ function mapSupabaseToDisplay(r: OperationalCostRow): CostDisplayRow {
 export function CostAnalysis() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<OperationalCostRow[]>([])
 
@@ -62,6 +65,7 @@ export function CostAnalysis() {
     if (isDemo || !userId) return
     const rows = await getOperationalCosts(userId)
     setSupabaseData(rows)
+    await consume(CREDIT_COSTS.FINANCE_COSTS_LOAD, 'FINANCE_COSTS_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {

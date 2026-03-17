@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getVehicleAllocations, addVehicleAllocation, updateVehicleAllocation, deleteVehicleAllocation } from '../../../services/fleet'
 import type { VehicleAllocationRow, VehicleAllocationInput } from '../../../services/fleet'
 import { mockVehicleAllocations } from '../../../data/mockFleetData'
@@ -58,6 +60,7 @@ function mapMockToRow(m: (typeof mockVehicleAllocations)[number], idx: number): 
 export function VehicleAllocation() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<VehicleAllocationRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
@@ -73,6 +76,7 @@ export function VehicleAllocation() {
     if (isDemo || !userId) return
     const rows = await getVehicleAllocations(userId)
     setSupabaseData(rows)
+    await consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {
@@ -136,8 +140,14 @@ export function VehicleAllocation() {
     }
     if (editingId) {
       await updateVehicleAllocation(editingId, payload)
+      await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
     } else {
+      if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
+        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un\'allocazione' }])
+        return
+      }
       await addVehicleAllocation(payload)
+      await consume(CREDIT_COSTS.FLEET_VEHICLE_ADD, 'FLEET_VEHICLE_ADD')
     }
     closeModal()
     await fetchData()

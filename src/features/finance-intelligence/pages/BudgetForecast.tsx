@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getOperationalCosts } from '../../../services/fleet'
 import type { OperationalCostRow } from '../../../services/fleet'
 import { mockBudgetVsActual } from '../../../data/mockFinanceData'
@@ -66,6 +68,7 @@ function aggregateMonthly(rows: OperationalCostRow[]): BudgetDisplayRow[] {
 export function BudgetForecast() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<OperationalCostRow[]>([])
 
@@ -73,6 +76,7 @@ export function BudgetForecast() {
     if (isDemo || !userId) return
     const rows = await getOperationalCosts(userId)
     setSupabaseData(rows)
+    await consume(CREDIT_COSTS.FINANCE_BUDGET_LOAD, 'FINANCE_BUDGET_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {

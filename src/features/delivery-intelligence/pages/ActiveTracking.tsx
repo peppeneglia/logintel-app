@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { MapPin } from 'lucide-react'
 import { mockActiveTrackings } from '../../../data/mockDeliveryData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getDeliveries } from '../../../services/delivery'
 import type { DeliveryRow } from '../../../services/delivery'
 
@@ -68,6 +70,7 @@ function rowToTracking(r: DeliveryRow): DisplayTracking {
 export function ActiveTracking() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DeliveryRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -78,6 +81,7 @@ export function ActiveTracking() {
     try {
       const rows = await getDeliveries(userId)
       setSupabaseData(rows.filter((r) => r.status === 'in_transit'))
+      await consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
     } finally {
       setLoading(false)
     }

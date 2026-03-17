@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getRouteMargins, addRouteMargin, updateRouteMargin, deleteRouteMargin, computeMargin } from '../../../services/finance'
 import type { RouteMarginRow, RouteMarginInput } from '../../../services/finance'
 import { mockRouteMargins } from '../../../data/mockFinanceData'
@@ -56,6 +58,7 @@ function mapMockToRow(m: (typeof mockRouteMargins)[number], idx: number): RouteM
 export function RouteMargins() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<RouteMarginRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
@@ -71,6 +74,7 @@ export function RouteMargins() {
     if (isDemo || !userId) return
     const data = await getRouteMargins(userId)
     setSupabaseData(data)
+    await consume(CREDIT_COSTS.FINANCE_MARGINS_LOAD, 'FINANCE_MARGINS_LOAD')
   }, [isDemo, userId])
 
   useEffect(() => {
@@ -135,7 +139,12 @@ export function RouteMargins() {
     if (editingId) {
       await updateRouteMargin(editingId, form)
     } else {
+      if (!canAfford(CREDIT_COSTS.FINANCE_MARGINS_ADD)) {
+        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una marginalità' }])
+        return
+      }
       await addRouteMargin(form)
+      await consume(CREDIT_COSTS.FINANCE_MARGINS_ADD, 'FINANCE_MARGINS_ADD')
     }
     closeModal()
     await fetchData()

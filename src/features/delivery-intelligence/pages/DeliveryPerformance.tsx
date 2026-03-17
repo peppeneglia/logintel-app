@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { Package, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockDeliveries } from '../../../data/mockDeliveryData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
 import { getDeliveries, addDelivery, updateDelivery, deleteDelivery } from '../../../services/delivery'
 import type { DeliveryRow, DeliveryInput } from '../../../services/delivery'
@@ -104,6 +106,7 @@ const emptyForm: DisplayDelivery = {
 export function DeliveryPerformance() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DeliveryRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -121,6 +124,7 @@ export function DeliveryPerformance() {
     try {
       const rows = await getDeliveries(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
     } finally {
       setLoading(false)
     }
@@ -211,8 +215,15 @@ export function DeliveryPerformance() {
       }
       if (editingId) {
         await updateDelivery(editingId, input)
+        await consume(CREDIT_COSTS.DELIVERY_UPDATE, 'DELIVERY_UPDATE')
       } else {
+        if (!canAfford(CREDIT_COSTS.DELIVERY_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una consegna' }])
+          setSaving(false)
+          return
+        }
         await addDelivery(input)
+        await consume(CREDIT_COSTS.DELIVERY_ADD, 'DELIVERY_ADD')
       }
       closeModal()
       await fetchData()

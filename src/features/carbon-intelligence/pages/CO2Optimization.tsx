@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { mockCO2Optimizations } from '../../../data/mockCarbonData'
 import type { CO2Optimization as CO2OptType } from '../../../data/mockCarbonData'
 import { getEmissionsRecords } from '../../../services/carbon'
@@ -171,6 +173,7 @@ function saveOptState(state: Record<string, CO2OptType['status']>) {
 export function CO2Optimization() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -182,6 +185,7 @@ export function CO2Optimization() {
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.CARBON_OPTIMIZATION_LOAD, 'CARBON_OPTIMIZATION_LOAD')
     } finally {
       setLoading(false)
     }

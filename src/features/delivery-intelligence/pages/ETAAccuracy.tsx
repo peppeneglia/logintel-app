@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { BarChart3 } from 'lucide-react'
 import { mockETAAccuracy } from '../../../data/mockDeliveryData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { getDeliveries } from '../../../services/delivery'
 import type { DeliveryRow } from '../../../services/delivery'
 
@@ -59,6 +61,7 @@ function computeAccuracyFromDeliveries(rows: DeliveryRow[]): DisplayAccuracy[] {
 export function ETAAccuracy() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DisplayAccuracy[]>([])
   const [loading, setLoading] = useState(false)
@@ -69,6 +72,7 @@ export function ETAAccuracy() {
     try {
       const rows = await getDeliveries(userId)
       setSupabaseData(computeAccuracyFromDeliveries(rows))
+      await consume(CREDIT_COSTS.DELIVERY_ETA_LOAD, 'DELIVERY_ETA_LOAD')
     } finally {
       setLoading(false)
     }

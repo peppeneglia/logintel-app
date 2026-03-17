@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { FileBarChart } from 'lucide-react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { mockESGMetrics, mockEmissionsHistory } from '../../../data/mockCarbonData'
 import type { ESGMetrics, EmissionsMonthly } from '../../../data/mockCarbonData'
 import { getEmissionsRecords } from '../../../services/carbon'
@@ -67,6 +69,7 @@ const emptyMetrics: ESGMetrics = {
 export function ESGReport() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -77,6 +80,7 @@ export function ESGReport() {
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.CARBON_ESG_LOAD, 'CARBON_ESG_LOAD')
     } finally {
       setLoading(false)
     }

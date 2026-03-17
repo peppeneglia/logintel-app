@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { mockWeeklyPlan } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
 import { RiskBadge } from '../../../components/RiskBadge'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
@@ -121,8 +123,10 @@ interface WeeklyResult {
 
 export function WeeklyPlan() {
   const isDemo = useAuthStore((s) => s.isDemo)
+  const { canAfford, consume } = useCredits()
   const [showResults, setShowResults] = useState(isDemo)
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(false)
   const [error, setError] = useState('')
   const [apiResults, setApiResults] = useState<WeeklyResult[]>([])
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
@@ -143,12 +147,22 @@ export function WeeklyPlan() {
     const validRoutes = routes.filter((r) => r.origin.trim() && r.destination.trim() && r.day.trim())
     if (validRoutes.length === 0) return
 
+    const totalCost = CREDIT_COSTS.WEEKLY_PLAN_ROUTE * validRoutes.length
+    if (!canAfford(totalCost)) {
+      console.warn('Crediti insufficienti per WEEKLY_PLAN_ROUTE')
+      setError('Crediti insufficienti per eseguire questa operazione')
+      return
+    }
+
     setLoading(true)
+    setCooldown(true)
+    setTimeout(() => setCooldown(false), 3000)
     setError('')
     setShowResults(false)
     setExpandedIdx(null)
 
     if (isDemo) {
+      await consume(totalCost, 'WEEKLY_PLAN_ROUTE')
       setTimeout(() => {
         setLoading(false)
         setShowResults(true)
@@ -177,6 +191,7 @@ export function WeeklyPlan() {
       )
       setApiResults(results)
       setShowResults(true)
+      await consume(totalCost, 'WEEKLY_PLAN_ROUTE')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella generazione del piano')
     } finally {
@@ -231,7 +246,7 @@ export function WeeklyPlan() {
           </button>
           <button
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={loading || cooldown}
             className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white font-medium rounded-xl hover:from-emerald-600 hover:to-emerald-800 transition-colors text-sm disabled:opacity-60"
           >
             {loading ? 'Generazione in corso...' : 'Genera piano'}

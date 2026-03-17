@@ -29,7 +29,7 @@ export interface PredictionResult {
   correctedETA: Date
   weatherConditions: WeatherPoint[]
   alternativeRoute?: AlternativeRoute
-  creditsUsed: number
+  creditsCost: number
 }
 
 export interface WeatherPoint {
@@ -62,7 +62,7 @@ export interface PredictionHistoryItem {
   correctedETA: Date
   weatherConditions: WeatherPoint[]
   alternativeRoute?: AlternativeRoute
-  creditsUsed: number
+  creditsCost: number
   actualDelay?: number
   feedbackGiven: boolean
 }
@@ -95,8 +95,8 @@ export interface UserProfile {
   company: string
   role: string
   fleetSize: number
-  plan: 'free' | 'starter' | 'pro' | 'enterprise'
-  creditsUsed: number
-  creditsTotal: number
+  plan: 'free' | 'pro' | 'team' | 'enterprise'
+  creditsRemaining: number
+  creditsDailyLimit: number
 }
 

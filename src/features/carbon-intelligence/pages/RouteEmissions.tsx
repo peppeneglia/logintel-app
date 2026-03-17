@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, Leaf } from 'lucide-react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { mockRouteEmissions } from '../../../data/mockCarbonData'
 import {
   getEmissionsRecords,
@@ -100,6 +102,7 @@ const emptyForm = {
 export function RouteEmissions() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -117,6 +120,7 @@ export function RouteEmissions() {
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.CARBON_EMISSIONS_LOAD, 'CARBON_EMISSIONS_LOAD')
     } finally {
       setLoading(false)
     }
@@ -197,7 +201,13 @@ export function RouteEmissions() {
       if (editingId) {
         await updateEmissionsRecord(editingId, input)
       } else {
+        if (!canAfford(CREDIT_COSTS.CARBON_EMISSIONS_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una registrazione' }])
+          setSaving(false)
+          return
+        }
         await addEmissionsRecord(input)
+        await consume(CREDIT_COSTS.CARBON_EMISSIONS_ADD, 'CARBON_EMISSIONS_ADD')
       }
       closeModal()
       await fetchData()

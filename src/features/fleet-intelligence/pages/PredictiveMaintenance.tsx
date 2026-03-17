@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus } from 'lucide-react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { mockMaintenanceAlerts } from '../../../data/mockFleetData'
 import type { MaintenanceAlert } from '../../../data/mockFleetData'
 import {
@@ -122,6 +124,7 @@ const emptyForm: FormState = {
 export function PredictiveMaintenance() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? ''
+  const { canAfford, consume } = useCredits()
 
   const [supabaseAlerts, setSupabaseAlerts] = useState<MaintenanceAlertRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -139,6 +142,7 @@ export function PredictiveMaintenance() {
     try {
       const rows = await getMaintenanceAlerts(userId)
       setSupabaseAlerts(rows)
+      await consume(CREDIT_COSTS.FLEET_MAINTENANCE_LOAD, 'FLEET_MAINTENANCE_LOAD')
     } finally {
       setLoading(false)
     }
@@ -235,8 +239,15 @@ export function PredictiveMaintenance() {
       if (editingId) {
         const { user_id: _, ...updateData } = payload
         await updateMaintenanceAlert(editingId, updateData)
+        await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
       } else {
+        if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un alert' }])
+          setSaving(false)
+          return
+        }
         await addMaintenanceAlert(payload)
+        await consume(CREDIT_COSTS.FLEET_VEHICLE_ADD, 'FLEET_VEHICLE_ADD')
       }
 
       closeModal()

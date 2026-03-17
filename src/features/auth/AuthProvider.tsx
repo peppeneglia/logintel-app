@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../../stores/authStore'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -6,13 +6,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setDemo = useAuthStore((s) => s.setDemo)
   const initialized = useAuthStore((s) => s.initialized)
   const loading = useAuthStore((s) => s.loading)
+  const [initError, setInitError] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('demo') === 'true') {
-      // Forza la demo, ignora qualsiasi sessione attiva
       setDemo()
-      // Rimuovi il parametro dall'URL senza ricaricare
       const url = new URL(window.location.href)
       url.searchParams.delete('demo')
       window.history.replaceState({}, '', url.pathname)
@@ -20,26 +19,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let subscription: { unsubscribe: () => void } | undefined
-    initialize().then((sub) => {
-      subscription = sub
-    })
+    initialize()
+      .then((sub) => {
+        subscription = sub
+      })
+      .catch(() => {
+        setInitError(true)
+      })
 
     return () => {
       subscription?.unsubscribe()
     }
   }, [initialize, setDemo])
 
-  // Se Supabase non è configurato e non siamo in demo, bypass auth con utente fittizio
-  // Questo permette di usare la API Railway reale senza autenticazione Supabase
-  const user = useAuthStore((s) => s.user)
-  const isDemo = useAuthStore((s) => s.isDemo)
-  const setBypass = useAuthStore((s) => s.setBypass)
-
-  useEffect(() => {
-    if (initialized && !loading && !user && !isDemo) {
-      setBypass()
-    }
-  }, [initialized, loading, user, isDemo, setBypass])
+  // No more auto-bypass. If Supabase fails, show error page.
+  if (initError) {
+    return (
+      <div className="h-screen bg-[#0f172a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 max-w-md text-center px-4">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/15 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-white">Servizio temporaneamente non disponibile</h1>
+          <p className="text-sm text-slate-400">
+            Stiamo riscontrando difficoltà tecniche. Riprova tra qualche minuto.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+          >
+            Riprova
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!initialized || loading) {
     return (

@@ -7,6 +7,8 @@ import { getVehicles, addVehicle, updateVehicle, deleteVehicle } from '../../../
 import type { VehicleRow, VehicleInput } from '../../../services/fleet'
 import { validateVehicleForm, isItalianPlateFormat } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 
 // ── Status maps ──
 
@@ -113,6 +115,7 @@ import { Field, NumericInput, AutocompleteInput, EURO_CLASS_OPTIONS, VEHICLE_BRA
 export function FleetOverview() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<VehicleRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -131,6 +134,7 @@ export function FleetOverview() {
     try {
       const rows = await getVehicles(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
     } finally {
       setLoading(false)
     }
@@ -224,8 +228,15 @@ export function FleetOverview() {
       }
       if (editingId) {
         await updateVehicle(editingId, input)
+        await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
       } else {
+        if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
+          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un veicolo' }])
+          setSaving(false)
+          return
+        }
         await addVehicle(input)
+        await consume(CREDIT_COSTS.FLEET_VEHICLE_ADD, 'FLEET_VEHICLE_ADD')
       }
       closeModal()
       await fetchData()

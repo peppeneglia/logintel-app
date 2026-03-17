@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BarChart3 } from 'lucide-react'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { mockEmissionsHistory } from '../../../data/mockCarbonData'
 import { getEmissionsRecords } from '../../../services/carbon'
 import type { EmissionsRecordRow } from '../../../services/carbon'
@@ -38,6 +40,7 @@ function aggregateByMonth(records: EmissionsRecordRow[]): EmissionsMonthly[] {
 export function EmissionsHistory() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
+  const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -48,6 +51,7 @@ export function EmissionsHistory() {
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
+      await consume(CREDIT_COSTS.CARBON_EMISSIONS_LOAD, 'CARBON_EMISSIONS_LOAD')
     } finally {
       setLoading(false)
     }
