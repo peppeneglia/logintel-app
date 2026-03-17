@@ -23,6 +23,16 @@
     height: 100%;
   }
 
+  /* Override browser autofill background color */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #334155 inset !important;
+    -webkit-text-fill-color: #fff !important;
+    caret-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
   ::-webkit-scrollbar {
     width: 12px;
   }

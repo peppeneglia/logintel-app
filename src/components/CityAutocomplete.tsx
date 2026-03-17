@@ -125,6 +125,20 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
     }
   }, [])
 
+  const handleBlur = () => {
+    // Auto-select the first suggestion when the user leaves the input
+    setTimeout(() => {
+      if (suggestions.length > 0 && value.trim().length >= 2) {
+        // Only auto-select if no coords were already set (user didn't click a suggestion)
+        const alreadySelected = value.includes(',')
+        if (!alreadySelected) {
+          handleSelect(suggestions[0])
+        }
+      }
+      setOpen(false)
+    }, 200)
+  }
+
   return (
     <div ref={wrapperRef} className="relative">
       <input
@@ -132,6 +146,7 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
         value={value}
         onChange={(e) => handleInput(e.target.value)}
         onFocus={() => { if (suggestions.length > 0) setOpen(true) }}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className={className}
       />
