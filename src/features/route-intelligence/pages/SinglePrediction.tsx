@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { mockSinglePrediction } from '../../../data/mockData'
+import { mockSinglePrediction, mockDemoPrediction } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
@@ -7,7 +7,6 @@ import type { CitySelection } from '../../../components/CityAutocomplete'
 import { RouteMap } from '../../../components/RouteMap'
 import { predictRoute } from '../../../services/api'
 import type { PredictionResponse } from '../../../services/api'
-import type { WeatherCondition } from '../../../types'
 
 const weatherEmoji: Record<string, string> = {
   clear: '\u2600\uFE0F',
@@ -325,91 +324,138 @@ export function SinglePrediction() {
         </div>
       )}
 
-      {/* Demo result */}
-      {isDemo && showResult && !loading && prediction && (
+      {/* Demo result — same UI as real mode */}
+      {isDemo && showResult && !loading && prediction && (() => {
+        const demo = mockDemoPrediction
+        const demoDistanceKm = demo.segments.reduce((sum, s) => sum + s.length_km, 0)
+        const demoDeparture = prediction.departureTime
+        const demoArrival = prediction.correctedETA
+        return (
         <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-white">{prediction.origin} &rarr; {prediction.destination}</h2>
-              <p className="text-sm text-slate-500">{formatDateTime(prediction.departureTime)}</p>
+              <p className="text-sm text-slate-500">{formatDateTime(demoDeparture)}</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-3">
+
+          {/* ETA — partenza → arrivo */}
+          <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-4">
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-xs text-slate-500">Partenza</p>
+                <p className="text-2xl font-bold text-white">{formatDateTime(demoDeparture)}</p>
+              </div>
+              <span className="text-slate-500 text-2xl">&rarr;</span>
+              <div>
+                <p className="text-xs text-slate-500">Arrivo</p>
+                <p className="text-2xl font-bold text-white">{formatDateTime(demoArrival)}</p>
+              </div>
+            </div>
+            {demo.total_delay_minutes > 0 && (
+              <p className="text-sm text-slate-400 mt-2">
+                Ritardo meteo: <span className="text-red-400 font-semibold">+{Math.round(demo.total_delay_minutes)} min</span>
+              </p>
+            )}
+          </div>
+
+          {/* Delay + Confidence + Distanza */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-1">Ritardo stimato</p>
-              <p className={`text-4xl font-bold ${getDelayColor(prediction.estimatedDelay)}`}>+{prediction.estimatedDelay} min</p>
+              <p className={`text-4xl font-bold ${getDelayColor(demo.total_delay_minutes)}`}>+{Math.round(demo.total_delay_minutes)} min</p>
             </div>
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-2">Confidenza</p>
-              <ConfidenceBar value={prediction.confidence} />
+              <ConfidenceBar value={demo.confidence.overall} />
+              <p className="text-xs text-slate-500 mt-1">Livello: {confidenceLevelIT[demo.confidence.level] || demo.confidence.level}</p>
+            </div>
+            <div className="bg-[#334155] rounded-xl p-4">
+              <p className="text-sm text-slate-400 mb-1">Distanza totale</p>
+              <p className="text-2xl font-bold text-white">{Math.round(demoDistanceKm)} km</p>
             </div>
           </div>
+
+          {/* Segmenti del percorso */}
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">Condizioni meteo lungo il percorso</h3>
+            <h3 className="text-sm font-semibold text-slate-300 mb-3">Segmenti del percorso</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#334155]">
-                    <th className="text-left py-2 px-3 font-medium text-slate-400">Localita</th>
-                    <th className="text-left py-2 px-3 font-medium text-slate-400">Km</th>
-                    <th className="text-left py-2 px-3 font-medium text-slate-400">Condizioni</th>
-                    <th className="text-left py-2 px-3 font-medium text-slate-400">Temperatura</th>
-                    <th className="text-left py-2 px-3 font-medium text-slate-400">Impatto</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">#</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Distanza</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Tipo strada</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Altitudine</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Meteo</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Ritardo</th>
+                    <th className="text-left py-2 px-3 font-medium text-slate-400">Orario</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {prediction.weatherConditions.map((wp, idx) => (
-                    <tr key={idx} className="border-b border-[#334155]">
-                      <td className="py-2 px-3 text-white">{wp.location}</td>
-                      <td className="py-2 px-3 text-slate-400">{wp.km}</td>
+                  {demo.segments.map((seg) => (
+                    <tr key={seg.index} className="border-b border-[#334155]">
+                      <td className="py-2 px-3 text-slate-400">{seg.index + 1}</td>
+                      <td className="py-2 px-3 text-white">{seg.length_km.toFixed(1)} km</td>
+                      <td className="py-2 px-3 text-slate-400">{roadTypeIT[seg.factors.road_type as string] || seg.factors.road_type || '—'}</td>
+                      <td className="py-2 px-3 text-slate-400">{Math.round(seg.factors.altitude_m)} m</td>
                       <td className="py-2 px-3">
-                        <span className="mr-1">{weatherEmoji[wp.condition as WeatherCondition]}</span>
-                        <span className="text-slate-400">{wp.condition.replace('_', ' ')}</span>
-                      </td>
-                      <td className="py-2 px-3 text-slate-400">{wp.temperature}°C</td>
-                      <td className="py-2 px-3">
-                        {wp.impactMinutes > 0 ? (
-                          <span className="text-orange-400 font-medium">+{wp.impactMinutes} min</span>
-                        ) : (
-                          <span className="text-emerald-400">Nessuno</span>
+                        {seg.weather.length > 0 ? seg.weather.map((w, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 mr-2">
+                            <span>{weatherEmoji[w.type] || '\u2600\uFE0F'}</span>
+                            <span className={`text-xs ${getWeatherColor(w.severity)}`}>{translateWeather(w.type, w.severity)}</span>
+                          </span>
+                        )) : (
+                          <span className="text-emerald-400 text-xs">
+                            {getClearEmoji(seg.estimated_arrival)} Sereno
+                          </span>
                         )}
                       </td>
+                      <td className="py-2 px-3">
+                        {seg.delay_minutes > 0 ? (
+                          <span className="font-semibold text-red-400">+{seg.delay_minutes.toFixed(1)} min</span>
+                        ) : (
+                          <span className="text-emerald-400">0 min</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-slate-400 text-xs">{new Date(seg.estimated_arrival).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-          {prediction.estimatedDelay > 15 && prediction.alternativeRoute && (
+
+          {/* Mappa del percorso */}
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-300 mb-3">Mappa del percorso</h3>
+            <RouteMap key={demo.id} segments={demo.segments} />
+          </div>
+
+          {/* Percorsi alternativi */}
+          {demo.alternatives && demo.alternatives.length > 0 && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 mb-3">
-              <h3 className="text-sm font-semibold text-emerald-400 mb-2">Percorso alternativo consigliato</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-emerald-300"><span className="font-medium">{prediction.alternativeRoute.name}</span> &mdash; {prediction.alternativeRoute.distance} km</p>
-                  <p className="text-sm text-emerald-400">Ritardo stimato: +{prediction.alternativeRoute.estimatedDelay} min</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-emerald-400">-{prediction.alternativeRoute.savings} min</p>
-                  <p className="text-xs text-emerald-400">risparmio</p>
-                </div>
+              <h3 className="text-sm font-semibold text-emerald-400 mb-3">Percorsi alternativi</h3>
+              <div className="space-y-3">
+                {demo.alternatives.map((alt) => (
+                  <div key={alt.route_index} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-emerald-300 font-medium">{alt.summary}</p>
+                      <p className="text-xs text-slate-400">{Math.round(alt.distance_km)} km &mdash; {Math.round(alt.duration_minutes)} min</p>
+                      <p className="text-xs text-emerald-400">Ritardo: +{Math.round(alt.total_delay_minutes)} min</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-emerald-400">-{Math.round(alt.delay_savings_minutes)} min</p>
+                      <p className="text-xs text-emerald-400">risparmio</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
-          <div className="bg-[#334155] rounded-xl p-4 mb-3">
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-xs text-slate-400">ETA originale</p>
-                <p className="text-sm font-medium text-slate-300">{formatDateTime(prediction.originalETA)}</p>
-              </div>
-              <span className="text-slate-500">&rarr;</span>
-              <div>
-                <p className="text-xs text-slate-400">ETA corretta</p>
-                <p className="text-sm font-semibold text-white">{formatDateTime(prediction.correctedETA)}</p>
-              </div>
-            </div>
-          </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* API result (real users) */}
       {!isDemo && showResult && !loading && result && (

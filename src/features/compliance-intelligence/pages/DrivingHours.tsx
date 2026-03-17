@@ -1,6 +1,75 @@
+import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { Clock, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockDrivingHours } from '../../../data/mockComplianceData'
-import { useUnavailable } from '../../../hooks/useUnavailable'
-import { UnavailableToast } from '../../../components/UnavailableToast'
+import { useAuthStore } from '../../../stores/authStore'
+import { Modal } from '../../../components/Modal'
+import {
+  getDrivingHours, addDrivingHoursRecord, updateDrivingHoursRecord, deleteDrivingHoursRecord,
+  checkDrivingViolation, MAX_DAILY_DRIVING_MINUTES,
+} from '../../../services/compliance'
+import type { DrivingHoursRow, DrivingHoursInput } from '../../../services/compliance'
+
+// ── Status maps ──
+
+const statusBadge: Record<string, string> = {
+  ok: 'bg-emerald-500/10 text-emerald-400',
+  warning: 'bg-amber-500/10 text-amber-400',
+  violation: 'bg-red-500/10 text-red-400',
+  // legacy mock statuses
+  compliant: 'bg-emerald-500/10 text-emerald-400',
+}
+
+const statusLabel: Record<string, string> = {
+  ok: 'Conforme',
+  warning: 'Attenzione',
+  violation: 'Violazione',
+  compliant: 'Conforme',
+}
+
+// ── Unified display type ──
+
+interface DisplayRecord {
+  id: string
+  driver: string
+  date: string
+  driving_minutes: number
+  break_minutes: number
+  start_time: string
+  end_time: string
+  rest_minutes_after: number
+  status: string
+}
+
+function mockToDisplay(r: (typeof mockDrivingHours)[number]): DisplayRecord {
+  return {
+    id: r.id,
+    driver: r.driver,
+    date: r.date,
+    driving_minutes: r.drivingMinutes,
+    break_minutes: r.restMinutes,
+    start_time: '06:00',
+    end_time: '18:00',
+    rest_minutes_after: r.remainingDrivingMinutes > 0 ? 600 : 300,
+    status: r.status === 'compliant' ? 'ok' : r.status,
+  }
+}
+
+function rowToDisplay(r: DrivingHoursRow): DisplayRecord {
+  const status = checkDrivingViolation(r.driving_minutes, r.rest_minutes_after)
+  return {
+    id: r.id,
+    driver: r.driver,
+    date: r.date,
+    driving_minutes: r.driving_minutes,
+    break_minutes: r.break_minutes,
+    start_time: r.start_time,
+    end_time: r.end_time,
+    rest_minutes_after: r.rest_minutes_after,
+    status,
+  }
+}
+
+// ── Helpers ──
 
 function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)
@@ -8,86 +77,378 @@ function formatMinutes(minutes: number): string {
   return `${h}:${m.toString().padStart(2, '0')}`
 }
 
-const statusBadge: Record<string, string> = {
-  compliant: 'bg-emerald-500/10 text-emerald-400',
-  warning: 'bg-amber-500/10 text-amber-400',
-  violation: 'bg-red-500/10 text-red-400',
+// ── Empty form defaults ──
+
+const emptyForm: DisplayRecord = {
+  id: '',
+  driver: '',
+  date: new Date().toISOString().slice(0, 10),
+  driving_minutes: 0,
+  break_minutes: 0,
+  start_time: '06:00',
+  end_time: '15:00',
+  rest_minutes_after: 660,
+  status: 'ok',
 }
 
-const statusLabel: Record<string, string> = {
-  compliant: 'Conforme',
-  warning: 'Attenzione',
-  violation: 'Violazione',
+// ── Input component ──
+
+const inputCls =
+  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+      {children}
+    </div>
+  )
 }
+
+// ── Main component ──
 
 export function DrivingHours() {
-  const { isDemo, show, guard: _guard, close } = useUnavailable()
+  const isDemo = useAuthStore((s) => s.isDemo)
+  const userId = useAuthStore((s) => s.user?.id)
 
-  const data = isDemo ? mockDrivingHours : []
+  const [supabaseData, setSupabaseData] = useState<DrivingHoursRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState<DisplayRecord>(emptyForm)
+  const [saving, setSaving] = useState(false)
 
-  const compliant = data.filter((r) => r.status === 'compliant').length
-  const warning = data.filter((r) => r.status === 'warning').length
-  const violation = data.filter((r) => r.status === 'violation').length
+  // ── Fetch from Supabase ──
+
+  const fetchData = useCallback(async () => {
+    if (isDemo || !userId) return
+    setLoading(true)
+    try {
+      const rows = await getDrivingHours(userId)
+      setSupabaseData(rows)
+    } finally {
+      setLoading(false)
+    }
+  }, [isDemo, userId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  // ── Display records ──
+
+  const records: DisplayRecord[] = isDemo
+    ? mockDrivingHours.map(mockToDisplay)
+    : supabaseData.map(rowToDisplay)
+
+  // ── Summary counts ──
+
+  const okCount = records.filter((r) => r.status === 'ok').length
+  const warningCount = records.filter((r) => r.status === 'warning').length
+  const violationCount = records.filter((r) => r.status === 'violation').length
+
+  // ── Modal handlers ──
+
+  function openAdd() {
+    setEditingId(null)
+    setForm(emptyForm)
+    setModalOpen(true)
+  }
+
+  function openEdit(r: DisplayRecord) {
+    if (isDemo) return
+    setEditingId(r.id)
+    setForm({ ...r })
+    setModalOpen(true)
+  }
+
+  function closeModal() {
+    setModalOpen(false)
+    setEditingId(null)
+    setForm(emptyForm)
+  }
+
+  function updateField<K extends keyof DisplayRecord>(key: K, value: DisplayRecord[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (!userId) return
+    setSaving(true)
+    try {
+      const input: DrivingHoursInput = {
+        user_id: userId,
+        driver: form.driver.trim(),
+        date: form.date,
+        driving_minutes: Number(form.driving_minutes),
+        break_minutes: Number(form.break_minutes),
+        start_time: form.start_time,
+        end_time: form.end_time,
+        rest_minutes_after: Number(form.rest_minutes_after),
+      }
+      if (editingId) {
+        await updateDrivingHoursRecord(editingId, input)
+      } else {
+        await addDrivingHoursRecord(input)
+      }
+      closeModal()
+      await fetchData()
+    } catch (err) {
+      console.error('Errore salvataggio ore guida:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Eliminare questo record? L\'operazione non è reversibile.')) return
+    try {
+      await deleteDrivingHoursRecord(id)
+      await fetchData()
+    } catch (err) {
+      console.error('Errore eliminazione ore guida:', err)
+    }
+  }
+
+  // ── Render ──
 
   return (
     <div>
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Ore Guida & Riposo</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
+          Ore Guida & Riposo
+        </h1>
+        {isDemo ? (
+          <button
+            disabled
+            title="Disponibile solo con un account registrato"
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 text-slate-500 rounded-xl text-sm font-medium cursor-not-allowed"
+          >
+            <Plus size={16} /> Aggiungi
+          </button>
+        ) : (
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+          >
+            <Plus size={16} /> Aggiungi
+          </button>
+        )}
+      </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Autisti conformi</p>
-          <p className="text-xl font-bold text-emerald-400">{compliant}</p>
+          <p className="text-xl font-bold text-emerald-400">{okCount}</p>
         </div>
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">In warning</p>
-          <p className="text-xl font-bold text-amber-400">{warning}</p>
+          <p className="text-xl font-bold text-amber-400">{warningCount}</p>
         </div>
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">In violazione</p>
-          <p className="text-xl font-bold text-red-400">{violation}</p>
+          <p className="text-xl font-bold text-red-400">{violationCount}</p>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
-        <h2 className="text-sm font-semibold text-slate-300 mb-4">Dettaglio ore guida giornaliere</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#334155]">
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Autista</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Data</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Guida</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Riposo</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Rimanente</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Sett. (h)</th>
-                <th className="text-left py-3 px-3 font-medium text-slate-400">Stato</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.length === 0 ? (
-                <tr><td colSpan={7} className="py-6 px-3 text-center text-slate-500">Nessun dato disponibile.</td></tr>
-              ) : data.map((record) => (
-                <tr key={record.id} className="border-b border-[#334155]">
-                  <td className="py-3 px-3 text-white font-medium">{record.driver}</td>
-                  <td className="py-3 px-3 text-slate-400">{record.date}</td>
-                  <td className="py-3 px-3 text-slate-300">{formatMinutes(record.drivingMinutes)}</td>
-                  <td className="py-3 px-3 text-slate-300">{formatMinutes(record.restMinutes)}</td>
-                  <td className="py-3 px-3 text-slate-300">{formatMinutes(record.remainingDrivingMinutes)}</td>
-                  <td className="py-3 px-3 text-slate-300">{record.weeklyDrivingHours}</td>
-                  <td className="py-3 px-3">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[record.status]}`}>
-                      {statusLabel[record.status]}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-slate-300">Dettaglio ore guida giornaliere</h2>
+          <span className="text-xs text-slate-500">Max giornaliero EU: {formatMinutes(MAX_DAILY_DRIVING_MINUTES)}</span>
         </div>
+
+        {loading ? (
+          <p className="text-sm text-slate-500 py-8 text-center">Caricamento...</p>
+        ) : records.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mb-4">
+              <Clock size={28} className="text-slate-600" />
+            </div>
+            <p className="text-white font-semibold mb-1">Nessun record registrato</p>
+            <p className="text-sm text-slate-500 mb-5 max-w-xs">
+              Aggiungi il primo record di ore guida per monitorare la conformità dei tuoi autisti.
+            </p>
+            {!isDemo && (
+              <button
+                onClick={openAdd}
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+              >
+                <Plus size={16} /> Aggiungi
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#334155]">
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Autista</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Data</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Guida</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Pausa</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Inizio</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Fine</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Riposo Dopo</th>
+                  <th className="text-left py-3 px-3 font-medium text-slate-400">Stato</th>
+                  {!isDemo && (
+                    <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((record) => (
+                  <tr
+                    key={record.id}
+                    className={`border-b border-[#334155] ${!isDemo ? 'cursor-pointer hover:bg-[#253347] transition-colors' : ''}`}
+                    onClick={() => openEdit(record)}
+                  >
+                    <td className="py-3 px-3 text-white font-medium">{record.driver}</td>
+                    <td className="py-3 px-3 text-slate-400">{record.date}</td>
+                    <td className="py-3 px-3 text-slate-300">{formatMinutes(record.driving_minutes)}</td>
+                    <td className="py-3 px-3 text-slate-300">{formatMinutes(record.break_minutes)}</td>
+                    <td className="py-3 px-3 text-slate-300">{record.start_time}</td>
+                    <td className="py-3 px-3 text-slate-300">{record.end_time}</td>
+                    <td className="py-3 px-3 text-slate-300">{formatMinutes(record.rest_minutes_after)}</td>
+                    <td className="py-3 px-3">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge[record.status] || 'bg-slate-500/10 text-slate-400'}`}>
+                        {statusLabel[record.status] || record.status}
+                      </span>
+                    </td>
+                    {!isDemo && (
+                      <td className="py-3 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openEdit(record) }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
+                            title="Modifica"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(record.id) }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Elimina"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      <UnavailableToast show={show} onClose={close} />
+
+      {/* Add / Edit Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? 'Modifica record' : 'Nuovo record ore guida'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Autista">
+              <input
+                required
+                value={form.driver}
+                onChange={(e) => updateField('driver', e.target.value)}
+                placeholder="es. Marco Bianchi"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Data">
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => updateField('date', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Minuti Guida">
+              <input
+                type="number"
+                required
+                min={0}
+                max={1440}
+                value={form.driving_minutes}
+                onChange={(e) => updateField('driving_minutes', Number(e.target.value))}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Minuti Pausa">
+              <input
+                type="number"
+                required
+                min={0}
+                max={1440}
+                value={form.break_minutes}
+                onChange={(e) => updateField('break_minutes', Number(e.target.value))}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Ora Inizio">
+              <input
+                type="time"
+                required
+                value={form.start_time}
+                onChange={(e) => updateField('start_time', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Ora Fine">
+              <input
+                type="time"
+                required
+                value={form.end_time}
+                onChange={(e) => updateField('end_time', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          <Field label="Riposo Dopo (min)">
+            <input
+              type="number"
+              required
+              min={0}
+              max={1440}
+              value={form.rest_minutes_after}
+              onChange={(e) => updateField('rest_minutes_after', Number(e.target.value))}
+              className={inputCls}
+            />
+          </Field>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 border border-slate-600 rounded-xl text-sm font-medium text-slate-300 hover:bg-[#334155] transition-colors"
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Salvataggio...' : editingId ? 'Salva modifiche' : 'Aggiungi'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

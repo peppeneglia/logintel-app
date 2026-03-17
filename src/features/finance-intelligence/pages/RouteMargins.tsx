@@ -1,32 +1,181 @@
+import { useState, useEffect, useCallback } from 'react'
+import { Modal } from '../../../components/Modal'
+import { useAuthStore } from '../../../stores/authStore'
+import { getRouteMargins, addRouteMargin, updateRouteMargin, deleteRouteMargin, computeMargin } from '../../../services/finance'
+import type { RouteMarginRow, RouteMarginInput } from '../../../services/finance'
 import { mockRouteMargins } from '../../../data/mockFinanceData'
-import { useUnavailable } from '../../../hooks/useUnavailable'
-import { UnavailableToast } from '../../../components/UnavailableToast'
+
+function euro(value: number): string {
+  return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
+}
+
+const SIGNAL_COLORS: Record<string, string> = {
+  green: 'bg-emerald-500/10 text-emerald-400',
+  yellow: 'bg-amber-500/10 text-amber-400',
+  red: 'bg-red-500/10 text-red-400',
+}
+
+const EMPTY_FORM: RouteMarginInput = {
+  user_id: '',
+  route: '',
+  customer: '',
+  date: new Date().toISOString().slice(0, 10),
+  km: 0,
+  driving_hours: 0,
+  revenue: 0,
+  fuel_cost: 0,
+  driver_cost: 0,
+  fixed_cost: 0,
+  tolls: 0,
+  vehicle_id: null,
+}
+
+/** Map old mock shape to RouteMarginRow for demo mode */
+function mapMockToRow(m: (typeof mockRouteMargins)[number], idx: number): RouteMarginRow {
+  return {
+    id: `mock-${idx}`,
+    user_id: 'demo-user',
+    route: m.rotta,
+    customer: '',
+    date: '2026-02-20',
+    km: m.km,
+    driving_hours: 0,
+    revenue: m.ricavo,
+    fuel_cost: m.costo * 0.4,
+    driver_cost: m.costo * 0.35,
+    fixed_cost: m.costo * 0.15,
+    tolls: m.costo * 0.1,
+    vehicle_id: null,
+    created_at: new Date().toISOString(),
+  }
+}
 
 export function RouteMargins() {
-  const { isDemo, show, close } = useUnavailable()
-  const data = isDemo ? mockRouteMargins : []
+  const { isDemo, user } = useAuthStore()
+  const userId = user?.id ?? null
 
-  const avgMargin = data.length ? data.reduce((sum, r) => sum + r.marginePct, 0) / data.length : 0
-  const totalRevenue = data.reduce((sum, r) => sum + r.ricavo, 0)
-  const totalProfit = data.reduce((sum, r) => sum + r.margine, 0)
+  const [supabaseData, setSupabaseData] = useState<RouteMarginRow[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState<RouteMarginInput>({ ...EMPTY_FORM })
+
+  const rows: RouteMarginRow[] = isDemo
+    ? mockRouteMargins.map(mapMockToRow)
+    : supabaseData
+
+  const fetchData = useCallback(async () => {
+    if (isDemo || !userId) return
+    const data = await getRouteMargins(userId)
+    setSupabaseData(data)
+  }, [isDemo, userId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  // Compute margins for each row
+  const rowsWithMargin = rows.map((r) => ({ ...r, margin: computeMargin(r) }))
+
+  // KPI totals
+  const totalRevenue = rowsWithMargin.reduce((sum, r) => sum + r.revenue, 0)
+  const totalMarginEur = rowsWithMargin.reduce((sum, r) => sum + r.margin.marginEur, 0)
+  const avgMarginPct = rowsWithMargin.length
+    ? rowsWithMargin.reduce((sum, r) => sum + r.margin.marginPct, 0) / rowsWithMargin.length
+    : 0
+
+  // Modal helpers
+  function openAdd() {
+    setEditingId(null)
+    setForm({ ...EMPTY_FORM, user_id: userId ?? '' })
+    setModalOpen(true)
+  }
+
+  function openEdit(row: RouteMarginRow) {
+    setEditingId(row.id)
+    setForm({
+      user_id: row.user_id,
+      route: row.route,
+      customer: row.customer,
+      date: row.date,
+      km: row.km,
+      driving_hours: row.driving_hours,
+      revenue: row.revenue,
+      fuel_cost: row.fuel_cost,
+      driver_cost: row.driver_cost,
+      fixed_cost: row.fixed_cost,
+      tolls: row.tolls,
+      vehicle_id: row.vehicle_id,
+    })
+    setModalOpen(true)
+  }
+
+  function closeModal() {
+    setModalOpen(false)
+    setEditingId(null)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (editingId) {
+      await updateRouteMargin(editingId, form)
+    } else {
+      await addRouteMargin(form)
+    }
+    closeModal()
+    await fetchData()
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Eliminare questo record di marginalità?')) return
+    await deleteRouteMargin(id)
+    await fetchData()
+  }
+
+  function setField<K extends keyof RouteMarginInput>(key: K, value: RouteMarginInput[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function setNumField(key: keyof RouteMarginInput, raw: string) {
+    const num = parseFloat(raw) || 0
+    setField(key, num as never)
+  }
+
+  // Preview margin in modal
+  const formPreview = computeMargin({
+    ...form,
+    id: '',
+    created_at: '',
+  } as RouteMarginRow)
 
   return (
     <div>
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Marginalità per Rotta</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
+          Marginalità per Rotta
+        </h1>
+        <button
+          onClick={openAdd}
+          disabled={isDemo}
+          title={isDemo ? 'Registrati per aggiungere dati' : undefined}
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          + Aggiungi
+        </button>
+      </div>
 
-      {/* Summary cards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Ricavo totale</p>
-          <p className="text-xl font-bold text-white">€{totalRevenue.toLocaleString('it-IT')}</p>
+          <p className="text-xl font-bold text-white">{euro(totalRevenue)}</p>
         </div>
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Margine totale</p>
-          <p className="text-xl font-bold text-emerald-400">€{totalProfit.toLocaleString('it-IT')}</p>
+          <p className="text-xl font-bold text-emerald-400">{euro(totalMarginEur)}</p>
         </div>
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Margine medio</p>
-          <p className="text-xl font-bold text-primary-400">{avgMargin.toFixed(1)}%</p>
+          <p className="text-xl font-bold text-primary-400">{avgMarginPct.toFixed(1)}%</p>
         </div>
       </div>
 
@@ -38,39 +187,219 @@ export function RouteMargins() {
             <thead>
               <tr className="border-b border-[#334155]">
                 <th className="text-left py-3 px-3 font-medium text-slate-400">Rotta</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Cliente</th>
+                <th className="text-left py-3 px-3 font-medium text-slate-400">Data</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Km</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Ricavo</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Costo</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Margine</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Margine %</th>
+                {!isDemo && <th className="text-right py-3 px-3 font-medium text-slate-400">Azioni</th>}
               </tr>
             </thead>
             <tbody>
-              {data.length === 0 ? (
-                <tr><td colSpan={6} className="py-6 text-center text-slate-500">Nessun dato disponibile.</td></tr>
-              ) : data.map((r) => (
-                <tr key={r.id} className="border-b border-[#334155]">
-                  <td className="py-3 px-3 text-white font-medium">{r.rotta}</td>
-                  <td className="py-3 px-3 text-slate-300 text-right">{r.km}</td>
-                  <td className="py-3 px-3 text-slate-300 text-right">€{r.ricavo.toLocaleString('it-IT')}</td>
-                  <td className="py-3 px-3 text-slate-300 text-right">€{r.costo.toLocaleString('it-IT')}</td>
-                  <td className="py-3 px-3 text-emerald-400 text-right font-medium">€{r.margine.toLocaleString('it-IT')}</td>
-                  <td className="py-3 px-3 text-right">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                      r.marginePct >= 30 ? 'bg-emerald-500/10 text-emerald-400' :
-                      r.marginePct >= 20 ? 'bg-amber-500/10 text-amber-400' :
-                      'bg-red-500/10 text-red-400'
-                    }`}>
-                      {r.marginePct}%
-                    </span>
+              {rowsWithMargin.length > 0 ? (
+                rowsWithMargin.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-b border-[#334155] hover:bg-[#263348] cursor-pointer transition-colors"
+                    onClick={() => !isDemo && openEdit(r)}
+                  >
+                    <td className="py-3 px-3 text-white font-medium">{r.route}</td>
+                    <td className="py-3 px-3 text-slate-300">{r.customer || '—'}</td>
+                    <td className="py-3 px-3 text-slate-400">{r.date}</td>
+                    <td className="py-3 px-3 text-slate-300 text-right">{r.km}</td>
+                    <td className="py-3 px-3 text-slate-300 text-right">{euro(r.revenue)}</td>
+                    <td className="py-3 px-3 text-slate-300 text-right">{euro(r.margin.totalCost)}</td>
+                    <td className="py-3 px-3 text-emerald-400 text-right font-medium">{euro(r.margin.marginEur)}</td>
+                    <td className="py-3 px-3 text-right">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${SIGNAL_COLORS[r.margin.signal]}`}>
+                        {r.margin.marginPct.toFixed(1)}%
+                      </span>
+                    </td>
+                    {!isDemo && (
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(r.id) }}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium"
+                        >
+                          Elimina
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={isDemo ? 8 : 9} className="py-8 text-center text-sm text-slate-500">
+                    Nessun dato disponibile.
+                    {!isDemo && (
+                      <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
+                        Aggiungi marginalità
+                      </button>
+                    )}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
-      <UnavailableToast show={show} onClose={close} />
+
+      {/* Modal */}
+      <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Marginalità' : 'Nuova Marginalità Rotta'}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Rotta</label>
+              <input
+                type="text"
+                required
+                value={form.route}
+                onChange={(e) => setField('route', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Cliente</label>
+              <input
+                type="text"
+                value={form.customer}
+                onChange={(e) => setField('customer', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Data</label>
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => setField('date', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Km</label>
+              <input
+                type="number"
+                required
+                min={0}
+                value={form.km}
+                onChange={(e) => setNumField('km', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Ore Guida</label>
+              <input
+                type="number"
+                required
+                min={0}
+                step="0.5"
+                value={form.driving_hours}
+                onChange={(e) => setNumField('driving_hours', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Ricavo</label>
+            <input
+              type="number"
+              required
+              min={0}
+              step="0.01"
+              value={form.revenue}
+              onChange={(e) => setNumField('revenue', e.target.value)}
+              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Carburante</label>
+              <input
+                type="number"
+                required
+                min={0}
+                step="0.01"
+                value={form.fuel_cost}
+                onChange={(e) => setNumField('fuel_cost', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Autista</label>
+              <input
+                type="number"
+                required
+                min={0}
+                step="0.01"
+                value={form.driver_cost}
+                onChange={(e) => setNumField('driver_cost', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Costi Fissi</label>
+              <input
+                type="number"
+                required
+                min={0}
+                step="0.01"
+                value={form.fixed_cost}
+                onChange={(e) => setNumField('fixed_cost', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Pedaggi</label>
+              <input
+                type="number"
+                required
+                min={0}
+                step="0.01"
+                value={form.tolls}
+                onChange={(e) => setNumField('tolls', e.target.value)}
+                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+
+          {/* Computed preview */}
+          <div className="rounded-xl bg-[#0f172a] border border-[#334155] p-3 text-sm">
+            <div className="flex justify-between text-slate-400">
+              <span>Costo totale</span>
+              <span className="text-white font-semibold">{euro(formPreview.totalCost)}</span>
+            </div>
+            <div className="flex justify-between text-slate-400 mt-1">
+              <span>Margine</span>
+              <span className={`font-semibold ${formPreview.marginEur >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {euro(formPreview.marginEur)}
+              </span>
+            </div>
+            <div className="flex justify-between text-slate-400 mt-1">
+              <span>Margine %</span>
+              <span className={`font-semibold ${SIGNAL_COLORS[formPreview.signal]} px-2 py-0.5 rounded-full text-xs`}>
+                {formPreview.marginPct.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              Annulla
+            </button>
+            <button type="submit" className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors">
+              {editingId ? 'Salva' : 'Aggiungi'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

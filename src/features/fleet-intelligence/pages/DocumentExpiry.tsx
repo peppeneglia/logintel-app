@@ -1,27 +1,29 @@
+import { useState, useEffect, useCallback } from 'react'
+import { Modal } from '../../../components/Modal'
+import { useAuthStore } from '../../../stores/authStore'
+import { getDocumentExpiries, addDocumentExpiry, updateDocumentExpiry, deleteDocumentExpiry } from '../../../services/fleet'
+import type { DocumentExpiryRow, DocumentExpiryInput } from '../../../services/fleet'
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
-import { useUnavailable } from '../../../hooks/useUnavailable'
-import { UnavailableToast } from '../../../components/UnavailableToast'
 
-const statusBadge: Record<string, string> = {
+const STATUS_BADGE: Record<string, string> = {
   valid: 'bg-emerald-500/10 text-emerald-400',
   expiring: 'bg-amber-500/10 text-amber-400',
   expired: 'bg-red-500/10 text-red-400',
 }
 
-const statusLabel: Record<string, string> = {
+const STATUS_LABEL: Record<string, string> = {
   valid: 'Valido',
   expiring: 'In Scadenza',
   expired: 'Scaduto',
 }
 
-const holderTypeBadge: Record<string, string> = {
-  vehicle: 'bg-primary-500/10 text-primary-400',
-  driver: 'bg-slate-600 text-slate-300',
-}
-
-const holderTypeLabel: Record<string, string> = {
-  vehicle: 'Veicolo',
-  driver: 'Autista',
+const EMPTY_FORM: DocumentExpiryInput = {
+  user_id: '',
+  vehicle_id: '',
+  document_type: '',
+  document_number: '',
+  expiry_date: '',
+  status: 'valid',
 }
 
 function formatDate(dateStr: string): string {
@@ -30,6 +32,26 @@ function formatDate(dateStr: string): string {
     month: '2-digit',
     year: 'numeric',
   })
+}
+
+function computeStatus(expiryDate: string): 'valid' | 'expiring' | 'expired' {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate)
+  expiry.setHours(0, 0, 0, 0)
+  if (expiry < today) return 'expired'
+  const thirtyDays = new Date(today)
+  thirtyDays.setDate(thirtyDays.getDate() + 30)
+  if (expiry < thirtyDays) return 'expiring'
+  return 'valid'
+}
+
+function computeDaysLeft(expiryDate: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate)
+  expiry.setHours(0, 0, 0, 0)
+  return Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 function daysLeftText(days: number): string {
@@ -44,19 +66,125 @@ function daysLeftColor(days: number): string {
   return 'text-slate-300'
 }
 
-export function DocumentExpiry() {
-  const { isDemo, show, close } = useUnavailable()
-  const documents = isDemo ? [...mockDocumentExpiries].sort((a, b) => a.daysLeft - b.daysLeft) : []
+/** Map old mock shape to DocumentExpiryRow for demo mode */
+function mapMockToRow(m: (typeof mockDocumentExpiries)[number]): DocumentExpiryRow {
+  return {
+    id: m.id,
+    user_id: 'demo-user',
+    vehicle_id: m.holder,
+    document_type: m.documentType,
+    document_number: null,
+    expiry_date: m.expiryDate,
+    status: m.status,
+    created_at: new Date().toISOString(),
+  }
+}
 
+export function DocumentExpiry() {
+  const { isDemo, user } = useAuthStore()
+  const userId = user?.id ?? null
+
+  const [supabaseData, setSupabaseData] = useState<DocumentExpiryRow[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [form, setForm] = useState<DocumentExpiryInput>({ ...EMPTY_FORM })
+
+  const rawDocuments: DocumentExpiryRow[] = isDemo
+    ? mockDocumentExpiries.map(mapMockToRow)
+    : supabaseData
+
+  // Recompute status client-side and sort by days left
+  const documents = rawDocuments
+    .map((doc) => {
+      const status = computeStatus(doc.expiry_date)
+      return { ...doc, status, _daysLeft: computeDaysLeft(doc.expiry_date) }
+    })
+    .sort((a, b) => a._daysLeft - b._daysLeft)
+
+  const fetchData = useCallback(async () => {
+    if (isDemo || !userId) return
+    const rows = await getDocumentExpiries(userId)
+    setSupabaseData(rows)
+  }, [isDemo, userId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  // KPI
   const expiredCount = documents.filter((d) => d.status === 'expired').length
   const expiringCount = documents.filter((d) => d.status === 'expiring').length
   const validCount = documents.filter((d) => d.status === 'valid').length
 
+  // Modal helpers
+  function openAdd() {
+    setEditingId(null)
+    setForm({ ...EMPTY_FORM, user_id: userId ?? '' })
+    setModalOpen(true)
+  }
+
+  function openEdit(row: DocumentExpiryRow) {
+    setEditingId(row.id)
+    setForm({
+      user_id: row.user_id,
+      vehicle_id: row.vehicle_id,
+      document_type: row.document_type,
+      document_number: row.document_number ?? '',
+      expiry_date: row.expiry_date,
+      status: row.status,
+    })
+    setModalOpen(true)
+  }
+
+  function closeModal() {
+    setModalOpen(false)
+    setEditingId(null)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const status = computeStatus(form.expiry_date)
+    const payload: DocumentExpiryInput = {
+      ...form,
+      document_number: form.document_number || null,
+      status,
+    }
+    if (editingId) {
+      await updateDocumentExpiry(editingId, payload)
+    } else {
+      await addDocumentExpiry(payload)
+    }
+    closeModal()
+    await fetchData()
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Eliminare questo documento?')) return
+    await deleteDocumentExpiry(id)
+    await fetchData()
+  }
+
+  function setField<K extends keyof DocumentExpiryInput>(key: K, value: DocumentExpiryInput[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
   return (
     <div>
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent mb-3">Scadenze & Documenti</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
+          Scadenze & Documenti
+        </h1>
+        <button
+          onClick={openAdd}
+          disabled={isDemo}
+          title={isDemo ? 'Registrati per aggiungere dati' : undefined}
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          + Aggiungi Documento
+        </button>
+      </div>
 
-      {/* Summary Row */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Scaduti</p>
@@ -79,50 +207,133 @@ export function DocumentExpiry() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#334155]">
-                <th className="text-left py-2 px-3 font-medium text-slate-400">Intestatario</th>
-                <th className="text-left py-2 px-3 font-medium text-slate-400">Tipo</th>
-                <th className="text-left py-2 px-3 font-medium text-slate-400">Documento</th>
-                <th className="text-left py-2 px-3 font-medium text-slate-400">Scadenza</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Veicolo (ID)</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Tipo Documento</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Numero Documento</th>
+                <th className="text-left py-2 px-3 font-medium text-slate-400">Data Scadenza</th>
                 <th className="text-right py-2 px-3 font-medium text-slate-400">Giorni</th>
                 <th className="text-left py-2 px-3 font-medium text-slate-400">Stato</th>
+                {!isDemo && <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>}
               </tr>
             </thead>
             <tbody>
-              {documents.length > 0 ? documents.map((doc) => {
-                const rowHighlight =
-                  doc.status === 'expired'
-                    ? 'bg-red-500/5'
-                    : doc.status === 'expiring'
-                      ? 'bg-amber-500/5'
-                      : ''
-                return (
-                  <tr key={doc.id} className={`border-b border-[#334155] ${rowHighlight}`}>
-                    <td className="py-2.5 px-3 font-medium text-white">{doc.holder}</td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${holderTypeBadge[doc.holderType]}`}>
-                        {holderTypeLabel[doc.holderType]}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-300">{doc.documentType}</td>
-                    <td className="py-2.5 px-3 text-slate-300">{formatDate(doc.expiryDate)}</td>
-                    <td className={`py-2.5 px-3 text-right ${daysLeftColor(doc.daysLeft)}`}>
-                      {daysLeftText(doc.daysLeft)}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge[doc.status]}`}>
-                        {statusLabel[doc.status]}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              }) : (
-                <tr><td colSpan={6} className="py-8 text-center text-sm text-slate-500">Nessun documento registrato.</td></tr>
+              {documents.length > 0 ? (
+                documents.map((doc) => {
+                  const rowHighlight =
+                    doc.status === 'expired'
+                      ? 'bg-red-500/5'
+                      : doc.status === 'expiring'
+                        ? 'bg-amber-500/5'
+                        : ''
+                  return (
+                    <tr
+                      key={doc.id}
+                      className={`border-b border-[#334155] hover:bg-[#263348] cursor-pointer transition-colors ${rowHighlight}`}
+                      onClick={() => !isDemo && openEdit(doc)}
+                    >
+                      <td className="py-2.5 px-3 font-medium text-white">{doc.vehicle_id}</td>
+                      <td className="py-2.5 px-3 text-slate-300">{doc.document_type}</td>
+                      <td className="py-2.5 px-3 text-slate-300">{doc.document_number ?? '—'}</td>
+                      <td className="py-2.5 px-3 text-slate-300">{formatDate(doc.expiry_date)}</td>
+                      <td className={`py-2.5 px-3 text-right ${daysLeftColor(doc._daysLeft)}`}>
+                        {daysLeftText(doc._daysLeft)}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[doc.status] ?? ''}`}>
+                          {STATUS_LABEL[doc.status] ?? doc.status}
+                        </span>
+                      </td>
+                      {!isDemo && (
+                        <td className="py-2.5 px-3 text-right">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(doc.id) }}
+                            className="text-red-400 hover:text-red-300 text-xs font-medium"
+                          >
+                            Elimina
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan={isDemo ? 6 : 7} className="py-8 text-center text-sm text-slate-500">
+                    Nessun dato disponibile.
+                    {!isDemo && (
+                      <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
+                        Aggiungi documento
+                      </button>
+                    )}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
-      <UnavailableToast show={show} onClose={close} />
+
+      {/* Modal */}
+      <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Documento' : 'Nuovo Documento'}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Veicolo (ID)</label>
+            <input
+              type="text"
+              required
+              value={form.vehicle_id}
+              onChange={(e) => setField('vehicle_id', e.target.value)}
+              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Tipo Documento</label>
+            <input
+              type="text"
+              required
+              value={form.document_type}
+              onChange={(e) => setField('document_type', e.target.value)}
+              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Numero Documento</label>
+            <input
+              type="text"
+              value={form.document_number ?? ''}
+              onChange={(e) => setField('document_number', e.target.value)}
+              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Data Scadenza</label>
+            <input
+              type="date"
+              required
+              value={form.expiry_date}
+              onChange={(e) => setField('expiry_date', e.target.value)}
+              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          {/* Status preview (auto-computed) */}
+          {form.expiry_date && (
+            <div className="rounded-xl bg-[#0f172a] border border-[#334155] p-3 text-sm flex items-center justify-between">
+              <span className="text-slate-400">Stato calcolato</span>
+              <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[computeStatus(form.expiry_date)]}`}>
+                {STATUS_LABEL[computeStatus(form.expiry_date)]}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              Annulla
+            </button>
+            <button type="submit" className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors">
+              {editingId ? 'Salva' : 'Aggiungi'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }

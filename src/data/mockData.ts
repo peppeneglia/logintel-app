@@ -6,6 +6,7 @@ import type {
   RouteComparison,
   UserProfile,
 } from '../types'
+import type { PredictionResponse } from '../services/api'
 
 // ─── Utente ────────────────────────────────────────
 export const mockUser: UserProfile = {
@@ -43,6 +44,79 @@ export const mockSinglePrediction: PredictionResult = {
     distance: 620,
   },
   creditsUsed: 1,
+}
+
+// ─── Mock PredictionResponse (same format as Railway API) ───
+export const mockDemoPrediction: PredictionResponse = {
+  id: 'demo-pred-001',
+  total_delay_minutes: 22,
+  confidence: {
+    overall: 78,
+    level: 'good',
+    components: {},
+  },
+  segments: [
+    {
+      index: 0,
+      start_point: { lat: 45.4642, lon: 9.1900 },
+      end_point: { lat: 44.8015, lon: 10.3279 },
+      length_km: 122,
+      estimated_arrival: '2026-02-25T09:25:00+01:00',
+      weather: [],
+      factors: { road_type: 'highway', road_factor: 1.0, altitude_m: 64 },
+      delay_minutes: 0,
+    },
+    {
+      index: 1,
+      start_point: { lat: 44.8015, lon: 10.3279 },
+      end_point: { lat: 44.4056, lon: 8.9463 },
+      length_km: 105,
+      estimated_arrival: '2026-02-25T10:30:00+01:00',
+      weather: [{ type: 'rain', severity: 'light', raw_value: 2.1, description: 'Pioggia leggera' }],
+      factors: { road_type: 'highway', road_factor: 1.0, altitude_m: 85 },
+      delay_minutes: 3,
+    },
+    {
+      index: 2,
+      start_point: { lat: 44.4056, lon: 8.9463 },
+      end_point: { lat: 43.7696, lon: 11.2558 },
+      length_km: 115,
+      estimated_arrival: '2026-02-25T11:55:00+01:00',
+      weather: [{ type: 'rain', severity: 'heavy', raw_value: 8.5, description: 'Pioggia forte' }],
+      factors: { road_type: 'highway', road_factor: 1.1, altitude_m: 320 },
+      delay_minutes: 12,
+    },
+    {
+      index: 3,
+      start_point: { lat: 43.7696, lon: 11.2558 },
+      end_point: { lat: 43.4633, lon: 11.8817 },
+      length_km: 80,
+      estimated_arrival: '2026-02-25T12:55:00+01:00',
+      weather: [{ type: 'rain', severity: 'moderate', raw_value: 4.2, description: 'Pioggia moderata' }],
+      factors: { road_type: 'state_road', road_factor: 1.2, altitude_m: 280 },
+      delay_minutes: 7,
+    },
+    {
+      index: 4,
+      start_point: { lat: 43.4633, lon: 11.8817 },
+      end_point: { lat: 41.9028, lon: 12.4964 },
+      length_km: 158,
+      estimated_arrival: '2026-02-25T14:52:00+01:00',
+      weather: [],
+      factors: { road_type: 'highway', road_factor: 1.0, altitude_m: 45 },
+      delay_minutes: 0,
+    },
+  ],
+  alternatives: [
+    {
+      route_index: 1,
+      total_delay_minutes: 8,
+      duration_minutes: 420,
+      distance_km: 620,
+      delay_savings_minutes: 14,
+      summary: 'Via A14 Adriatica',
+    },
+  ],
 }
 
 // ─── Chat conversations mock ──────────────────────
