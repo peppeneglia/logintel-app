@@ -47,11 +47,17 @@ export function useCredits() {
           // Refresh profile in store
           const fetchProfile = useAuthStore.getState().fetchProfile
           await fetchProfile(userId)
+        } else {
+          // Supabase returned false (e.g. profile not found) — update locally as fallback
+          const newRemaining = Math.max(0, creditsRemaining - cost)
+          updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
         }
-        return result.success
-      } catch (err) {
-        console.error('useCredits consume error:', err)
-        return false
+        return true
+      } catch {
+        // Supabase unreachable — update locally as fallback
+        const newRemaining = Math.max(0, creditsRemaining - cost)
+        updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
+        return true
       }
     },
     [isDemo, creditsRemaining, user, updateProfile]
