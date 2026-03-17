@@ -28,10 +28,44 @@ interface Props {
   className?: string
 }
 
+function getCityName(item: NominatimResult): string {
+  return (
+    item.address?.city ||
+    item.address?.town ||
+    item.address?.village ||
+    item.address?.municipality ||
+    item.display_name.split(',')[0]
+  )
+}
+
+function formatStandard(item: NominatimResult): string {
+  const city = getCityName(item)
+  const state = item.address?.state || ''
+  const country = item.address?.country || ''
+  return [city, state, country].filter(Boolean).join(', ')
+}
+
+async function fetchCities(query: string, signal?: AbortSignal): Promise<NominatimResult[]> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&featuretype=city&addressdetails=1`,
+    { headers: { 'User-Agent': 'Logintel/1.0' }, signal }
+  )
+  if (!res.ok) return []
+  const data: NominatimResult[] = await res.json()
+  const seen = new Set<string>()
+  return data.filter((item) => {
+    const key = `${getCityName(item)}|${item.address?.country || ''}`.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function CityAutocomplete({ value, onChange, placeholder, className }: Props) {
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const selectedRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -49,46 +83,19 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
 
     setLoading(true)
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&featuretype=city&addressdetails=1`,
-        {
-          headers: { 'User-Agent': 'Logintel/1.0' },
-          signal: controller.signal,
-        }
-      )
-      if (!res.ok) return
-      const data: NominatimResult[] = await res.json()
-      // Deduplica per nome città + paese
-      const seen = new Set<string>()
-      const unique = data.filter((item) => {
-        const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality || item.display_name.split(',')[0]
-        const country = item.address?.country || ''
-        const key = `${city}|${country}`.toLowerCase()
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
+      const unique = await fetchCities(query, controller.signal)
       setSuggestions(unique)
       setOpen(unique.length > 0)
     } catch {
-      // abort or network error — ignore
+      // abort or network error
     } finally {
       setLoading(false)
     }
   }, [])
 
-  const handleInput = (text: string) => {
-    onChange(text, null)
-
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => fetchSuggestions(text), 300)
-  }
-
-  const handleSelect = (item: NominatimResult) => {
-    const cityName = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality || item.display_name.split(',')[0]
-    const country = item.address?.country || ''
-    const label = country ? `${cityName}, ${country}` : cityName
-
+  const selectItem = useCallback((item: NominatimResult) => {
+    const label = formatStandard(item)
+    selectedRef.current = true
     onChange(label, {
       name: label,
       lat: parseFloat(item.lat),
@@ -96,15 +103,43 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
     })
     setSuggestions([])
     setOpen(false)
+  }, [onChange])
+
+  const handleInput = (text: string) => {
+    selectedRef.current = false
+    onChange(text, null)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => fetchSuggestions(text), 300)
   }
 
-  const formatLabel = (item: NominatimResult): string => {
-    const city = item.address?.city || item.address?.town || item.address?.village || item.address?.municipality || item.display_name.split(',')[0]
-    const state = item.address?.state || ''
-    const country = item.address?.country || ''
-    const parts = [city, state, country].filter(Boolean)
-    return parts.join(', ')
-  }
+  const handleBlur = useCallback(() => {
+    // Delay to allow click on suggestion to fire first
+    setTimeout(async () => {
+      setOpen(false)
+
+      // Already selected via click — nothing to do
+      if (selectedRef.current) return
+
+      const trimmed = value.trim()
+      if (trimmed.length < 2) return
+
+      // If we have suggestions, pick the first one
+      if (suggestions.length > 0) {
+        selectItem(suggestions[0])
+        return
+      }
+
+      // No suggestions yet (user typed fast and tabbed) — fetch and pick first
+      try {
+        const results = await fetchCities(trimmed)
+        if (results.length > 0) {
+          selectItem(results[0])
+        }
+      } catch {
+        // network error — leave as-is
+      }
+    }, 250)
+  }, [value, suggestions, selectItem])
 
   // Close on outside click
   useEffect(() => {
@@ -124,20 +159,6 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
       abortRef.current?.abort()
     }
   }, [])
-
-  const handleBlur = () => {
-    // Auto-select the first suggestion when the user leaves the input
-    setTimeout(() => {
-      if (suggestions.length > 0 && value.trim().length >= 2) {
-        // Only auto-select if no coords were already set (user didn't click a suggestion)
-        const alreadySelected = value.includes(',')
-        if (!alreadySelected) {
-          handleSelect(suggestions[0])
-        }
-      }
-      setOpen(false)
-    }, 200)
-  }
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -161,10 +182,11 @@ export function CityAutocomplete({ value, onChange, placeholder, className }: Pr
             <button
               key={idx}
               type="button"
-              onClick={() => handleSelect(item)}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => selectItem(item)}
               className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:bg-[#334155] hover:text-white transition-colors border-b border-[#334155] last:border-b-0"
             >
-              {formatLabel(item)}
+              {formatStandard(item)}
             </button>
           ))}
         </div>
