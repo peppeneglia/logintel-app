@@ -13,7 +13,6 @@ function profileField<K extends keyof Profile>(profile: unknown, key: K, fallbac
 
 export function useCredits() {
   const { profile, isDemo, user } = useAuthStore()
-  const updateProfile = useAuthStore((s) => s.updateProfile)
 
   const creditsRemaining = profileField(profile, 'credits_remaining', 500)
   const dailyLimit = profileField(profile, 'credits_daily_limit', 500)
@@ -31,9 +30,14 @@ export function useCredits() {
 
   const consume = useCallback(
     async (cost: number, actionType: string): Promise<boolean> => {
-      // Always update locally first for instant UI feedback
+      // Update store directly for instant UI feedback (no Supabase round-trip)
       const newRemaining = Math.max(0, creditsRemaining - cost)
-      updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
+      const currentProfile = useAuthStore.getState().profile
+      if (currentProfile) {
+        useAuthStore.setState({
+          profile: { ...currentProfile, credits_remaining: newRemaining } as Profile,
+        })
+      }
 
       if (isDemo) return true
 
@@ -46,7 +50,7 @@ export function useCredits() {
 
       return true
     },
-    [isDemo, creditsRemaining, extraCredits, user, updateProfile]
+    [isDemo, creditsRemaining, extraCredits, user]
   )
 
   const resetIfNewDay = useCallback(async () => {
