@@ -31,36 +31,22 @@ export function useCredits() {
 
   const consume = useCallback(
     async (cost: number, actionType: string): Promise<boolean> => {
-      if (isDemo) {
-        // Simulate consumption locally in demo mode
-        const newRemaining = Math.max(0, creditsRemaining - cost)
-        updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
-        return true
-      }
+      // Always update locally first for instant UI feedback
+      const newRemaining = Math.max(0, creditsRemaining - cost)
+      updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
+
+      if (isDemo) return true
 
       const userId = user?.id
-      if (!userId) return false
+      if (!userId) return true
 
-      try {
-        const result = await consumeCredits(userId, cost, actionType)
-        if (result.success) {
-          // Refresh profile in store
-          const fetchProfile = useAuthStore.getState().fetchProfile
-          await fetchProfile(userId)
-        } else {
-          // Supabase returned false (e.g. profile not found) — update locally as fallback
-          const newRemaining = Math.max(0, creditsRemaining - cost)
-          updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
-        }
-        return true
-      } catch {
-        // Supabase unreachable — update locally as fallback
-        const newRemaining = Math.max(0, creditsRemaining - cost)
-        updateProfile({ credits_remaining: newRemaining } as Partial<Profile>)
-        return true
-      }
+      // Fire Supabase update in background — don't block the UI
+      consumeCredits(userId, cost, actionType, creditsRemaining, extraCredits)
+        .catch(() => { /* Supabase unreachable — local update already applied */ })
+
+      return true
     },
-    [isDemo, creditsRemaining, user, updateProfile]
+    [isDemo, creditsRemaining, extraCredits, user, updateProfile]
   )
 
   const resetIfNewDay = useCallback(async () => {

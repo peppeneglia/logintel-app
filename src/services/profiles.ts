@@ -32,64 +32,69 @@ export async function updateProfile(userId: string, updates: ProfileUpdate): Pro
 
 /**
  * Consume credits from the user's balance.
- * Deducts from credits_remaining first, then extra_credits if needed.
- * Returns false if insufficient balance.
+ * Accepts current balance from store to avoid an extra getProfile round-trip.
+ * Runs update + insert in parallel.
  */
 export async function consumeCredits(
   userId: string,
   amount: number,
-  actionType: string
-): Promise<{ success: boolean; balanceAfter: number }> {
-  const profile = await getProfile(userId)
-  if (!profile) return { success: false, balanceAfter: 0 }
+  actionType: string,
+  currentRemaining?: number,
+  currentExtra?: number
+): Promise<{ success: boolean; balanceAfter: number; newRemaining: number; newExtra: number }> {
+  // Use provided values or fetch from DB
+  let remaining = currentRemaining
+  let extra = currentExtra
+  if (remaining === undefined || extra === undefined) {
+    const profile = await getProfile(userId)
+    if (!profile) return { success: false, balanceAfter: 0, newRemaining: 0, newExtra: 0 }
+    remaining = profile.credits_remaining
+    extra = profile.extra_credits
+  }
 
-  const totalAvailable = profile.credits_remaining + profile.extra_credits
+  const totalAvailable = remaining + extra
   if (totalAvailable < amount) {
-    return { success: false, balanceAfter: totalAvailable }
+    return { success: false, balanceAfter: totalAvailable, newRemaining: remaining, newExtra: extra }
   }
 
   // Deduct from daily credits first, then extra
-  let remainingDeduction = amount
-  let newCreditsRemaining = profile.credits_remaining
-  let newExtraCredits = profile.extra_credits
-
+  let deduction = amount
+  let newRemaining = remaining
+  let newExtra = extra
   let usedExtra = false
-  if (newCreditsRemaining >= remainingDeduction) {
-    newCreditsRemaining -= remainingDeduction
+
+  if (newRemaining >= deduction) {
+    newRemaining -= deduction
   } else {
-    remainingDeduction -= newCreditsRemaining
-    newCreditsRemaining = 0
-    newExtraCredits -= remainingDeduction
+    deduction -= newRemaining
+    newRemaining = 0
+    newExtra -= deduction
     usedExtra = true
   }
 
-  const balanceAfter = newCreditsRemaining + newExtraCredits
+  const balanceAfter = newRemaining + newExtra
+  const logActionType = usedExtra ? `${actionType}_EXTRA` : actionType
 
-  // Update profile
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .update({
-      credits_remaining: newCreditsRemaining,
-      extra_credits: newExtraCredits,
-    })
-    .eq('id', userId)
+  // Run update + insert in parallel
+  const [{ error: profileError }, { error: txError }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .update({ credits_remaining: newRemaining, extra_credits: newExtra })
+      .eq('id', userId),
+    supabase
+      .from('credit_transactions')
+      .insert({
+        user_id: userId,
+        amount: -amount,
+        action_type: logActionType,
+        balance_after: balanceAfter,
+      }),
+  ])
 
   if (profileError) throw profileError
-
-  // Log transaction — suffix _EXTRA when extra credits were used
-  const logActionType = usedExtra ? `${actionType}_EXTRA` : actionType
-  const { error: txError } = await supabase
-    .from('credit_transactions')
-    .insert({
-      user_id: userId,
-      amount: -amount,
-      action_type: logActionType,
-      balance_after: balanceAfter,
-    })
-
   if (txError) console.error('consumeCredits log:', txError.message)
 
-  return { success: true, balanceAfter }
+  return { success: true, balanceAfter, newRemaining, newExtra }
 }
 
 /**

@@ -81,6 +81,15 @@ async function apiCall<T>(endpoint: string, body: unknown): Promise<T> {
   return res.json()
 }
 
+// ── Prediction cache (5 min TTL) ──
+
+const predictionCache = new Map<string, { data: PredictionResponse; ts: number }>()
+const CACHE_TTL = 5 * 60 * 1000
+
+function predictionCacheKey(origin: Coordinate, destination: Coordinate, time: string): string {
+  return `${origin.lat},${origin.lon}|${destination.lat},${destination.lon}|${time}`
+}
+
 // ── Prediction functions ──
 
 export async function predictRoute(
@@ -98,10 +107,20 @@ export async function predictRoute(
     ? departureTime
     : `${departureTime}:00+01:00`
 
-  return apiCall<PredictionResponse>('/api/predict', {
+  // Check cache
+  const cacheKey = predictionCacheKey(origin, destination, isoTime)
+  const cached = predictionCache.get(cacheKey)
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    return cached.data
+  }
+
+  const result = await apiCall<PredictionResponse>('/api/predict', {
     origin,
     destination,
     departure_time: isoTime,
     include_alternatives: includeAlternatives,
   })
+
+  predictionCache.set(cacheKey, { data: result, ts: Date.now() })
+  return result
 }
