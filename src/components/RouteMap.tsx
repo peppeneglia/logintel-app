@@ -98,16 +98,26 @@ export function RouteMap({ segments }: Props) {
           )
         })}
 
-        {/* Marker partenza e arrivo */}
+        {/* Marker partenza (A) e arrivo (B) */}
         <Marker
           position={[segments[0].start_point.lat, segments[0].start_point.lon]}
-          icon={makeIcon('\uD83D\uDFE2')}
+          icon={L.divIcon({
+            html: '<div style="background:#10b981;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)">A</div>',
+            className: '',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          })}
         >
           <Popup><span style={{ color: '#e2e8f0', background: '#1e293b', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Partenza</span></Popup>
         </Marker>
         <Marker
           position={[segments[segments.length - 1].end_point.lat, segments[segments.length - 1].end_point.lon]}
-          icon={makeIcon('\uD83D\uDD34')}
+          icon={L.divIcon({
+            html: '<div style="background:#ef4444;color:white;font-weight:bold;font-size:14px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)">B</div>',
+            className: '',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          })}
         >
           <Popup><span style={{ color: '#e2e8f0', background: '#1e293b', padding: '4px 8px', borderRadius: 8, fontSize: 12 }}>Arrivo</span></Popup>
         </Marker>

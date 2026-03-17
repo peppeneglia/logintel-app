@@ -551,7 +551,7 @@ export function SinglePrediction() {
                       <div className="flex items-center gap-2">
                         {isBest && <span className="text-emerald-400 text-xs font-bold">MIGLIORE</span>}
                         {isCurrent && !isBest && <span className="text-slate-500 text-xs">(attuale)</span>}
-                        <span className="text-sm text-white">{entry.time.replace('T', ' ')}</span>
+                        <span className="text-sm text-white">{formatDateTime(new Date(entry.time))}</span>
                       </div>
                       <span className={`text-sm font-semibold ${entry.delay > 5 ? 'text-red-400' : 'text-emerald-400'}`}>
                         +{Math.round(entry.delay)} min
