@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { showErrorToast } from '../hooks/useToast'
 
 // ── Types ──
 
@@ -87,7 +88,11 @@ export async function getVehicles(userId: string): Promise<VehicleRow[]> {
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-  if (error) { console.error('getVehicles:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getVehicles:', error.message)
+    return []
+  }
   return (data || []) as VehicleRow[]
 }
 
@@ -97,7 +102,10 @@ export async function addVehicle(data: VehicleInput): Promise<VehicleRow | null>
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as VehicleRow
 }
 
@@ -108,13 +116,19 @@ export async function updateVehicle(id: string, data: Partial<VehicleInput>): Pr
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as VehicleRow
 }
 
 export async function deleteVehicle(id: string): Promise<void> {
   const { error } = await supabase.from('fleet_vehicles').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── Maintenance Alerts ──
@@ -125,7 +139,11 @@ export async function getMaintenanceAlerts(userId: string): Promise<MaintenanceA
     .select('*')
     .eq('user_id', userId)
     .order('due_date', { ascending: true })
-  if (error) { console.error('getMaintenanceAlerts:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getMaintenanceAlerts:', error.message)
+    return []
+  }
   return (data || []) as MaintenanceAlertRow[]
 }
 
@@ -135,7 +153,10 @@ export async function addMaintenanceAlert(data: MaintenanceAlertInput): Promise<
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as MaintenanceAlertRow
 }
 
@@ -146,13 +167,19 @@ export async function updateMaintenanceAlert(id: string, data: Partial<Maintenan
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as MaintenanceAlertRow
 }
 
 export async function deleteMaintenanceAlert(id: string): Promise<void> {
   const { error } = await supabase.from('maintenance_alerts').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── Vehicle Allocations ──
@@ -163,7 +190,11 @@ export async function getVehicleAllocations(userId: string): Promise<VehicleAllo
     .select('*')
     .eq('user_id', userId)
     .order('start_date', { ascending: false })
-  if (error) { console.error('getVehicleAllocations:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getVehicleAllocations:', error.message)
+    return []
+  }
   return (data || []) as VehicleAllocationRow[]
 }
 
@@ -173,7 +204,10 @@ export async function addVehicleAllocation(data: VehicleAllocationInput): Promis
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as VehicleAllocationRow
 }
 
@@ -184,13 +218,19 @@ export async function updateVehicleAllocation(id: string, data: Partial<VehicleA
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as VehicleAllocationRow
 }
 
 export async function deleteVehicleAllocation(id: string): Promise<void> {
   const { error } = await supabase.from('vehicle_allocations').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── Operational Costs ──
@@ -201,7 +241,11 @@ export async function getOperationalCosts(userId: string): Promise<OperationalCo
     .select('*')
     .eq('user_id', userId)
     .order('year', { ascending: false })
-  if (error) { console.error('getOperationalCosts:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getOperationalCosts:', error.message)
+    return []
+  }
   return (data || []) as OperationalCostRow[]
 }
 
@@ -211,7 +255,10 @@ export async function addOperationalCost(data: OperationalCostInput): Promise<Op
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as OperationalCostRow
 }
 
@@ -222,13 +269,19 @@ export async function updateOperationalCost(id: string, data: Partial<Operationa
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as OperationalCostRow
 }
 
 export async function deleteOperationalCost(id: string): Promise<void> {
   const { error } = await supabase.from('operational_costs').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── Document Expiries ──
@@ -239,7 +292,11 @@ export async function getDocumentExpiries(userId: string): Promise<DocumentExpir
     .select('*')
     .eq('user_id', userId)
     .order('expiry_date', { ascending: true })
-  if (error) { console.error('getDocumentExpiries:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getDocumentExpiries:', error.message)
+    return []
+  }
   return (data || []) as DocumentExpiryRow[]
 }
 
@@ -249,7 +306,10 @@ export async function addDocumentExpiry(data: DocumentExpiryInput): Promise<Docu
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as DocumentExpiryRow
 }
 
@@ -260,11 +320,17 @@ export async function updateDocumentExpiry(id: string, data: Partial<DocumentExp
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as DocumentExpiryRow
 }
 
 export async function deleteDocumentExpiry(id: string): Promise<void> {
   const { error } = await supabase.from('document_expiries').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }

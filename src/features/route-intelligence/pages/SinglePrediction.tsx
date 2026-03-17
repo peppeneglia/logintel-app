@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { mockSinglePrediction, mockDemoPrediction } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { ConfidenceBar } from '../../../components/ConfidenceBar'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
 import type { CitySelection } from '../../../components/CityAutocomplete'
 import { RouteMap } from '../../../components/RouteMap'
@@ -94,7 +96,9 @@ function formatDateTime(date: Date): string {
 
 export function SinglePrediction() {
   const isDemo = useAuthStore((s) => s.isDemo)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
+  const [showCreditModal, setShowCreditModal] = useState(false)
 
   const [origin, setOrigin] = useState(isDemo ? 'Milano' : '')
   const [originCoords, setOriginCoords] = useState<CitySelection | null>(null)
@@ -124,8 +128,7 @@ export function SinglePrediction() {
     }
 
     if (!canAfford(CREDIT_COSTS.SINGLE_PREDICTION)) {
-      console.warn('Crediti insufficienti per SINGLE_PREDICTION')
-      setError('Crediti insufficienti per eseguire questa operazione')
+      setShowCreditModal(true)
       return
     }
 
@@ -640,6 +643,23 @@ export function SinglePrediction() {
           )}
         </div>
       )}
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={CREDIT_COSTS.SINGLE_PREDICTION}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => {
+          setShowCreditModal(false)
+          navigate('/settings/plan')
+        }}
+        onBuyExtra={() => {
+          setShowCreditModal(false)
+          navigate('/settings/plan')
+        }}
+      />
     </div>
   )
 }

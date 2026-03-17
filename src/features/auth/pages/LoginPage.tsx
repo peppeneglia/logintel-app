@@ -44,6 +44,20 @@ export function LoginPage() {
     try {
       await signIn(email.trim(), password)
       setFailedAttempts(0)
+
+      // If "Remember Me" is NOT checked, move Supabase session from
+      // localStorage to sessionStorage so it expires when the browser closes.
+      if (!remember) {
+        const keys = Object.keys(localStorage).filter((k) => k.startsWith('sb-'))
+        for (const key of keys) {
+          const value = localStorage.getItem(key)
+          if (value) {
+            sessionStorage.setItem(key, value)
+            localStorage.removeItem(key)
+          }
+        }
+      }
+
       navigate('/', { replace: true })
     } catch (err) {
       const attempts = failedAttempts + 1

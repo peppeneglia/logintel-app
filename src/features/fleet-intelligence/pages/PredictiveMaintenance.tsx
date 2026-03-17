@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { mockMaintenanceAlerts } from '../../../data/mockFleetData'
 import type { MaintenanceAlert } from '../../../data/mockFleetData'
 import {
@@ -124,7 +126,8 @@ const emptyForm: FormState = {
 export function PredictiveMaintenance() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? ''
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseAlerts, setSupabaseAlerts] = useState<MaintenanceAlertRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -134,6 +137,8 @@ export function PredictiveMaintenance() {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // Fetch from Supabase when not demo
   const fetchAlerts = useCallback(async () => {
@@ -242,7 +247,8 @@ export function PredictiveMaintenance() {
         await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
       } else {
         if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un alert' }])
+          setPendingCreditCost(CREDIT_COSTS.FLEET_VEHICLE_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -528,6 +534,18 @@ export function PredictiveMaintenance() {
           </button>
         </div>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

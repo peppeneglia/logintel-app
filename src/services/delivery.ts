@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { showErrorToast } from '../hooks/useToast'
 
 // ── Types ──
 
@@ -41,7 +42,11 @@ export async function getDeliveries(userId: string): Promise<DeliveryRow[]> {
     .select('*')
     .eq('user_id', userId)
     .order('departure_date', { ascending: false })
-  if (error) { console.error('getDeliveries:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getDeliveries:', error.message)
+    return []
+  }
   return (data || []) as DeliveryRow[]
 }
 
@@ -51,7 +56,10 @@ export async function addDelivery(data: DeliveryInput): Promise<DeliveryRow | nu
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as DeliveryRow
 }
 
@@ -62,13 +70,19 @@ export async function updateDelivery(id: string, data: Partial<DeliveryInput>): 
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as DeliveryRow
 }
 
 export async function deleteDelivery(id: string): Promise<void> {
   const { error } = await supabase.from('deliveries').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── Delivery Windows ──
@@ -79,7 +93,11 @@ export async function getDeliveryWindows(deliveryId: string): Promise<DeliveryWi
     .select('*')
     .eq('delivery_id', deliveryId)
     .order('window_start', { ascending: true })
-  if (error) { console.error('getDeliveryWindows:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getDeliveryWindows:', error.message)
+    return []
+  }
   return (data || []) as DeliveryWindowRow[]
 }
 
@@ -89,7 +107,10 @@ export async function addDeliveryWindow(data: DeliveryWindowInput): Promise<Deli
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as DeliveryWindowRow
 }
 
@@ -100,11 +121,17 @@ export async function updateDeliveryWindow(id: string, data: Partial<DeliveryWin
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as DeliveryWindowRow
 }
 
 export async function deleteDeliveryWindow(id: string): Promise<void> {
   const { error } = await supabase.from('delivery_windows').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }

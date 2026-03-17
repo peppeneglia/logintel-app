@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { showErrorToast } from '../hooks/useToast'
 
 // ── Types ──
 
@@ -79,7 +80,11 @@ export async function getDrivingHours(userId: string): Promise<DrivingHoursRow[]
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
-  if (error) { console.error('getDrivingHours:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getDrivingHours:', error.message)
+    return []
+  }
   return (data || []) as DrivingHoursRow[]
 }
 
@@ -89,7 +94,10 @@ export async function addDrivingHoursRecord(data: DrivingHoursInput): Promise<Dr
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as DrivingHoursRow
 }
 
@@ -100,13 +108,19 @@ export async function updateDrivingHoursRecord(id: string, data: Partial<Driving
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as DrivingHoursRow
 }
 
 export async function deleteDrivingHoursRecord(id: string): Promise<void> {
   const { error } = await supabase.from('driving_hours').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── Compliance Documents ──
@@ -117,7 +131,11 @@ export async function getComplianceDocuments(userId: string): Promise<Compliance
     .select('*')
     .eq('user_id', userId)
     .order('expiry_date', { ascending: true })
-  if (error) { console.error('getComplianceDocuments:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getComplianceDocuments:', error.message)
+    return []
+  }
   return (data || []) as ComplianceDocumentRow[]
 }
 
@@ -127,7 +145,10 @@ export async function addComplianceDocument(data: ComplianceDocumentInput): Prom
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as ComplianceDocumentRow
 }
 
@@ -138,13 +159,19 @@ export async function updateComplianceDocument(id: string, data: Partial<Complia
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as ComplianceDocumentRow
 }
 
 export async function deleteComplianceDocument(id: string): Promise<void> {
   const { error } = await supabase.from('compliance_documents').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }
 
 // ── ADR Shipments ──
@@ -155,7 +182,11 @@ export async function getADRShipments(userId: string): Promise<ADRShipmentRow[]>
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
-  if (error) { console.error('getADRShipments:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getADRShipments:', error.message)
+    return []
+  }
   return (data || []) as ADRShipmentRow[]
 }
 
@@ -165,7 +196,10 @@ export async function addADRShipment(data: ADRShipmentInput): Promise<ADRShipmen
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as ADRShipmentRow
 }
 
@@ -176,11 +210,17 @@ export async function updateADRShipment(id: string, data: Partial<ADRShipmentInp
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as ADRShipmentRow
 }
 
 export async function deleteADRShipment(id: string): Promise<void> {
   const { error } = await supabase.from('adr_shipments').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }

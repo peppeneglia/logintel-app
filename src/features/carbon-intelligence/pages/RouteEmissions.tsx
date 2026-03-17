@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, Leaf } from 'lucide-react'
 import { Modal } from '../../../components/Modal'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
@@ -102,7 +104,8 @@ const emptyForm = {
 export function RouteEmissions() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -111,6 +114,8 @@ export function RouteEmissions() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // ── Fetch from Supabase ──
 
@@ -202,7 +207,8 @@ export function RouteEmissions() {
         await updateEmissionsRecord(editingId, input)
       } else {
         if (!canAfford(CREDIT_COSTS.CARBON_EMISSIONS_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una registrazione' }])
+          setPendingCreditCost(CREDIT_COSTS.CARBON_EMISSIONS_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -432,6 +438,18 @@ export function RouteEmissions() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { getOperationalCosts, addOperationalCost, updateOperationalCost, deleteOperationalCost } from '../../../services/fleet'
 import type { OperationalCostRow, OperationalCostInput } from '../../../services/fleet'
 import { mockOperationalCosts } from '../../../data/mockFleetData'
@@ -55,13 +57,16 @@ function computeCostPerKm(row: { fuel_cost: number; maintenance_cost: number; to
 export function OperationalCosts() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<OperationalCostRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<OperationalCostInput>({ ...EMPTY_FORM })
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   const costs: OperationalCostRow[] = isDemo
     ? mockOperationalCosts.map(mapMockToRow)
@@ -146,7 +151,8 @@ export function OperationalCosts() {
       await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
     } else {
       if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
-        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un costo' }])
+        setPendingCreditCost(CREDIT_COSTS.FLEET_VEHICLE_ADD)
+        setShowCreditModal(true)
         return
       }
       await addOperationalCost(form)
@@ -410,6 +416,18 @@ export function OperationalCosts() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

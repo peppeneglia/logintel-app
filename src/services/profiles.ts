@@ -53,12 +53,14 @@ export async function consumeCredits(
   let newCreditsRemaining = profile.credits_remaining
   let newExtraCredits = profile.extra_credits
 
+  let usedExtra = false
   if (newCreditsRemaining >= remainingDeduction) {
     newCreditsRemaining -= remainingDeduction
   } else {
     remainingDeduction -= newCreditsRemaining
     newCreditsRemaining = 0
     newExtraCredits -= remainingDeduction
+    usedExtra = true
   }
 
   const balanceAfter = newCreditsRemaining + newExtraCredits
@@ -74,13 +76,14 @@ export async function consumeCredits(
 
   if (profileError) throw profileError
 
-  // Log transaction
+  // Log transaction — suffix _EXTRA when extra credits were used
+  const logActionType = usedExtra ? `${actionType}_EXTRA` : actionType
   const { error: txError } = await supabase
     .from('credit_transactions')
     .insert({
       user_id: userId,
       amount: -amount,
-      action_type: actionType,
+      action_type: logActionType,
       balance_after: balanceAfter,
     })
 

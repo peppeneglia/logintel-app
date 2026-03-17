@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FileText, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockComplianceDocuments } from '../../../data/mockComplianceData'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import {
   getComplianceDocuments, addComplianceDocument, updateComplianceDocument, deleteComplianceDocument,
   computeDocumentStatus,
@@ -100,7 +102,8 @@ const emptyForm = {
 export function DocumentsLicenses() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<ComplianceDocumentRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -110,6 +113,8 @@ export function DocumentsLicenses() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // ── Fetch from Supabase ──
 
@@ -197,7 +202,8 @@ export function DocumentsLicenses() {
         await updateComplianceDocument(editingId, input)
       } else {
         if (!canAfford(CREDIT_COSTS.COMPLIANCE_HOURS_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un documento' }])
+          setPendingCreditCost(CREDIT_COSTS.COMPLIANCE_HOURS_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -441,6 +447,18 @@ export function DocumentsLicenses() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

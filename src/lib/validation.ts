@@ -17,7 +17,7 @@ export function isItalianPlateFormat(plate: string): boolean {
 // ── Numeric range checks ──
 
 export function isValidYear(year: number): boolean {
-  return Number.isInteger(year) && year >= 1990 && year <= new Date().getFullYear() + 1
+  return Number.isInteger(year) && year >= 1990 && year <= 2030
 }
 
 export function isPositiveNumber(value: number): boolean {
@@ -25,7 +25,7 @@ export function isPositiveNumber(value: number): boolean {
 }
 
 export function isValidKm(km: number): boolean {
-  return isPositiveNumber(km) && km <= 9_999_999
+  return isPositiveNumber(km) && km <= 2_000_000
 }
 
 export function isValidCost(cost: number): boolean {
@@ -33,11 +33,11 @@ export function isValidCost(cost: number): boolean {
 }
 
 export function isValidWeight(kg: number): boolean {
-  return isPositiveNumber(kg) && kg <= 100_000
+  return isPositiveNumber(kg) && kg <= 50_000
 }
 
 export function isValidFuelConsumption(liters: number): boolean {
-  return isPositiveNumber(liters) && liters <= 100
+  return typeof liters === 'number' && isFinite(liters) && liters >= 5 && liters <= 100
 }
 
 export function isValidDrivingMinutes(minutes: number): boolean {
@@ -87,7 +87,7 @@ export function validateVehicleForm(form: {
     errors.push({ field: 'year', message: `Anno non valido (1990-${new Date().getFullYear() + 1})` })
   }
   if (!isValidKm(form.total_km)) {
-    errors.push({ field: 'total_km', message: 'Km totali non validi (0-9.999.999)' })
+    errors.push({ field: 'total_km', message: 'Km totali non validi (0-2.000.000)' })
   }
   if (!isValidKm(form.monthly_km)) {
     errors.push({ field: 'monthly_km', message: 'Km mensili non validi' })
@@ -96,7 +96,7 @@ export function validateVehicleForm(form: {
     errors.push({ field: 'monthly_km', message: 'I km mensili non possono superare i km totali' })
   }
   if (form.fuel_consumption_per_100km > 0 && !isValidFuelConsumption(form.fuel_consumption_per_100km)) {
-    errors.push({ field: 'fuel_consumption_per_100km', message: 'Consumo non valido (0-100 L/100km)' })
+    errors.push({ field: 'fuel_consumption_per_100km', message: 'Consumo non valido (5-100 L/100km)' })
   }
 
   return errors
@@ -138,7 +138,7 @@ export function validateDeliveryForm(form: {
     errors.push({ field: 'actual_delivery_date', message: 'La consegna effettiva deve essere dopo la partenza' })
   }
   if (form.weight_kg > 0 && !isValidWeight(form.weight_kg)) {
-    errors.push({ field: 'weight_kg', message: 'Peso non valido (0-100.000 kg)' })
+    errors.push({ field: 'weight_kg', message: 'Peso non valido (0-50.000 kg)' })
   }
 
   return errors

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { showErrorToast } from '../hooks/useToast'
 
 // ── Types ──
 
@@ -40,7 +41,11 @@ export async function getRouteMargins(userId: string): Promise<RouteMarginRow[]>
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
-  if (error) { console.error('getRouteMargins:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getRouteMargins:', error.message)
+    return []
+  }
   return (data || []) as RouteMarginRow[]
 }
 
@@ -50,7 +55,10 @@ export async function addRouteMargin(data: RouteMarginInput): Promise<RouteMargi
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as RouteMarginRow
 }
 
@@ -61,11 +69,17 @@ export async function updateRouteMargin(id: string, data: Partial<RouteMarginInp
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as RouteMarginRow
 }
 
 export async function deleteRouteMargin(id: string): Promise<void> {
   const { error } = await supabase.from('route_margins').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }

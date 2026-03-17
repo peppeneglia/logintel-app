@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockADRShipments } from '../../../data/mockComplianceData'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { getADRShipments, addADRShipment, updateADRShipment, deleteADRShipment } from '../../../services/compliance'
 import type { ADRShipmentRow, ADRShipmentInput } from '../../../services/compliance'
 import { isValidWeight } from '../../../lib/validation'
@@ -87,7 +89,8 @@ const emptyForm = {
 export function ADRRegulations() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<ADRShipmentRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -96,6 +99,8 @@ export function ADRRegulations() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // ── Fetch from Supabase ──
 
@@ -185,7 +190,8 @@ export function ADRRegulations() {
         await updateADRShipment(editingId, input)
       } else {
         if (!canAfford(CREDIT_COSTS.COMPLIANCE_HOURS_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una spedizione' }])
+          setPendingCreditCost(CREDIT_COSTS.COMPLIANCE_HOURS_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -422,6 +428,18 @@ export function ADRRegulations() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

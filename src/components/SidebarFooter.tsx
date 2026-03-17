@@ -12,7 +12,7 @@ function creditBarColor(pct: number): string {
 export function SidebarFooter() {
   const navigate = useNavigate()
   const { profile, signOut, isDemo } = useAuthStore()
-  const { creditsRemaining, dailyLimit, totalAvailable } = useCredits()
+  const { creditsRemaining, dailyLimit, extraCredits } = useCredits()
 
   const handleSignOut = async () => {
     await signOut()
@@ -38,10 +38,15 @@ export function SidebarFooter() {
         className="bg-[#334155] rounded-xl px-3 py-2.5 hover:bg-slate-600 transition-colors text-left"
       >
         {isDemo ? (
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400">Modalità demo</span>
-            <span className="text-xs text-emerald-400 font-medium">{totalAvailable.toLocaleString('it-IT')} crediti</span>
-          </div>
+          <>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-slate-400">Modalità demo</span>
+              <span className="text-xs font-medium text-white">442 / 500</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-emerald-500" style={{ width: '88%' }} />
+            </div>
+          </>
         ) : (
           <>
             <div className="flex items-center justify-between mb-1.5">
@@ -56,6 +61,11 @@ export function SidebarFooter() {
                 style={{ width: `${Math.min(100, pct)}%` }}
               />
             </div>
+            {extraCredits > 0 && (
+              <div className="mt-1 text-[10px] text-cyan-400">
+                + {extraCredits.toLocaleString('it-IT')} extra
+              </div>
+            )}
           </>
         )}
       </button>

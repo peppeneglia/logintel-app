@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { getDocumentExpiries, addDocumentExpiry, updateDocumentExpiry, deleteDocumentExpiry } from '../../../services/fleet'
 import type { DocumentExpiryRow, DocumentExpiryInput } from '../../../services/fleet'
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
@@ -89,13 +91,16 @@ function mapMockToRow(m: (typeof mockDocumentExpiries)[number]): DocumentExpiryR
 export function DocumentExpiry() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DocumentExpiryRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DocumentExpiryInput>({ ...EMPTY_FORM })
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   const rawDocuments: DocumentExpiryRow[] = isDemo
     ? mockDocumentExpiries.map(mapMockToRow)
@@ -177,7 +182,8 @@ export function DocumentExpiry() {
       await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
     } else {
       if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
-        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un documento' }])
+        setPendingCreditCost(CREDIT_COSTS.FLEET_VEHICLE_ADD)
+        setShowCreditModal(true)
         return
       }
       await addDocumentExpiry(payload)
@@ -370,6 +376,18 @@ export function DocumentExpiry() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

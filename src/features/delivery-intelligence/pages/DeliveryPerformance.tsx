@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Package, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockDeliveries } from '../../../data/mockDeliveryData'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { getDeliveries, addDelivery, updateDelivery, deleteDelivery } from '../../../services/delivery'
 import type { DeliveryRow, DeliveryInput } from '../../../services/delivery'
 import { validateDeliveryForm } from '../../../lib/validation'
@@ -106,7 +108,8 @@ const emptyForm: DisplayDelivery = {
 export function DeliveryPerformance() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DeliveryRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -115,6 +118,8 @@ export function DeliveryPerformance() {
   const [form, setForm] = useState<DisplayDelivery>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // ── Fetch from Supabase ──
 
@@ -218,7 +223,8 @@ export function DeliveryPerformance() {
         await consume(CREDIT_COSTS.DELIVERY_UPDATE, 'DELIVERY_UPDATE')
       } else {
         if (!canAfford(CREDIT_COSTS.DELIVERY_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una consegna' }])
+          setPendingCreditCost(CREDIT_COSTS.DELIVERY_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -490,6 +496,18 @@ export function DeliveryPerformance() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

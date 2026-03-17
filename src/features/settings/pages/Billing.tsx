@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '../../../stores/authStore'
+import { supabase } from '../../../lib/supabase'
 import { UpgradePlanModal } from '../../../components/UpgradePlanModal'
 
 const planNames: Record<string, string> = {
@@ -43,11 +44,47 @@ function transactionTypeBadge(type: MockTransaction['type']): { label: string; c
   return { label: 'Crediti extra', cls: 'bg-cyan-500/10 text-cyan-400' }
 }
 
+interface CreditTransaction {
+  id: string
+  amount: number
+  action_type: string
+  balance_after: number
+  created_at: string
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  PLAN_UPGRADE_PRO: 'Upgrade a piano Pro',
+  PLAN_UPGRADE_TEAM: 'Upgrade a piano Team',
+  EXTRA_PURCHASE: 'Acquisto crediti extra',
+  DAILY_RESET: 'Rinnovo crediti giornalieri',
+}
+
+const ACTION_AMOUNTS: Record<string, string> = {
+  PLAN_UPGRADE_PRO: '€49,00',
+  PLAN_UPGRADE_TEAM: '€117,00',
+  EXTRA_PURCHASE: '—',
+}
+
 export function Billing() {
-  const { isDemo, profile } = useAuthStore()
+  const { isDemo, profile, user } = useAuthStore()
   const plan = profile?.plan || 'free'
 
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [realTransactions, setRealTransactions] = useState<CreditTransaction[]>([])
+
+  useEffect(() => {
+    if (isDemo || !user?.id) return
+    supabase
+      .from('credit_transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('action_type', ['PLAN_UPGRADE_PRO', 'PLAN_UPGRADE_TEAM', 'EXTRA_PURCHASE', 'DAILY_RESET'])
+      .order('created_at', { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (data) setRealTransactions(data as CreditTransaction[])
+      })
+  }, [isDemo, user?.id])
 
   return (
     <div>
@@ -123,6 +160,37 @@ export function Billing() {
                   </tr>
                 )
               })}
+            </tbody>
+          </table>
+        ) : realTransactions.length > 0 ? (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#334155]">
+                <th className="text-left text-sm font-medium text-slate-400 pb-3">Data</th>
+                <th className="text-left text-sm font-medium text-slate-400 pb-3">Descrizione</th>
+                <th className="text-right text-sm font-medium text-slate-400 pb-3">Crediti</th>
+                <th className="text-right text-sm font-medium text-slate-400 pb-3">Importo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {realTransactions.map((txn) => (
+                <tr key={txn.id} className="border-b border-[#334155] last:border-0">
+                  <td className="py-3 text-sm text-slate-400">
+                    {new Date(txn.created_at).toLocaleDateString('it-IT')}
+                  </td>
+                  <td className="py-3 text-sm text-slate-300">
+                    {ACTION_LABELS[txn.action_type] || txn.action_type}
+                  </td>
+                  <td className="py-3 text-sm text-right font-medium">
+                    <span className={txn.amount > 0 ? 'text-emerald-400' : 'text-slate-300'}>
+                      {txn.amount > 0 ? '+' : ''}{txn.amount.toLocaleString('it-IT')}
+                    </span>
+                  </td>
+                  <td className="py-3 text-sm text-white font-medium text-right">
+                    {ACTION_AMOUNTS[txn.action_type] || '—'}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         ) : (

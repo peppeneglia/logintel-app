@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Clock, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockDeliveryWindows } from '../../../data/mockDeliveryData'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { Modal } from '../../../components/Modal'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import {
   getDeliveries,
   getDeliveryWindows,
@@ -71,7 +73,8 @@ type FormState = typeof emptyForm
 export function DeliveryWindows() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [deliveries, setDeliveries] = useState<DeliveryRow[]>([])
   const [windowRows, setWindowRows] = useState<DeliveryWindowRow[]>([])
@@ -81,6 +84,8 @@ export function DeliveryWindows() {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // ── Fetch ──
 
@@ -182,7 +187,8 @@ export function DeliveryWindows() {
         await updateDeliveryWindow(editingId, input)
       } else {
         if (!canAfford(CREDIT_COSTS.DELIVERY_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una finestra' }])
+          setPendingCreditCost(CREDIT_COSTS.DELIVERY_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -408,6 +414,18 @@ export function DeliveryWindows() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

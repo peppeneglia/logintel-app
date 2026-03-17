@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Truck, CheckCircle, Wrench, XCircle, Plus, Pencil, Trash2 } from 'lucide-react'
 import { mockFleetVehicles } from '../../../data/mockFleetData'
 import { useAuthStore } from '../../../stores/authStore'
@@ -9,6 +10,7 @@ import { validateVehicleForm, isItalianPlateFormat } from '../../../lib/validati
 import type { ValidationError } from '../../../lib/validation'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 
 // ── Status maps ──
 
@@ -115,7 +117,8 @@ import { Field, NumericInput, AutocompleteInput, EURO_CLASS_OPTIONS, VEHICLE_BRA
 export function FleetOverview() {
   const isDemo = useAuthStore((s) => s.isDemo)
   const userId = useAuthStore((s) => s.user?.id)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<VehicleRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -125,6 +128,8 @@ export function FleetOverview() {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
   const [plateWarning, setPlateWarning] = useState('')
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   // ── Fetch from Supabase ──
 
@@ -231,7 +236,8 @@ export function FleetOverview() {
         await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
       } else {
         if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
-          setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un veicolo' }])
+          setPendingCreditCost(CREDIT_COSTS.FLEET_VEHICLE_ADD)
+          setShowCreditModal(true)
           setSaving(false)
           return
         }
@@ -572,6 +578,18 @@ export function FleetOverview() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

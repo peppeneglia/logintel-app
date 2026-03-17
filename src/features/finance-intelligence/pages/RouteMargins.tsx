@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components/Modal'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
@@ -58,13 +60,16 @@ function mapMockToRow(m: (typeof mockRouteMargins)[number], idx: number): RouteM
 export function RouteMargins() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<RouteMarginRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<RouteMarginInput>({ ...EMPTY_FORM })
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   const rows: RouteMarginRow[] = isDemo
     ? mockRouteMargins.map(mapMockToRow)
@@ -140,7 +145,8 @@ export function RouteMargins() {
       await updateRouteMargin(editingId, form)
     } else {
       if (!canAfford(CREDIT_COSTS.FINANCE_MARGINS_ADD)) {
-        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere una marginalità' }])
+        setPendingCreditCost(CREDIT_COSTS.FINANCE_MARGINS_ADD)
+        setShowCreditModal(true)
         return
       }
       await addRouteMargin(form)
@@ -418,6 +424,18 @@ export function RouteMargins() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

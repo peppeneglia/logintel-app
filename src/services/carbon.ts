@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { showErrorToast } from '../hooks/useToast'
 
 // ── Types ──
 
@@ -47,7 +48,11 @@ export async function getEmissionsRecords(userId: string): Promise<EmissionsReco
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
-  if (error) { console.error('getEmissionsRecords:', error.message); return [] }
+  if (error) {
+    showErrorToast('Errore nel caricamento dei dati. Riprova.')
+    console.error('getEmissionsRecords:', error.message)
+    return []
+  }
   return (data || []) as EmissionsRecordRow[]
 }
 
@@ -57,7 +62,10 @@ export async function addEmissionsRecord(data: EmissionsRecordInput): Promise<Em
     .insert(data)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nel salvataggio. Riprova.')
+    throw error
+  }
   return row as EmissionsRecordRow
 }
 
@@ -68,11 +76,17 @@ export async function updateEmissionsRecord(id: string, data: Partial<EmissionsR
     .eq('id', id)
     .select()
     .single()
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'aggiornamento. Riprova.')
+    throw error
+  }
   return row as EmissionsRecordRow
 }
 
 export async function deleteEmissionsRecord(id: string): Promise<void> {
   const { error } = await supabase.from('emissions_records').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    showErrorToast('Errore nell\'eliminazione. Riprova.')
+    throw error
+  }
 }

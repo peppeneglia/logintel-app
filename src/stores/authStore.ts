@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import * as authService from '../services/auth'
+import { resetDailyCreditsIfNeeded } from '../services/profiles'
 import type { Database } from '../types/database'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -14,7 +15,6 @@ interface AuthState {
 
   initialize: () => Promise<{ unsubscribe: () => void } | undefined>
   setDemo: () => void
-  setBypass: () => void
   fetchProfile: (userId: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (data: authService.SignUpData) => Promise<{ needsConfirmation: boolean }>
@@ -31,33 +31,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loading: true,
   initialized: false,
   isDemo: false,
-
-  setBypass: () => {
-    set({
-      isDemo: false,
-      user: { id: 'bypass-user', email: 'utente@logintel.it' },
-      profile: {
-        id: 'bypass-user',
-        first_name: 'Utente',
-        last_name: 'Logintel',
-        email: 'utente@logintel.it',
-        company: 'Logintel',
-        role: 'Fleet Manager',
-        fleet_size: 24,
-        plan: 'pro',
-        credits_remaining: 5000,
-        credits_daily_limit: 5000,
-        credits_reset_at: new Date().toISOString(),
-        extra_credits: 0,
-        extra_credits_expire_at: null,
-        avatar_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as Profile,
-      loading: false,
-      initialized: true,
-    })
-  },
 
   setDemo: () => {
     set({
@@ -95,6 +68,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: { id: session.user.id, email: session.user.email || '' },
         })
         await get().fetchProfile(session.user.id)
+        // Reset daily credits if a new day has started
+        try {
+          const updated = await resetDailyCreditsIfNeeded(session.user.id)
+          if (updated) await get().fetchProfile(session.user.id)
+        } catch { /* non-blocking */ }
       }
     } catch {
       // Session non valida o Supabase non configurato
@@ -109,6 +87,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: { id: session.user.id, email: session.user.email || '' },
         })
         await get().fetchProfile(session.user.id)
+        // Reset daily credits if a new day has started
+        try {
+          const updated = await resetDailyCreditsIfNeeded(session.user.id)
+          if (updated) await get().fetchProfile(session.user.id)
+        } catch { /* non-blocking */ }
       } else if (event === 'SIGNED_OUT') {
         set({ user: null, profile: null })
       }

@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { mockRouteComparisons } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { RiskBadge } from '../../../components/RiskBadge'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
 import type { CitySelection } from '../../../components/CityAutocomplete'
 import { predictRoute } from '../../../services/api'
@@ -73,7 +75,9 @@ function predictionToDisplayRoutes(pred: PredictionResponse, origin: string, des
 
 export function CompareRoutes() {
   const isDemo = useAuthStore((s) => s.isDemo)
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
+  const [showCreditModal, setShowCreditModal] = useState(false)
   const [origin, setOrigin] = useState(isDemo ? 'Bologna' : '')
   const [originCoords, setOriginCoords] = useState<CitySelection | null>(null)
   const [destination, setDestination] = useState(isDemo ? 'Napoli' : '')
@@ -95,8 +99,7 @@ export function CompareRoutes() {
     }
 
     if (!canAfford(CREDIT_COSTS.COMPARE_ROUTES)) {
-      console.warn('Crediti insufficienti per COMPARE_ROUTES')
-      setError('Crediti insufficienti per eseguire questa operazione')
+      setShowCreditModal(true)
       return
     }
 
@@ -208,6 +211,17 @@ export function CompareRoutes() {
           </div>
         </div>
       )}
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={CREDIT_COSTS.COMPARE_ROUTES}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }

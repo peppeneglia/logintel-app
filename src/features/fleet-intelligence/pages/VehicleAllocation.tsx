@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Modal } from '../../../components/Modal'
 import { useAuthStore } from '../../../stores/authStore'
 import { useCredits } from '../../../hooks/useCredits'
 import { CREDIT_COSTS } from '../../../lib/creditCosts'
+import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { getVehicleAllocations, addVehicleAllocation, updateVehicleAllocation, deleteVehicleAllocation } from '../../../services/fleet'
 import type { VehicleAllocationRow, VehicleAllocationInput } from '../../../services/fleet'
 import { mockVehicleAllocations } from '../../../data/mockFleetData'
@@ -60,13 +62,16 @@ function mapMockToRow(m: (typeof mockVehicleAllocations)[number], idx: number): 
 export function VehicleAllocation() {
   const { isDemo, user } = useAuthStore()
   const userId = user?.id ?? null
-  const { canAfford, consume } = useCredits()
+  const navigate = useNavigate()
+  const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<VehicleAllocationRow[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<VehicleAllocationInput>({ ...EMPTY_FORM })
   const [errors, setErrors] = useState<ValidationError[]>([])
+  const [showCreditModal, setShowCreditModal] = useState(false)
+  const [pendingCreditCost, setPendingCreditCost] = useState(0)
 
   const allocations: VehicleAllocationRow[] = isDemo
     ? mockVehicleAllocations.map(mapMockToRow)
@@ -143,7 +148,8 @@ export function VehicleAllocation() {
       await consume(CREDIT_COSTS.FLEET_VEHICLE_UPDATE, 'FLEET_VEHICLE_UPDATE')
     } else {
       if (!canAfford(CREDIT_COSTS.FLEET_VEHICLE_ADD)) {
-        setErrors([{ field: '', message: 'Crediti insufficienti per aggiungere un\'allocazione' }])
+        setPendingCreditCost(CREDIT_COSTS.FLEET_VEHICLE_ADD)
+        setShowCreditModal(true)
         return
       }
       await addVehicleAllocation(payload)
@@ -338,6 +344,18 @@ export function VehicleAllocation() {
           </div>
         </form>
       </Modal>
+
+      <CreditConfirmModal
+        open={showCreditModal}
+        creditsRemaining={creditsRemaining}
+        dailyLimit={dailyLimit}
+        extraCredits={extraCredits}
+        cost={pendingCreditCost}
+        onConfirm={() => setShowCreditModal(false)}
+        onCancel={() => setShowCreditModal(false)}
+        onUpgrade={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+        onBuyExtra={() => { setShowCreditModal(false); navigate('/settings/plan') }}
+      />
     </div>
   )
 }
