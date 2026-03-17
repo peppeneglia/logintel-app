@@ -33,6 +33,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isDemo: false,
 
   setDemo: () => {
+    // Restore credits from sessionStorage if available (survives page reload)
+    const savedCredits = sessionStorage.getItem('logintel-demo-credits')
+    const creditsRemaining = savedCredits !== null ? parseInt(savedCredits, 10) : 442
+
     set({
       isDemo: true,
       user: { id: 'demo-user', email: 'demo@logintel.it' },
@@ -45,7 +49,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         role: 'Fleet Manager',
         fleet_size: 24,
         plan: 'free',
-        credits_remaining: 442,
+        credits_remaining: creditsRemaining,
         credits_daily_limit: 500,
         credits_reset_at: new Date().toISOString(),
         extra_credits: 0,

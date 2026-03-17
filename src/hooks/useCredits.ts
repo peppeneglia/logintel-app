@@ -39,7 +39,11 @@ export function useCredits() {
         })
       }
 
-      if (isDemo) return true
+      // Persist demo credits to sessionStorage (survives page reload)
+      if (isDemo) {
+        sessionStorage.setItem('logintel-demo-credits', String(newRemaining))
+        return true
+      }
 
       const userId = user?.id
       if (!userId) return true
