@@ -144,6 +144,7 @@ export function LoginPage() {
             />
             <button
               type="button"
+              tabIndex={-1}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
             >
@@ -163,6 +164,7 @@ export function LoginPage() {
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
+              tabIndex={-1}
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
               className="w-4 h-4 rounded border-slate-600 bg-[#334155] text-primary-500 focus:ring-primary-500/30 focus:ring-offset-0"
@@ -172,6 +174,7 @@ export function LoginPage() {
           <Link
             to="/forgot-password"
             replace
+            tabIndex={-1}
             className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
           >
             Password dimenticata?

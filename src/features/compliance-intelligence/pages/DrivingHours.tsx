@@ -156,7 +156,6 @@ export function DrivingHours() {
   }
 
   function openEdit(r: DisplayRecord) {
-    if (isDemo) return
     setEditingId(r.id)
     setForm({ ...r })
     setErrors([])
@@ -237,22 +236,12 @@ export function DrivingHours() {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
           Ore Guida & Riposo
         </h1>
-        {isDemo ? (
-          <button
-            disabled
-            title="Disponibile solo con un account registrato"
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 text-slate-500 rounded-xl text-sm font-medium cursor-not-allowed"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        ) : (
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        )}
+        <button
+          onClick={openAdd}
+          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+        >
+          <Plus size={16} /> Aggiungi
+        </button>
       </div>
 
       {/* Summary cards */}
@@ -289,14 +278,12 @@ export function DrivingHours() {
             <p className="text-sm text-slate-500 mb-5 max-w-xs">
               Aggiungi il primo record di ore guida per monitorare la conformità dei tuoi autisti.
             </p>
-            {!isDemo && (
-              <button
-                onClick={openAdd}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
-              >
-                <Plus size={16} /> Aggiungi
-              </button>
-            )}
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+            >
+              <Plus size={16} /> Aggiungi
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -311,16 +298,14 @@ export function DrivingHours() {
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Fine</th>
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Riposo Dopo</th>
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Stato</th>
-                  {!isDemo && (
-                    <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
-                  )}
+                  <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((record) => (
                   <tr
                     key={record.id}
-                    className={`border-b border-[#334155] ${!isDemo ? 'cursor-pointer hover:bg-[#253347] transition-colors' : ''}`}
+                    className="border-b border-[#334155] cursor-pointer hover:bg-[#253347] transition-colors"
                     onClick={() => openEdit(record)}
                   >
                     <td className="py-3 px-3 text-white font-medium">{record.driver}</td>
@@ -335,26 +320,24 @@ export function DrivingHours() {
                         {statusLabel[record.status] || record.status}
                       </span>
                     </td>
-                    {!isDemo && (
-                      <td className="py-3 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); openEdit(record) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
-                            title="Modifica"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(record.id) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                            title="Elimina"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="py-3 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEdit(record) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
+                          title="Modifica"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(record.id) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title="Elimina"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

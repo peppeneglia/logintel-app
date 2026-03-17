@@ -177,7 +177,6 @@ export function PredictiveMaintenance() {
   }
 
   function openEditModal(alert: DisplayAlert) {
-    if (isDemo) return
     setEditingId(alert.id)
     setForm({
       vehicle_id: alert.vehicle_id,
@@ -284,8 +283,7 @@ export function PredictiveMaintenance() {
         </h1>
         <button
           onClick={openAddModal}
-          disabled={isDemo}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors"
         >
           <Plus size={16} />
           Aggiungi alert
@@ -334,7 +332,7 @@ export function PredictiveMaintenance() {
                     <tr
                       key={alert.id}
                       onClick={() => openEditModal(alert)}
-                      className={`border-b border-[#334155] ${!isDemo ? 'cursor-pointer hover:bg-[#253347] transition-colors' : ''}`}
+                      className="border-b border-[#334155] cursor-pointer hover:bg-[#253347] transition-colors"
                     >
                       <td className="py-2.5 px-3 font-medium text-white">{alert.vehicle_id}</td>
                       <td className="py-2.5 px-3 text-slate-300">{alert.type}</td>

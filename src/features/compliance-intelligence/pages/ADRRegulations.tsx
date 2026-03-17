@@ -136,7 +136,6 @@ export function ADRRegulations() {
   }
 
   function openEdit(s: DisplayShipment) {
-    if (isDemo) return
     setEditingId(s.id)
     setForm({
       adr_class: s.adr_class,
@@ -225,22 +224,12 @@ export function ADRRegulations() {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
           Normative ADR
         </h1>
-        {isDemo ? (
-          <button
-            disabled
-            title="Disponibile solo con un account registrato"
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 text-slate-500 rounded-xl text-sm font-medium cursor-not-allowed"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        ) : (
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        )}
+        <button
+          onClick={openAdd}
+          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+        >
+          <Plus size={16} /> Aggiungi
+        </button>
       </div>
 
       <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
@@ -257,14 +246,12 @@ export function ADRRegulations() {
             <p className="text-sm text-slate-500 mb-5 max-w-xs">
               Aggiungi la prima spedizione ADR per monitorare la conformità delle merci pericolose.
             </p>
-            {!isDemo && (
-              <button
-                onClick={openAdd}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
-              >
-                <Plus size={16} /> Aggiungi
-              </button>
-            )}
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+            >
+              <Plus size={16} /> Aggiungi
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -277,16 +264,14 @@ export function ADRRegulations() {
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Autista</th>
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Data</th>
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Conforme</th>
-                  {!isDemo && (
-                    <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
-                  )}
+                  <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {shipments.map((shipment) => (
                   <tr
                     key={shipment.id}
-                    className={`border-b border-[#334155] ${!isDemo ? 'cursor-pointer hover:bg-[#253347] transition-colors' : ''}`}
+                    className="border-b border-[#334155] cursor-pointer hover:bg-[#253347] transition-colors"
                     onClick={() => openEdit(shipment)}
                   >
                     <td className="py-3 px-3 text-white font-medium">{shipment.adr_class}</td>
@@ -301,26 +286,24 @@ export function ADRRegulations() {
                         {compliantLabel[shipment.badgeKey] || (shipment.compliant ? 'Conforme' : 'Non Conforme')}
                       </span>
                     </td>
-                    {!isDemo && (
-                      <td className="py-3 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); openEdit(shipment) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
-                            title="Modifica"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(shipment.id) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                            title="Elimina"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="py-3 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEdit(shipment) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
+                          title="Modifica"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(shipment.id) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title="Elimina"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

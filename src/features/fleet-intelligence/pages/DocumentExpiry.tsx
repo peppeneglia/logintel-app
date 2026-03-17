@@ -211,9 +211,7 @@ export function DocumentExpiry() {
         </h1>
         <button
           onClick={openAdd}
-          disabled={isDemo}
-          title={isDemo ? 'Registrati per aggiungere dati' : undefined}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors"
         >
           + Aggiungi Documento
         </button>
@@ -248,7 +246,7 @@ export function DocumentExpiry() {
                 <th className="text-left py-2 px-3 font-medium text-slate-400">Data Scadenza</th>
                 <th className="text-right py-2 px-3 font-medium text-slate-400">Giorni</th>
                 <th className="text-left py-2 px-3 font-medium text-slate-400">Stato</th>
-                {!isDemo && <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>}
+                <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -264,7 +262,7 @@ export function DocumentExpiry() {
                     <tr
                       key={doc.id}
                       className={`border-b border-[#334155] hover:bg-[#263348] cursor-pointer transition-colors ${rowHighlight}`}
-                      onClick={() => !isDemo && openEdit(doc)}
+                      onClick={() => openEdit(doc)}
                     >
                       <td className="py-2.5 px-3 font-medium text-white">{doc.vehicle_id}</td>
                       <td className="py-2.5 px-3 text-slate-300">{doc.document_type}</td>
@@ -278,8 +276,7 @@ export function DocumentExpiry() {
                           {STATUS_LABEL[doc.status] ?? doc.status}
                         </span>
                       </td>
-                      {!isDemo && (
-                        <td className="py-2.5 px-3 text-right">
+                      <td className="py-2.5 px-3 text-right">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(doc.id) }}
                             className="text-red-400 hover:text-red-300 text-xs font-medium"
@@ -287,19 +284,16 @@ export function DocumentExpiry() {
                             Elimina
                           </button>
                         </td>
-                      )}
                     </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan={isDemo ? 6 : 7} className="py-8 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-sm text-slate-500">
                     Nessun dato disponibile.
-                    {!isDemo && (
-                      <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
+                    <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
                         Aggiungi documento
                       </button>
-                    )}
                   </td>
                 </tr>
               )}

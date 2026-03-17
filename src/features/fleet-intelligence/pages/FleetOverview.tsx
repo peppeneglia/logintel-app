@@ -180,7 +180,6 @@ export function FleetOverview() {
   }
 
   function openEdit(v: DisplayVehicle) {
-    if (isDemo) return
     setEditingId(v.id)
     setForm({ ...v })
     setErrors([])
@@ -271,22 +270,12 @@ export function FleetOverview() {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
           Panoramica Flotta
         </h1>
-        {isDemo ? (
-          <button
-            disabled
-            title="Disponibile solo con un account registrato"
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 text-slate-500 rounded-xl text-sm font-medium cursor-not-allowed"
-          >
-            <Plus size={16} /> Aggiungi veicolo
-          </button>
-        ) : (
-          <button
+        <button
             onClick={openAdd}
             className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
           >
             <Plus size={16} /> Aggiungi veicolo
           </button>
-        )}
       </div>
 
       {/* Summary Cards */}
@@ -324,14 +313,12 @@ export function FleetOverview() {
             <p className="text-sm text-slate-500 mb-5 max-w-xs">
               Aggiungi il primo veicolo della tua flotta per iniziare a monitorare stato, chilometraggio e consumi.
             </p>
-            {!isDemo && (
-              <button
+            <button
                 onClick={openAdd}
                 className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
               >
                 <Plus size={16} /> Aggiungi veicolo
               </button>
-            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -345,16 +332,14 @@ export function FleetOverview() {
                   <th className="text-right py-2 px-3 font-medium text-slate-400">Km Totali</th>
                   <th className="text-right py-2 px-3 font-medium text-slate-400">Km Mensili</th>
                   <th className="text-right py-2 px-3 font-medium text-slate-400">L/100km</th>
-                  {!isDemo && (
-                    <th className="text-center py-2 px-3 font-medium text-slate-400">Azioni</th>
-                  )}
+                  <th className="text-center py-2 px-3 font-medium text-slate-400">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {vehicles.map((v) => (
                   <tr
                     key={v.id}
-                    className={`border-b border-[#334155] ${!isDemo ? 'cursor-pointer hover:bg-[#253347] transition-colors' : ''}`}
+                    className="border-b border-[#334155] cursor-pointer hover:bg-[#253347] transition-colors"
                     onClick={() => openEdit(v)}
                   >
                     <td className="py-2.5 px-3 font-medium text-white">{v.plate}</td>
@@ -380,8 +365,7 @@ export function FleetOverview() {
                         ? v.fuel_consumption_per_100km.toFixed(1)
                         : '\u2014'}
                     </td>
-                    {!isDemo && (
-                      <td className="py-2.5 px-3 text-center">
+                    <td className="py-2.5 px-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={(e) => {
@@ -405,7 +389,6 @@ export function FleetOverview() {
                           </button>
                         </div>
                       </td>
-                    )}
                   </tr>
                 ))}
               </tbody>

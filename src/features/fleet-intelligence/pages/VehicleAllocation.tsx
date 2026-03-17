@@ -177,9 +177,7 @@ export function VehicleAllocation() {
         </h1>
         <button
           onClick={openAdd}
-          disabled={isDemo}
-          title={isDemo ? 'Registrati per aggiungere dati' : undefined}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors"
         >
           + Aggiungi Allocazione
         </button>
@@ -214,7 +212,7 @@ export function VehicleAllocation() {
                 <th className="text-left py-2 px-3 font-medium text-slate-400">Data Inizio</th>
                 <th className="text-left py-2 px-3 font-medium text-slate-400">Data Fine</th>
                 <th className="text-left py-2 px-3 font-medium text-slate-400">Stato</th>
-                {!isDemo && <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>}
+                <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -223,7 +221,7 @@ export function VehicleAllocation() {
                   <tr
                     key={alloc.id}
                     className="border-b border-[#334155] hover:bg-[#263348] cursor-pointer transition-colors"
-                    onClick={() => !isDemo && openEdit(alloc)}
+                    onClick={() => openEdit(alloc)}
                   >
                     <td className="py-2.5 px-3 font-medium text-white">{alloc.vehicle_id}</td>
                     <td className="py-2.5 px-3 text-slate-300">{alloc.driver}</td>
@@ -235,8 +233,7 @@ export function VehicleAllocation() {
                         {STATUS_LABEL[alloc.status] ?? alloc.status}
                       </span>
                     </td>
-                    {!isDemo && (
-                      <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-right">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDelete(alloc.id) }}
                           className="text-red-400 hover:text-red-300 text-xs font-medium"
@@ -244,18 +241,15 @@ export function VehicleAllocation() {
                           Elimina
                         </button>
                       </td>
-                    )}
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={isDemo ? 6 : 7} className="py-8 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-sm text-slate-500">
                     Nessun dato disponibile.
-                    {!isDemo && (
-                      <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
+                    <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
                         Aggiungi allocazione
                       </button>
-                    )}
                   </td>
                 </tr>
               )}

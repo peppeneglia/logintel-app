@@ -37,36 +37,22 @@ export function SidebarFooter() {
         onClick={() => navigate('/settings/plan')}
         className="bg-[#334155] rounded-xl px-3 py-2.5 hover:bg-slate-600 transition-colors text-left"
       >
-        {isDemo ? (
-          <>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-slate-400">Modalità demo</span>
-              <span className="text-xs font-medium text-white">442 / 500</span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-emerald-500" style={{ width: '88%' }} />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-slate-400">Crediti oggi</span>
-              <span className="text-xs font-medium text-white">
-                {creditsRemaining.toLocaleString('it-IT')} / {dailyLimit.toLocaleString('it-IT')}
-              </span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${creditBarColor(pct)}`}
-                style={{ width: `${Math.min(100, pct)}%` }}
-              />
-            </div>
-            {extraCredits > 0 && (
-              <div className="mt-1 text-[10px] text-cyan-400">
-                + {extraCredits.toLocaleString('it-IT')} extra
-              </div>
-            )}
-          </>
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs text-slate-400">Crediti oggi</span>
+          <span className="text-xs font-medium text-white">
+            {creditsRemaining.toLocaleString('it-IT')} / {dailyLimit.toLocaleString('it-IT')}
+          </span>
+        </div>
+        <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${creditBarColor(pct)}`}
+            style={{ width: `${Math.min(100, pct)}%` }}
+          />
+        </div>
+        {extraCredits > 0 && (
+          <div className="mt-1 text-[10px] text-cyan-400">
+            + {extraCredits.toLocaleString('it-IT')} extra
+          </div>
         )}
       </button>
 

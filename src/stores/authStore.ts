@@ -68,11 +68,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: { id: session.user.id, email: session.user.email || '' },
         })
         await get().fetchProfile(session.user.id)
-        // Reset daily credits if a new day has started
-        try {
-          const updated = await resetDailyCreditsIfNeeded(session.user.id)
-          if (updated) await get().fetchProfile(session.user.id)
-        } catch { /* non-blocking */ }
+        // Reset daily credits non-blocking
+        resetDailyCreditsIfNeeded(session.user.id)
+          .then((updated) => { if (updated) get().fetchProfile(session.user.id) })
+          .catch(() => { /* non-blocking */ })
       }
     } catch {
       // Session non valida o Supabase non configurato
@@ -86,12 +85,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           user: { id: session.user.id, email: session.user.email || '' },
         })
+        // Single fetchProfile — resetDailyCredits runs non-blocking after
         await get().fetchProfile(session.user.id)
-        // Reset daily credits if a new day has started
-        try {
-          const updated = await resetDailyCreditsIfNeeded(session.user.id)
-          if (updated) await get().fetchProfile(session.user.id)
-        } catch { /* non-blocking */ }
+        resetDailyCreditsIfNeeded(session.user.id)
+          .then((updated) => { if (updated) get().fetchProfile(session.user.id) })
+          .catch(() => { /* non-blocking */ })
       } else if (event === 'SIGNED_OUT') {
         set({ user: null, profile: null })
       }
@@ -118,7 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { user } = await authService.signIn(email, password)
       if (user) {
         set({ user: { id: user.id, email: user.email || '' } })
-        await get().fetchProfile(user.id)
+        // fetchProfile + resetDailyCredits will be handled by onAuthStateChange
       }
     } finally {
       set({ loading: false })

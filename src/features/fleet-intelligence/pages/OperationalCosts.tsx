@@ -180,9 +180,7 @@ export function OperationalCosts() {
         </h1>
         <button
           onClick={openAdd}
-          disabled={isDemo}
-          title={isDemo ? 'Registrati per aggiungere dati' : undefined}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors"
         >
           + Aggiungi Costo
         </button>
@@ -223,7 +221,7 @@ export function OperationalCosts() {
                 <th className="text-right py-2 px-3 font-medium text-slate-400">Totale</th>
                 <th className="text-right py-2 px-3 font-medium text-slate-400">Km</th>
                 <th className="text-right py-2 px-3 font-medium text-slate-400">/km</th>
-                {!isDemo && <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>}
+                <th className="text-right py-2 px-3 font-medium text-slate-400">Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +234,7 @@ export function OperationalCosts() {
                       <tr
                         key={cost.id}
                         className="border-b border-[#334155] hover:bg-[#263348] cursor-pointer transition-colors"
-                        onClick={() => !isDemo && openEdit(cost)}
+                        onClick={() => openEdit(cost)}
                       >
                         <td className="py-2.5 px-3 font-medium text-white">{cost.vehicle_id}</td>
                         <td className="py-2.5 px-3 text-right text-slate-300">{euro(cost.fuel_cost)}</td>
@@ -246,8 +244,7 @@ export function OperationalCosts() {
                         <td className="py-2.5 px-3 text-right font-semibold text-white">{euro(rowTotal)}</td>
                         <td className="py-2.5 px-3 text-right text-slate-300">{cost.total_km.toLocaleString('it-IT')}</td>
                         <td className="py-2.5 px-3 text-right text-slate-400">{euro(rowCpk)}</td>
-                        {!isDemo && (
-                          <td className="py-2.5 px-3 text-right">
+                        <td className="py-2.5 px-3 text-right">
                             <button
                               onClick={(e) => { e.stopPropagation(); handleDelete(cost.id) }}
                               className="text-red-400 hover:text-red-300 text-xs font-medium"
@@ -255,7 +252,6 @@ export function OperationalCosts() {
                               Elimina
                             </button>
                           </td>
-                        )}
                       </tr>
                     )
                   })}
@@ -270,18 +266,16 @@ export function OperationalCosts() {
                     <td className="py-3 px-3 text-right font-bold text-primary-400">{euro(totalCostAll)}</td>
                     <td className="py-3 px-3 text-right font-semibold text-white">{totals.total_km.toLocaleString('it-IT')}</td>
                     <td className="py-3 px-3 text-right font-semibold text-emerald-400">{euro(avgCostPerKm)}</td>
-                    {!isDemo && <td />}
+                    <td />
                   </tr>
                 </>
               ) : (
                 <tr>
-                  <td colSpan={isDemo ? 8 : 9} className="py-8 text-center text-sm text-slate-500">
+                  <td colSpan={9} className="py-8 text-center text-sm text-slate-500">
                     Nessun dato disponibile.
-                    {!isDemo && (
-                      <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
+                    <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
                         Aggiungi costo
                       </button>
-                    )}
                   </td>
                 </tr>
               )}

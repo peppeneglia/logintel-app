@@ -130,7 +130,6 @@ export function DeliveryWindows() {
   }
 
   function openEdit(w: DisplayWindow) {
-    if (isDemo) return
     setEditingId(w.id)
     setForm({
       id: w.id,
@@ -222,22 +221,12 @@ export function DeliveryWindows() {
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">
           Finestre di Consegna
         </h1>
-        {isDemo ? (
-          <button
-            disabled
-            title="Non disponibile in modalità demo"
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 text-slate-500 rounded-xl text-sm font-medium cursor-not-allowed"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        ) : (
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
-          >
-            <Plus size={16} /> Aggiungi
-          </button>
-        )}
+        <button
+          onClick={openAdd}
+          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+        >
+          <Plus size={16} /> Aggiungi
+        </button>
       </div>
 
       <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-6">
@@ -252,14 +241,12 @@ export function DeliveryWindows() {
             <p className="text-sm text-slate-500 mb-5 max-w-xs">
               Aggiungi una finestra di consegna per monitorare il rispetto degli slot orari.
             </p>
-            {!isDemo && (
-              <button
-                onClick={openAdd}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
-              >
-                <Plus size={16} /> Aggiungi finestra
-              </button>
-            )}
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+            >
+              <Plus size={16} /> Aggiungi finestra
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -271,16 +258,14 @@ export function DeliveryWindows() {
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Fine Finestra</th>
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Rispettata</th>
                   <th className="text-left py-3 px-3 font-medium text-slate-400">Note</th>
-                  {!isDemo && (
-                    <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
-                  )}
+                  <th className="text-center py-3 px-3 font-medium text-slate-400">Azioni</th>
                 </tr>
               </thead>
               <tbody>
                 {windows.map((w) => (
                   <tr
                     key={w.id}
-                    className={`border-b border-[#334155] ${!isDemo ? 'cursor-pointer hover:bg-[#253347] transition-colors' : ''}`}
+                    className="border-b border-[#334155] cursor-pointer hover:bg-[#253347] transition-colors"
                     onClick={() => openEdit(w)}
                   >
                     <td className="py-3 px-3 text-white font-medium">{w.delivery_label}</td>
@@ -294,26 +279,24 @@ export function DeliveryWindows() {
                     <td className="py-3 px-3 text-slate-300 max-w-xs truncate" title={w.notes}>
                       {w.notes || '\u2014'}
                     </td>
-                    {!isDemo && (
-                      <td className="py-3 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); openEdit(w) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
-                            title="Modifica"
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(w.id) }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                            title="Elimina"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="py-3 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEdit(w) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
+                          title="Modifica"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(w.id) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title="Elimina"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

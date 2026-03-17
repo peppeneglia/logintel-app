@@ -181,9 +181,7 @@ export function RouteMargins() {
         </h1>
         <button
           onClick={openAdd}
-          disabled={isDemo}
-          title={isDemo ? 'Registrati per aggiungere dati' : undefined}
-          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 hover:bg-primary-500 text-white transition-colors"
         >
           + Aggiungi
         </button>
@@ -220,7 +218,7 @@ export function RouteMargins() {
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Costo</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Margine</th>
                 <th className="text-right py-3 px-3 font-medium text-slate-400">Margine %</th>
-                {!isDemo && <th className="text-right py-3 px-3 font-medium text-slate-400">Azioni</th>}
+                <th className="text-right py-3 px-3 font-medium text-slate-400">Azioni</th>
               </tr>
             </thead>
             <tbody>
@@ -229,7 +227,7 @@ export function RouteMargins() {
                   <tr
                     key={r.id}
                     className="border-b border-[#334155] hover:bg-[#263348] cursor-pointer transition-colors"
-                    onClick={() => !isDemo && openEdit(r)}
+                    onClick={() => openEdit(r)}
                   >
                     <td className="py-3 px-3 text-white font-medium">{r.route}</td>
                     <td className="py-3 px-3 text-slate-300">{r.customer || '—'}</td>
@@ -243,27 +241,23 @@ export function RouteMargins() {
                         {r.margin.marginPct.toFixed(1)}%
                       </span>
                     </td>
-                    {!isDemo && (
-                      <td className="py-3 px-3 text-right">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(r.id) }}
-                          className="text-red-400 hover:text-red-300 text-xs font-medium"
-                        >
-                          Elimina
-                        </button>
-                      </td>
-                    )}
+                    <td className="py-3 px-3 text-right">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(r.id) }}
+                        className="text-red-400 hover:text-red-300 text-xs font-medium"
+                      >
+                        Elimina
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={isDemo ? 8 : 9} className="py-8 text-center text-sm text-slate-500">
+                  <td colSpan={9} className="py-8 text-center text-sm text-slate-500">
                     Nessun dato disponibile.
-                    {!isDemo && (
-                      <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
-                        Aggiungi marginalità
-                      </button>
-                    )}
+                    <button onClick={openAdd} className="ml-2 text-primary-400 hover:underline">
+                      Aggiungi marginalità
+                    </button>
                   </td>
                 </tr>
               )}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, UserPlus, CheckCircle, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, UserPlus, CheckCircle, AlertCircle, X } from 'lucide-react'
 import { AuthLayout } from '../components/AuthLayout'
 import { useAuthStore } from '../../../stores/authStore'
 
@@ -18,6 +18,7 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -222,6 +223,7 @@ export function RegisterPage() {
             />
             <button
               type="button"
+              tabIndex={-1}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
             >
@@ -249,6 +251,7 @@ export function RegisterPage() {
             />
             <button
               type="button"
+              tabIndex={-1}
               onClick={() => setShowConfirm(!showConfirm)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
             >
@@ -274,9 +277,9 @@ export function RegisterPage() {
             />
             <span className="text-sm text-slate-400 leading-tight">
               Accetto i{' '}
-              <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Termini di servizio</span>
+              <button type="button" tabIndex={-1} onClick={() => setLegalModal('terms')} className="text-primary-400 hover:text-primary-300 underline underline-offset-2">Termini di servizio</button>
               {' '}e la{' '}
-              <span className="text-primary-400 hover:text-primary-300 cursor-pointer">Privacy Policy</span>
+              <button type="button" tabIndex={-1} onClick={() => setLegalModal('privacy')} className="text-primary-400 hover:text-primary-300 underline underline-offset-2">Privacy Policy</button>
             </span>
           </label>
           {fieldErrors.terms && (
@@ -336,6 +339,78 @@ export function RegisterPage() {
           Accedi
         </Link>
       </p>
+
+      {/* Legal Modal */}
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setLegalModal(null)} />
+          <div className="relative bg-[#1e293b] border border-[#334155] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
+              <h2 className="text-lg font-semibold text-white">
+                {legalModal === 'terms' ? 'Termini di Servizio' : 'Privacy Policy'}
+              </h2>
+              <button onClick={() => setLegalModal(null)} className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-[#334155] transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-slate-300 leading-relaxed space-y-4">
+              {legalModal === 'terms' ? (
+                <>
+                  <p className="text-slate-400 text-xs">Ultimo aggiornamento: 1 marzo 2026</p>
+                  <h3 className="text-white font-semibold">1. Accettazione dei Termini</h3>
+                  <p>Utilizzando Logintel, l'utente accetta integralmente i presenti Termini di Servizio. L'accesso e l'utilizzo della piattaforma sono subordinati all'accettazione e al rispetto di questi termini.</p>
+                  <h3 className="text-white font-semibold">2. Descrizione del Servizio</h3>
+                  <p>Logintel è una piattaforma di logistica intelligente basata sull'intelligenza artificiale che fornisce predizioni meteo-logistiche, gestione flotta, monitoraggio consegne, compliance normativa, analisi finanziaria e monitoraggio emissioni CO2.</p>
+                  <h3 className="text-white font-semibold">3. Account e Registrazione</h3>
+                  <p>L'utente è responsabile della riservatezza delle proprie credenziali di accesso. Ogni attività svolta tramite il proprio account è responsabilità dell'utente. È vietato condividere le credenziali con terzi.</p>
+                  <h3 className="text-white font-semibold">4. Piano e Crediti</h3>
+                  <p>Il servizio è disponibile in diversi piani (Free, Pro, Team, Enterprise). I crediti giornalieri si rinnovano automaticamente a mezzanotte UTC. I crediti non utilizzati non sono cumulabili. I crediti extra acquistati hanno validità 30 giorni.</p>
+                  <h3 className="text-white font-semibold">5. Pagamenti e Fatturazione</h3>
+                  <p>I piani a pagamento vengono addebitati mensilmente o annualmente secondo il ciclo scelto. L'utente può modificare o annullare il proprio piano in qualsiasi momento. I rimborsi sono soggetti alla nostra politica di rimborso.</p>
+                  <h3 className="text-white font-semibold">6. Utilizzo Accettabile</h3>
+                  <p>L'utente si impegna a non utilizzare il servizio per scopi illeciti, non tentare di accedere a dati di altri utenti, non sovraccaricare intenzionalmente i sistemi e non rivendere l'accesso al servizio senza autorizzazione.</p>
+                  <h3 className="text-white font-semibold">7. Proprietà Intellettuale</h3>
+                  <p>Tutti i contenuti, algoritmi, modelli predittivi e interfacce della piattaforma sono di proprietà esclusiva di Logintel. I dati inseriti dall'utente rimangono di sua proprietà.</p>
+                  <h3 className="text-white font-semibold">8. Limitazione di Responsabilità</h3>
+                  <p>Le predizioni fornite da Logintel sono stime basate su modelli statistici e dati meteorologici. Logintel non garantisce l'accuratezza assoluta delle predizioni e non è responsabile per decisioni basate esclusivamente sulle informazioni fornite dalla piattaforma.</p>
+                  <h3 className="text-white font-semibold">9. Modifiche ai Termini</h3>
+                  <p>Logintel si riserva il diritto di modificare i presenti termini. Le modifiche saranno comunicate via email e attraverso la piattaforma con almeno 30 giorni di preavviso.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-slate-400 text-xs">Ultimo aggiornamento: 1 marzo 2026</p>
+                  <h3 className="text-white font-semibold">1. Titolare del Trattamento</h3>
+                  <p>Il titolare del trattamento dei dati personali è Logintel S.r.l., con sede in Italia. Per qualsiasi richiesta relativa alla privacy, contattare privacy@logintel.it.</p>
+                  <h3 className="text-white font-semibold">2. Dati Raccolti</h3>
+                  <p>Raccogliamo: dati di registrazione (nome, cognome, email, azienda), dati di utilizzo (predizioni effettuate, crediti consumati, pagine visitate), dati di pagamento (gestiti tramite provider terzi sicuri) e dati tecnici (indirizzo IP, tipo di browser, dispositivo).</p>
+                  <h3 className="text-white font-semibold">3. Finalità del Trattamento</h3>
+                  <p>I dati sono trattati per: erogazione del servizio, miglioramento degli algoritmi predittivi, comunicazioni relative al servizio, adempimenti legali e fiscali, analisi statistiche aggregate e anonimizzate.</p>
+                  <h3 className="text-white font-semibold">4. Base Giuridica</h3>
+                  <p>Il trattamento è basato su: esecuzione del contratto (erogazione del servizio), consenso dell'utente (comunicazioni marketing), legittimo interesse (miglioramento del servizio) e obblighi legali (adempimenti fiscali).</p>
+                  <h3 className="text-white font-semibold">5. Conservazione dei Dati</h3>
+                  <p>I dati personali sono conservati per la durata del rapporto contrattuale e per i successivi 5 anni per adempimenti legali. I dati di utilizzo anonimizzati possono essere conservati indefinitamente.</p>
+                  <h3 className="text-white font-semibold">6. Condivisione dei Dati</h3>
+                  <p>I dati non vengono venduti a terzi. Possono essere condivisi con: fornitori di servizi cloud (hosting), provider di pagamento, autorità competenti se richiesto dalla legge.</p>
+                  <h3 className="text-white font-semibold">7. Diritti dell'Utente</h3>
+                  <p>Ai sensi del GDPR, l'utente ha diritto di: accesso ai propri dati, rettifica, cancellazione, portabilità, limitazione del trattamento e opposizione. Per esercitare questi diritti, contattare privacy@logintel.it.</p>
+                  <h3 className="text-white font-semibold">8. Sicurezza</h3>
+                  <p>Adottiamo misure tecniche e organizzative adeguate per proteggere i dati personali, tra cui crittografia in transito e a riposo, controllo degli accessi e monitoraggio continuo.</p>
+                  <h3 className="text-white font-semibold">9. Cookie</h3>
+                  <p>Utilizziamo cookie tecnici necessari al funzionamento del servizio e cookie analitici per migliorare l'esperienza utente. L'utente può gestire le preferenze sui cookie dalle impostazioni del browser.</p>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-[#334155]">
+              <button
+                onClick={() => setLegalModal(null)}
+                className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-medium hover:from-emerald-600 hover:to-emerald-800 transition-colors"
+              >
+                Ho letto e compreso
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthLayout>
   )
 }
