@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Props {
   date: string        // YYYY-MM-DD
@@ -11,145 +11,139 @@ interface Props {
 const inputClass =
   'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
 
-// Masked input: user types digits, mask auto-formats.
-// Backspace removes only last digit.
-
-function useMaskedInput(
-  mask: string,     // e.g. "DD/MM/YYYY" or "HH:MM"
-  value: string,    // raw digits only
-  onChange: (raw: string) => void,
-  toFormatted: (raw: string) => string,
-  maxDigits: number,
-) {
-  const ref = useRef<HTMLInputElement>(null)
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const digit = e.key
-    if (digit === 'Backspace') {
-      e.preventDefault()
-      if (value.length > 0) {
-        onChange(value.slice(0, -1))
-      }
-      return
-    }
-    if (digit === 'Delete') {
-      e.preventDefault()
-      onChange('')
-      return
-    }
-    // Allow tab, enter, arrow keys
-    if (['Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(digit)) return
-
-    e.preventDefault()
-
-    // Only accept digits
-    if (!/^[0-9]$/.test(digit)) return
-    if (value.length >= maxDigits) return
-
-    onChange(value + digit)
-  }
-
-  const formatted = toFormatted(value)
-
-  return { ref, formatted, handleKeyDown, placeholder: mask }
-}
-
-function formatDate(raw: string): string {
-  // raw = digits only, max 8 (DDMMYYYY)
-  const d = raw.padEnd(0, '')
+function formatDateDigits(raw: string): string {
   let out = ''
-  for (let i = 0; i < d.length && i < 8; i++) {
+  for (let i = 0; i < raw.length && i < 8; i++) {
     if (i === 2 || i === 4) out += '/'
-    out += d[i]
+    out += raw[i]
   }
   return out
 }
 
-function formatTime(raw: string): string {
-  // raw = digits only, max 4 (HHMM)
-  const d = raw.padEnd(0, '')
+function formatTimeDigits(raw: string): string {
   let out = ''
-  for (let i = 0; i < d.length && i < 4; i++) {
+  for (let i = 0; i < raw.length && i < 4; i++) {
     if (i === 2) out += ':'
-    out += d[i]
+    out += raw[i]
   }
   return out
 }
 
-// Convert DD/MM/YYYY to YYYY-MM-DD
-function toISODate(raw: string): string {
+function rawToISODate(raw: string): string {
   if (raw.length < 8) return ''
-  const dd = raw.slice(0, 2)
-  const mm = raw.slice(2, 4)
-  const yyyy = raw.slice(4, 8)
-  return `${yyyy}-${mm}-${dd}`
+  return `${raw.slice(4, 8)}-${raw.slice(2, 4)}-${raw.slice(0, 2)}`
 }
 
-// Convert YYYY-MM-DD to raw digits DDMMYYYY
-function fromISODate(iso: string): string {
+function isoToRawDate(iso: string): string {
   if (!iso || iso.length < 10) return ''
   const [yyyy, mm, dd] = iso.split('-')
   return `${dd}${mm}${yyyy}`
 }
 
-// Convert HHMM to HH:MM
-function toISOTime(raw: string): string {
+function rawToISOTime(raw: string): string {
   if (raw.length < 4) return ''
   return `${raw.slice(0, 2)}:${raw.slice(2, 4)}`
 }
 
-// Convert HH:MM to raw digits HHMM
-function fromISOTime(iso: string): string {
+function isoToRawTime(iso: string): string {
   if (!iso) return ''
   return iso.replace(':', '')
 }
 
+function MaskedInput({
+  rawValue,
+  onRawChange,
+  format,
+  maxDigits,
+  placeholder,
+}: {
+  rawValue: string
+  onRawChange: (raw: string) => void
+  format: (raw: string) => string
+  maxDigits: number
+  placeholder: string
+}) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault()
+      if (rawValue.length > 0) onRawChange(rawValue.slice(0, -1))
+      return
+    }
+    if (e.key === 'Delete') {
+      e.preventDefault()
+      onRawChange('')
+      return
+    }
+    if (['Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return
+    e.preventDefault()
+    if (!/^[0-9]$/.test(e.key)) return
+    if (rawValue.length >= maxDigits) return
+    onRawChange(rawValue + e.key)
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={format(rawValue)}
+      onKeyDown={handleKeyDown}
+      onChange={() => {}}
+      placeholder={placeholder}
+      className={inputClass}
+    />
+  )
+}
+
 export function DateTimeInput({ date, time, onDateChange, onTimeChange, className }: Props) {
-  const dateRaw = fromISODate(date)
-  const timeRaw = fromISOTime(time)
+  // Internal raw digit state — survives partial input
+  const [dateRaw, setDateRaw] = useState(() => isoToRawDate(date))
+  const [timeRaw, setTimeRaw] = useState(() => isoToRawTime(time))
 
-  const dateInput = useMaskedInput(
-    'GG/MM/AAAA',
-    dateRaw,
-    (raw) => onDateChange(toISODate(raw)),
-    formatDate,
-    8,
-  )
+  // Sync from parent when external value changes (e.g. demo prefill)
+  useEffect(() => {
+    const parentRaw = isoToRawDate(date)
+    if (parentRaw && parentRaw !== dateRaw) setDateRaw(parentRaw)
+  }, [date])
 
-  const timeInput = useMaskedInput(
-    'HH:MM',
-    timeRaw,
-    (raw) => onTimeChange(toISOTime(raw)),
-    formatTime,
-    4,
-  )
+  useEffect(() => {
+    const parentRaw = isoToRawTime(time)
+    if (parentRaw && parentRaw !== timeRaw) setTimeRaw(parentRaw)
+  }, [time])
+
+  const handleDateRaw = (raw: string) => {
+    setDateRaw(raw)
+    const iso = rawToISODate(raw)
+    if (iso) onDateChange(iso)
+    else if (raw.length === 0) onDateChange('')
+  }
+
+  const handleTimeRaw = (raw: string) => {
+    setTimeRaw(raw)
+    const iso = rawToISOTime(raw)
+    if (iso) onTimeChange(iso)
+    else if (raw.length === 0) onTimeChange('')
+  }
 
   return (
     <div className={`grid grid-cols-2 gap-2 ${className || ''}`}>
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-1">Data partenza</label>
-        <input
-          ref={dateInput.ref}
-          type="text"
-          inputMode="numeric"
-          value={dateInput.formatted}
-          onKeyDown={dateInput.handleKeyDown}
-          onChange={() => {}} // controlled via onKeyDown
-          placeholder={dateInput.placeholder}
-          className={inputClass}
+        <MaskedInput
+          rawValue={dateRaw}
+          onRawChange={handleDateRaw}
+          format={formatDateDigits}
+          maxDigits={8}
+          placeholder="GG/MM/AAAA"
         />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-1">Ora partenza</label>
-        <input
-          ref={timeInput.ref}
-          type="text"
-          inputMode="numeric"
-          value={timeInput.formatted}
-          onKeyDown={timeInput.handleKeyDown}
-          onChange={() => {}} // controlled via onKeyDown
-          placeholder={timeInput.placeholder}
-          className={inputClass}
+        <MaskedInput
+          rawValue={timeRaw}
+          onRawChange={handleTimeRaw}
+          format={formatTimeDigits}
+          maxDigits={4}
+          placeholder="HH:MM"
         />
       </div>
     </div>
