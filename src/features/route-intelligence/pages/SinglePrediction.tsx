@@ -135,10 +135,8 @@ export function SinglePrediction() {
     setSubmittedOrigin(origin)
     setSubmittedDestination(destination)
     setSubmittedDeparture(departureTime)
-    setShowSkeleton(false)
+    setShowSkeleton(true)
     setBestTimeResult(null)
-
-    const skeletonTimer = setTimeout(() => setShowSkeleton(true), 2000)
 
     const originArg = originCoords ? { lat: originCoords.lat, lon: originCoords.lon } : origin
     const destArg = destinationCoords ? { lat: destinationCoords.lat, lon: destinationCoords.lon } : destination
@@ -150,7 +148,6 @@ export function SinglePrediction() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore nella predizione')
     } finally {
-      clearTimeout(skeletonTimer)
       setShowSkeleton(false)
       setLoading(false)
     }
@@ -284,14 +281,7 @@ export function SinglePrediction() {
         </div>
       )}
 
-      {/* Loading — spinner iniziale, poi skeleton dopo 2s */}
-      {loading && !showSkeleton && (
-        <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-12 text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-3" />
-          <p className="text-sm text-slate-500">Calcolo predizione in corso...</p>
-        </div>
-      )}
-
+      {/* Loading — skeleton immediato con dati noti */}
       {loading && showSkeleton && submittedOrigin && (
         <div className="card-accent bg-[#1e293b] rounded-2xl border border-[#334155] p-6 animate-pulse">
           <div className="flex items-center justify-between mb-4">
