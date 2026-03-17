@@ -8,6 +8,7 @@ import {
   computeDocumentStatus,
 } from '../../../services/compliance'
 import type { ComplianceDocumentRow, ComplianceDocumentInput } from '../../../services/compliance'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Status maps ──
 
@@ -118,6 +119,7 @@ export function DocumentsLicenses() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // ── Fetch from Supabase ──
 
@@ -151,6 +153,7 @@ export function DocumentsLicenses() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -163,6 +166,7 @@ export function DocumentsLicenses() {
       document_number: d.document_number,
       expiry_date: d.expiry_date,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -170,11 +174,24 @@ export function DocumentsLicenses() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors: ValidationError[] = []
+    if (!form.driver.trim()) validationErrors.push({ field: 'driver', message: "L'autista è obbligatorio" })
+    if (!form.type.trim()) validationErrors.push({ field: 'type', message: 'Il tipo documento è obbligatorio' })
+    if (!form.expiry_date) validationErrors.push({ field: 'expiry_date', message: 'La data scadenza è obbligatoria' })
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const input: ComplianceDocumentInput = {
@@ -365,15 +382,16 @@ export function DocumentsLicenses() {
               value={form.driver}
               onChange={(e) => setForm((p) => ({ ...p, driver: e.target.value }))}
               placeholder="es. Marco Bianchi"
-              className={inputCls}
+              className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
             />
+            {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
           </Field>
 
           <Field label="Tipo">
             <select
               value={form.type}
               onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
-              className={inputCls}
+              className={`${inputCls} ${fieldError('type') ? 'border-red-500' : ''}`}
             >
               {typeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -396,9 +414,19 @@ export function DocumentsLicenses() {
               required
               value={form.expiry_date}
               onChange={(e) => setForm((p) => ({ ...p, expiry_date: e.target.value }))}
-              className={inputCls}
+              className={`${inputCls} ${fieldError('expiry_date') ? 'border-red-500' : ''}`}
             />
+            {fieldError('expiry_date') && <p className="text-xs text-red-400 mt-1">{fieldError('expiry_date')}</p>}
           </Field>
+
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button

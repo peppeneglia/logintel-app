@@ -5,6 +5,8 @@ import { useAuthStore } from '../../../stores/authStore'
 import { Modal } from '../../../components/Modal'
 import { getADRShipments, addADRShipment, updateADRShipment, deleteADRShipment } from '../../../services/compliance'
 import type { ADRShipmentRow, ADRShipmentInput } from '../../../services/compliance'
+import { isValidWeight } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Status maps ──
 
@@ -101,6 +103,7 @@ export function ADRRegulations() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // ── Fetch from Supabase ──
 
@@ -130,6 +133,7 @@ export function ADRRegulations() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -144,6 +148,7 @@ export function ADRRegulations() {
       date: s.date,
       compliant: s.compliant,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -151,11 +156,26 @@ export function ADRRegulations() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors: ValidationError[] = []
+    if (!form.adr_class.trim()) validationErrors.push({ field: 'adr_class', message: 'La classe ADR è obbligatoria' })
+    if (!form.cargo_description.trim()) validationErrors.push({ field: 'cargo_description', message: 'La descrizione del carico è obbligatoria' })
+    if (form.weight_kg <= 0 || !isValidWeight(form.weight_kg)) validationErrors.push({ field: 'weight_kg', message: 'Il peso deve essere maggiore di 0 (max 100.000 kg)' })
+    if (!form.driver.trim()) validationErrors.push({ field: 'driver', message: "L'autista è obbligatorio" })
+    if (!form.date) validationErrors.push({ field: 'date', message: 'La data è obbligatoria' })
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const input: ADRShipmentInput = {
@@ -318,8 +338,9 @@ export function ADRRegulations() {
                 value={form.adr_class}
                 onChange={(e) => setForm((p) => ({ ...p, adr_class: e.target.value }))}
                 placeholder="es. 3"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('adr_class') ? 'border-red-500' : ''}`}
               />
+              {fieldError('adr_class') && <p className="text-xs text-red-400 mt-1">{fieldError('adr_class')}</p>}
             </Field>
             <Field label="Peso (kg)">
               <input
@@ -328,8 +349,9 @@ export function ADRRegulations() {
                 min={0}
                 value={form.weight_kg}
                 onChange={(e) => setForm((p) => ({ ...p, weight_kg: Number(e.target.value) }))}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('weight_kg') ? 'border-red-500' : ''}`}
               />
+              {fieldError('weight_kg') && <p className="text-xs text-red-400 mt-1">{fieldError('weight_kg')}</p>}
             </Field>
           </div>
 
@@ -339,8 +361,9 @@ export function ADRRegulations() {
               value={form.cargo_description}
               onChange={(e) => setForm((p) => ({ ...p, cargo_description: e.target.value }))}
               placeholder="es. Benzina"
-              className={inputCls}
+              className={`${inputCls} ${fieldError('cargo_description') ? 'border-red-500' : ''}`}
             />
+            {fieldError('cargo_description') && <p className="text-xs text-red-400 mt-1">{fieldError('cargo_description')}</p>}
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -350,8 +373,9 @@ export function ADRRegulations() {
                 value={form.driver}
                 onChange={(e) => setForm((p) => ({ ...p, driver: e.target.value }))}
                 placeholder="es. Marco Bianchi"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
               />
+              {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
             </Field>
             <Field label="Data">
               <input
@@ -359,8 +383,9 @@ export function ADRRegulations() {
                 required
                 value={form.date}
                 onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
+              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
             </Field>
           </div>
 
@@ -375,6 +400,14 @@ export function ADRRegulations() {
             </select>
           </Field>
 
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

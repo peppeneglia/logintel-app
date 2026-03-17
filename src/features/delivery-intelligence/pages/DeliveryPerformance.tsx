@@ -5,6 +5,8 @@ import { useAuthStore } from '../../../stores/authStore'
 import { Modal } from '../../../components/Modal'
 import { getDeliveries, addDelivery, updateDelivery, deleteDelivery } from '../../../services/delivery'
 import type { DeliveryRow, DeliveryInput } from '../../../services/delivery'
+import { validateDeliveryForm } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Status maps ──
 
@@ -122,6 +124,7 @@ export function DeliveryPerformance() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DisplayDelivery>(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // ── Fetch from Supabase ──
 
@@ -169,6 +172,7 @@ export function DeliveryPerformance() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -176,6 +180,7 @@ export function DeliveryPerformance() {
     if (isDemo) return
     setEditingId(d.id)
     setForm({ ...d })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -183,6 +188,11 @@ export function DeliveryPerformance() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   function updateField<K extends keyof DisplayDelivery>(key: K, value: DisplayDelivery[K]) {
@@ -192,6 +202,11 @@ export function DeliveryPerformance() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors = validateDeliveryForm(form)
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const input: DeliveryInput = {
@@ -365,8 +380,9 @@ export function DeliveryPerformance() {
               value={form.customer}
               onChange={(e) => updateField('customer', e.target.value)}
               placeholder="es. Ferrero S.p.A."
-              className={inputCls}
+              className={`${inputCls} ${fieldError('customer') ? 'border-red-500' : ''}`}
             />
+            {fieldError('customer') && <p className="text-xs text-red-400 mt-1">{fieldError('customer')}</p>}
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -376,8 +392,9 @@ export function DeliveryPerformance() {
                 value={form.origin}
                 onChange={(e) => updateField('origin', e.target.value)}
                 placeholder="es. Torino"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('origin') ? 'border-red-500' : ''}`}
               />
+              {fieldError('origin') && <p className="text-xs text-red-400 mt-1">{fieldError('origin')}</p>}
             </Field>
             <Field label="Destinazione">
               <input
@@ -385,8 +402,9 @@ export function DeliveryPerformance() {
                 value={form.destination}
                 onChange={(e) => updateField('destination', e.target.value)}
                 placeholder="es. Milano"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('destination') ? 'border-red-500' : ''}`}
               />
+              {fieldError('destination') && <p className="text-xs text-red-400 mt-1">{fieldError('destination')}</p>}
             </Field>
           </div>
 
@@ -397,8 +415,9 @@ export function DeliveryPerformance() {
                 required
                 value={form.departure_date}
                 onChange={(e) => updateField('departure_date', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('departure_date') ? 'border-red-500' : ''}`}
               />
+              {fieldError('departure_date') && <p className="text-xs text-red-400 mt-1">{fieldError('departure_date')}</p>}
             </Field>
             <Field label="Consegna Prevista">
               <input
@@ -406,8 +425,9 @@ export function DeliveryPerformance() {
                 required
                 value={form.scheduled_delivery_date}
                 onChange={(e) => updateField('scheduled_delivery_date', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('scheduled_delivery_date') ? 'border-red-500' : ''}`}
               />
+              {fieldError('scheduled_delivery_date') && <p className="text-xs text-red-400 mt-1">{fieldError('scheduled_delivery_date')}</p>}
             </Field>
           </div>
 
@@ -416,8 +436,9 @@ export function DeliveryPerformance() {
               type="datetime-local"
               value={form.actual_delivery_date}
               onChange={(e) => updateField('actual_delivery_date', e.target.value)}
-              className={inputCls}
+              className={`${inputCls} ${fieldError('actual_delivery_date') ? 'border-red-500' : ''}`}
             />
+            {fieldError('actual_delivery_date') && <p className="text-xs text-red-400 mt-1">{fieldError('actual_delivery_date')}</p>}
           </Field>
 
           <div className="grid grid-cols-3 gap-4">
@@ -428,8 +449,9 @@ export function DeliveryPerformance() {
                 step={0.1}
                 value={form.weight_kg}
                 onChange={(e) => updateField('weight_kg', Number(e.target.value))}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('weight_kg') ? 'border-red-500' : ''}`}
               />
+              {fieldError('weight_kg') && <p className="text-xs text-red-400 mt-1">{fieldError('weight_kg')}</p>}
             </Field>
             <Field label="Stato">
               <select
@@ -452,6 +474,14 @@ export function DeliveryPerformance() {
             </Field>
           </div>
 
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

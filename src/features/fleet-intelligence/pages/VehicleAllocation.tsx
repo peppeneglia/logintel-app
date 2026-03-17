@@ -4,6 +4,8 @@ import { useAuthStore } from '../../../stores/authStore'
 import { getVehicleAllocations, addVehicleAllocation, updateVehicleAllocation, deleteVehicleAllocation } from '../../../services/fleet'
 import type { VehicleAllocationRow, VehicleAllocationInput } from '../../../services/fleet'
 import { mockVehicleAllocations } from '../../../data/mockFleetData'
+import { isDateAfter } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 const STATUS_BADGE: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400',
@@ -60,6 +62,7 @@ export function VehicleAllocation() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<VehicleAllocationInput>({ ...EMPTY_FORM })
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   const allocations: VehicleAllocationRow[] = isDemo
     ? mockVehicleAllocations.map(mapMockToRow)
@@ -84,6 +87,7 @@ export function VehicleAllocation() {
   function openAdd() {
     setEditingId(null)
     setForm({ ...EMPTY_FORM, user_id: userId ?? '' })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -98,16 +102,33 @@ export function VehicleAllocation() {
       end_date: row.end_date ?? '',
       status: row.status,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setEditingId(null)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    const validationErrors: ValidationError[] = []
+    if (!form.driver.trim()) validationErrors.push({ field: 'driver', message: "L'autista è obbligatorio" })
+    if (!form.route.trim()) validationErrors.push({ field: 'route', message: 'La rotta è obbligatoria' })
+    if (!form.start_date) validationErrors.push({ field: 'start_date', message: 'La data inizio è obbligatoria' })
+    if (form.end_date && form.start_date && !isDateAfter(form.end_date, form.start_date)) {
+      validationErrors.push({ field: 'end_date', message: 'La data fine deve essere dopo la data inizio' })
+    }
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     const payload: VehicleAllocationInput = {
       ...form,
       end_date: form.end_date || null,
@@ -246,8 +267,9 @@ export function VehicleAllocation() {
               required
               value={form.driver}
               onChange={(e) => setField('driver', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('driver') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Rotta</label>
@@ -256,8 +278,9 @@ export function VehicleAllocation() {
               required
               value={form.route}
               onChange={(e) => setField('route', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('route') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('route') && <p className="text-xs text-red-400 mt-1">{fieldError('route')}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -267,8 +290,9 @@ export function VehicleAllocation() {
                 required
                 value={form.start_date}
                 onChange={(e) => setField('start_date', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('start_date') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('start_date') && <p className="text-xs text-red-400 mt-1">{fieldError('start_date')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Data Fine</label>
@@ -276,8 +300,9 @@ export function VehicleAllocation() {
                 type="date"
                 value={form.end_date ?? ''}
                 onChange={(e) => setField('end_date', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('end_date') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('end_date') && <p className="text-xs text-red-400 mt-1">{fieldError('end_date')}</p>}
             </div>
           </div>
           <div>
@@ -292,6 +317,14 @@ export function VehicleAllocation() {
               ))}
             </select>
           </div>
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-colors">
               Annulla

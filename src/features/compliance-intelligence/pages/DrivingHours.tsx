@@ -8,6 +8,8 @@ import {
   checkDrivingViolation, MAX_DAILY_DRIVING_MINUTES,
 } from '../../../services/compliance'
 import type { DrivingHoursRow, DrivingHoursInput } from '../../../services/compliance'
+import { validateDrivingHoursForm } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Status maps ──
 
@@ -117,6 +119,7 @@ export function DrivingHours() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DisplayRecord>(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // ── Fetch from Supabase ──
 
@@ -152,6 +155,7 @@ export function DrivingHours() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -159,6 +163,7 @@ export function DrivingHours() {
     if (isDemo) return
     setEditingId(r.id)
     setForm({ ...r })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -166,6 +171,11 @@ export function DrivingHours() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   function updateField<K extends keyof DisplayRecord>(key: K, value: DisplayRecord[K]) {
@@ -175,6 +185,11 @@ export function DrivingHours() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors = validateDrivingHoursForm(form)
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const input: DrivingHoursInput = {
@@ -359,8 +374,9 @@ export function DrivingHours() {
                 value={form.driver}
                 onChange={(e) => updateField('driver', e.target.value)}
                 placeholder="es. Marco Bianchi"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
               />
+              {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
             </Field>
             <Field label="Data">
               <input
@@ -368,8 +384,9 @@ export function DrivingHours() {
                 required
                 value={form.date}
                 onChange={(e) => updateField('date', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
+              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
             </Field>
           </div>
 
@@ -382,8 +399,9 @@ export function DrivingHours() {
                 max={1440}
                 value={form.driving_minutes}
                 onChange={(e) => updateField('driving_minutes', Number(e.target.value))}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('driving_minutes') ? 'border-red-500' : ''}`}
               />
+              {fieldError('driving_minutes') && <p className="text-xs text-red-400 mt-1">{fieldError('driving_minutes')}</p>}
             </Field>
             <Field label="Minuti Pausa">
               <input
@@ -393,8 +411,9 @@ export function DrivingHours() {
                 max={1440}
                 value={form.break_minutes}
                 onChange={(e) => updateField('break_minutes', Number(e.target.value))}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('break_minutes') ? 'border-red-500' : ''}`}
               />
+              {fieldError('break_minutes') && <p className="text-xs text-red-400 mt-1">{fieldError('break_minutes')}</p>}
             </Field>
           </div>
 
@@ -431,6 +450,14 @@ export function DrivingHours() {
             />
           </Field>
 
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

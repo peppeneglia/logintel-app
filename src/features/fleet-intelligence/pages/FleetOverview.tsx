@@ -5,6 +5,8 @@ import { useAuthStore } from '../../../stores/authStore'
 import { Modal } from '../../../components/Modal'
 import { getVehicles, addVehicle, updateVehicle, deleteVehicle } from '../../../services/fleet'
 import type { VehicleRow, VehicleInput } from '../../../services/fleet'
+import { validateVehicleForm, isItalianPlateFormat } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Status maps ──
 
@@ -128,6 +130,8 @@ export function FleetOverview() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DisplayVehicle>(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
+  const [plateWarning, setPlateWarning] = useState('')
 
   // ── Fetch from Supabase ──
 
@@ -171,6 +175,8 @@ export function FleetOverview() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+    setPlateWarning('')
     setModalOpen(true)
   }
 
@@ -178,6 +184,8 @@ export function FleetOverview() {
     if (isDemo) return
     setEditingId(v.id)
     setForm({ ...v })
+    setErrors([])
+    setPlateWarning('')
     setModalOpen(true)
   }
 
@@ -185,6 +193,12 @@ export function FleetOverview() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+    setPlateWarning('')
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   function updateField<K extends keyof DisplayVehicle>(key: K, value: DisplayVehicle[K]) {
@@ -194,11 +208,19 @@ export function FleetOverview() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors = validateVehicleForm(form)
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+    setErrors([])
+
     setSaving(true)
     try {
       const input: VehicleInput = {
         user_id: userId,
-        plate: form.plate.trim(),
+        plate: form.plate.trim().toUpperCase(),
         brand: form.brand.trim(),
         model: form.model.trim(),
         year: Number(form.year),
@@ -397,10 +419,17 @@ export function FleetOverview() {
               <input
                 required
                 value={form.plate}
-                onChange={(e) => updateField('plate', e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase()
+                  updateField('plate', val)
+                  setPlateWarning(val.length >= 5 && !isItalianPlateFormat(val) ? 'Formato targa non standard (es. AB 123 CD)' : '')
+                  setErrors((prev) => prev.filter((err) => err.field !== 'plate'))
+                }}
                 placeholder="es. MI 123 AB"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('plate') ? 'border-red-500' : ''}`}
               />
+              {fieldError('plate') && <p className="text-xs text-red-400 mt-1">{fieldError('plate')}</p>}
+              {plateWarning && !fieldError('plate') && <p className="text-xs text-amber-400 mt-1">{plateWarning}</p>}
             </Field>
             <Field label="Marca">
               <input
@@ -509,6 +538,15 @@ export function FleetOverview() {
               className={inputCls + ' resize-none'}
             />
           </Field>
+
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button

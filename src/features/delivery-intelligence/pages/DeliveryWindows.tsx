@@ -11,6 +11,8 @@ import {
   deleteDeliveryWindow,
 } from '../../../services/delivery'
 import type { DeliveryRow, DeliveryWindowRow, DeliveryWindowInput } from '../../../services/delivery'
+import { isDateAfter } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Unified display type ──
 
@@ -88,6 +90,7 @@ export function DeliveryWindows() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // ── Fetch ──
 
@@ -126,6 +129,7 @@ export function DeliveryWindows() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -140,6 +144,7 @@ export function DeliveryWindows() {
       met: w.met,
       notes: w.notes,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -147,6 +152,11 @@ export function DeliveryWindows() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   function updateFormField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -156,6 +166,17 @@ export function DeliveryWindows() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors: ValidationError[] = []
+    if (!form.delivery_id) validationErrors.push({ field: 'delivery_id', message: 'La consegna è obbligatoria' })
+    if (!form.window_start) validationErrors.push({ field: 'window_start', message: "L'inizio finestra è obbligatorio" })
+    if (!form.window_end) validationErrors.push({ field: 'window_end', message: 'La fine finestra è obbligatoria' })
+    if (form.window_start && form.window_end && !isDateAfter(form.window_end, form.window_start)) {
+      validationErrors.push({ field: 'window_end', message: 'La fine finestra deve essere dopo l\'inizio' })
+    }
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const input: DeliveryWindowInput = {
@@ -310,7 +331,7 @@ export function DeliveryWindows() {
               required
               value={form.delivery_id}
               onChange={(e) => updateFormField('delivery_id', e.target.value)}
-              className={inputCls}
+              className={`${inputCls} ${fieldError('delivery_id') ? 'border-red-500' : ''}`}
             >
               <option value="">Seleziona una consegna...</option>
               {deliveries.map((d) => (
@@ -319,6 +340,7 @@ export function DeliveryWindows() {
                 </option>
               ))}
             </select>
+            {fieldError('delivery_id') && <p className="text-xs text-red-400 mt-1">{fieldError('delivery_id')}</p>}
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -328,8 +350,9 @@ export function DeliveryWindows() {
                 required
                 value={form.window_start}
                 onChange={(e) => updateFormField('window_start', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('window_start') ? 'border-red-500' : ''}`}
               />
+              {fieldError('window_start') && <p className="text-xs text-red-400 mt-1">{fieldError('window_start')}</p>}
             </Field>
             <Field label="Fine Finestra">
               <input
@@ -337,8 +360,9 @@ export function DeliveryWindows() {
                 required
                 value={form.window_end}
                 onChange={(e) => updateFormField('window_end', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('window_end') ? 'border-red-500' : ''}`}
               />
+              {fieldError('window_end') && <p className="text-xs text-red-400 mt-1">{fieldError('window_end')}</p>}
             </Field>
           </div>
 
@@ -363,6 +387,14 @@ export function DeliveryWindows() {
             />
           </Field>
 
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

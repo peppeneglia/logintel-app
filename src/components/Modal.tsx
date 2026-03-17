@@ -6,9 +6,11 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  /** max-width class override, defaults to max-w-2xl */
+  width?: string
 }
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({ open, onClose, title, children, width = 'max-w-2xl' }: ModalProps) {
   const backdropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
     >
-      <div className="bg-[#1e293b] border border-[#334155] rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto mx-4">
+      <div className={`bg-[#1e293b] border border-[#334155] rounded-2xl shadow-2xl w-full ${width} mx-4`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
           <button

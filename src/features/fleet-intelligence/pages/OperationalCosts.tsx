@@ -4,6 +4,8 @@ import { useAuthStore } from '../../../stores/authStore'
 import { getOperationalCosts, addOperationalCost, updateOperationalCost, deleteOperationalCost } from '../../../services/fleet'
 import type { OperationalCostRow, OperationalCostInput } from '../../../services/fleet'
 import { mockOperationalCosts } from '../../../data/mockFleetData'
+import { isValidYear, isValidKm, isValidCost } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -55,6 +57,7 @@ export function OperationalCosts() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<OperationalCostInput>({ ...EMPTY_FORM })
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   const costs: OperationalCostRow[] = isDemo
     ? mockOperationalCosts.map(mapMockToRow)
@@ -88,6 +91,7 @@ export function OperationalCosts() {
   function openAdd() {
     setEditingId(null)
     setForm({ ...EMPTY_FORM, user_id: userId ?? '' })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -104,16 +108,34 @@ export function OperationalCosts() {
       driver_cost: row.driver_cost,
       total_km: row.total_km,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setEditingId(null)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    const validationErrors: ValidationError[] = []
+    if (form.month < 1 || form.month > 12) validationErrors.push({ field: 'month', message: 'Il mese deve essere tra 1 e 12' })
+    if (!isValidYear(form.year)) validationErrors.push({ field: 'year', message: `Anno non valido (1990-${new Date().getFullYear() + 1})` })
+    if (!isValidCost(form.fuel_cost)) validationErrors.push({ field: 'fuel_cost', message: 'Costo carburante non valido' })
+    if (!isValidCost(form.maintenance_cost)) validationErrors.push({ field: 'maintenance_cost', message: 'Costo manutenzione non valido' })
+    if (!isValidCost(form.toll_cost)) validationErrors.push({ field: 'toll_cost', message: 'Costo pedaggi non valido' })
+    if (!isValidCost(form.driver_cost)) validationErrors.push({ field: 'driver_cost', message: 'Costo autista non valido' })
+    if (!isValidKm(form.total_km)) validationErrors.push({ field: 'total_km', message: 'Km non validi' })
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     if (editingId) {
       await updateOperationalCost(editingId, form)
     } else {
@@ -279,8 +301,9 @@ export function OperationalCosts() {
                 max={12}
                 value={form.month}
                 onChange={(e) => setNumField('month', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('month') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('month') && <p className="text-xs text-red-400 mt-1">{fieldError('month')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Anno</label>
@@ -291,8 +314,9 @@ export function OperationalCosts() {
                 max={2099}
                 value={form.year}
                 onChange={(e) => setNumField('year', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('year') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('year') && <p className="text-xs text-red-400 mt-1">{fieldError('year')}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -305,8 +329,9 @@ export function OperationalCosts() {
                 step="0.01"
                 value={form.fuel_cost}
                 onChange={(e) => setNumField('fuel_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('fuel_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('fuel_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('fuel_cost')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Costo Manutenzione</label>
@@ -317,8 +342,9 @@ export function OperationalCosts() {
                 step="0.01"
                 value={form.maintenance_cost}
                 onChange={(e) => setNumField('maintenance_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('maintenance_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('maintenance_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('maintenance_cost')}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -331,8 +357,9 @@ export function OperationalCosts() {
                 step="0.01"
                 value={form.toll_cost}
                 onChange={(e) => setNumField('toll_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('toll_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('toll_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('toll_cost')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Costo Autista</label>
@@ -343,8 +370,9 @@ export function OperationalCosts() {
                 step="0.01"
                 value={form.driver_cost}
                 onChange={(e) => setNumField('driver_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('driver_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('driver_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('driver_cost')}</p>}
             </div>
           </div>
           <div>
@@ -355,8 +383,9 @@ export function OperationalCosts() {
               min={0}
               value={form.total_km}
               onChange={(e) => setNumField('total_km', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('total_km') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('total_km') && <p className="text-xs text-red-400 mt-1">{fieldError('total_km')}</p>}
           </div>
           {/* Computed preview */}
           <div className="rounded-xl bg-[#0f172a] border border-[#334155] p-3 text-sm">
@@ -369,6 +398,14 @@ export function OperationalCosts() {
               <span className="text-emerald-400 font-semibold">{euro(computeCostPerKm(form))}</span>
             </div>
           </div>
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-colors">
               Annulla

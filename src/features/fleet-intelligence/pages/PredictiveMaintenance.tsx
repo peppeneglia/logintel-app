@@ -11,6 +11,8 @@ import {
   deleteMaintenanceAlert,
 } from '../../../services/fleet'
 import type { MaintenanceAlertRow, MaintenanceAlertInput } from '../../../services/fleet'
+import { isFutureDate } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Display types ────────────────────────────────────
 
@@ -127,6 +129,7 @@ export function PredictiveMaintenance() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // Fetch from Supabase when not demo
   const fetchAlerts = useCallback(async () => {
@@ -159,6 +162,7 @@ export function PredictiveMaintenance() {
   function openAddModal() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -174,6 +178,7 @@ export function PredictiveMaintenance() {
       due_date: alert.due_date ?? '',
       resolved: alert.resolved,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -181,6 +186,11 @@ export function PredictiveMaintenance() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   function handleChange(field: keyof FormState, value: string | boolean) {
@@ -199,6 +209,15 @@ export function PredictiveMaintenance() {
 
   async function handleSave() {
     if (!userId) return
+
+    const validationErrors: ValidationError[] = []
+    if (!form.type.trim()) validationErrors.push({ field: 'type', message: 'Il tipo è obbligatorio' })
+    if (!editingId && form.due_date && !isFutureDate(form.due_date)) {
+      validationErrors.push({ field: 'due_date', message: 'La scadenza deve essere una data futura per nuovi alert' })
+    }
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const payload: MaintenanceAlertInput = {
@@ -367,9 +386,10 @@ export function PredictiveMaintenance() {
               type="text"
               value={form.type}
               onChange={(e) => handleChange('type', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('type') ? 'border-red-500' : 'border-[#334155]'}`}
               placeholder="es. Pastiglie freno"
             />
+            {fieldError('type') && <p className="text-xs text-red-400 mt-1">{fieldError('type')}</p>}
           </div>
 
           {/* description */}
@@ -418,8 +438,9 @@ export function PredictiveMaintenance() {
               type="date"
               value={form.due_date}
               onChange={(e) => handleChange('due_date', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('due_date') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('due_date') && <p className="text-xs text-red-400 mt-1">{fieldError('due_date')}</p>}
           </div>
 
           {/* resolved */}
@@ -435,6 +456,15 @@ export function PredictiveMaintenance() {
               Risolto
             </label>
           </div>
+
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-2">
@@ -460,7 +490,7 @@ export function PredictiveMaintenance() {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={saving || !form.vehicle_id || !form.type}
+                disabled={saving}
                 className="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? 'Salvataggio...' : editingId ? 'Salva' : 'Aggiungi'}

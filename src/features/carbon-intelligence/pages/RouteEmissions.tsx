@@ -12,6 +12,8 @@ import {
   CO2_FACTORS,
 } from '../../../services/carbon'
 import type { EmissionsRecordRow, EmissionsRecordInput } from '../../../services/carbon'
+import { validateEmissionsForm } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 // ── Trend helpers ──
 
@@ -118,6 +120,7 @@ export function RouteEmissions() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   // ── Fetch from Supabase ──
 
@@ -151,6 +154,7 @@ export function RouteEmissions() {
   function openAdd() {
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -164,6 +168,7 @@ export function RouteEmissions() {
       date: row.date,
       vehicle_id: row.vehicle_id,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -171,6 +176,11 @@ export function RouteEmissions() {
     setModalOpen(false)
     setEditingId(null)
     setForm(emptyForm)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   function updateField<K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) {
@@ -180,6 +190,11 @@ export function RouteEmissions() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!userId) return
+
+    const validationErrors = validateEmissionsForm(form)
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     setSaving(true)
     try {
       const co2Kg = computeEmissions(form.km, form.euro_class)
@@ -342,8 +357,9 @@ export function RouteEmissions() {
               value={form.route}
               onChange={(e) => updateField('route', e.target.value)}
               placeholder="es. Milano → Roma"
-              className={inputCls}
+              className={`${inputCls} ${fieldError('route') ? 'border-red-500' : ''}`}
             />
+            {fieldError('route') && <p className="text-xs text-red-400 mt-1">{fieldError('route')}</p>}
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -355,14 +371,15 @@ export function RouteEmissions() {
                 value={form.km || ''}
                 onChange={(e) => updateField('km', Number(e.target.value))}
                 placeholder="es. 580"
-                className={inputCls}
+                className={`${inputCls} ${fieldError('km') ? 'border-red-500' : ''}`}
               />
+              {fieldError('km') && <p className="text-xs text-red-400 mt-1">{fieldError('km')}</p>}
             </Field>
             <Field label="Classe Euro">
               <select
                 value={form.euro_class}
                 onChange={(e) => updateField('euro_class', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('euro_class') ? 'border-red-500' : ''}`}
               >
                 {euroClassOptions.map((ec) => (
                   <option key={ec} value={ec}>{ec}</option>
@@ -378,8 +395,9 @@ export function RouteEmissions() {
                 required
                 value={form.date}
                 onChange={(e) => updateField('date', e.target.value)}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
+              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
             </Field>
             <Field label="Veicolo (ID)">
               <input
@@ -397,6 +415,14 @@ export function RouteEmissions() {
             <span className="text-lg font-bold text-emerald-400">{co2Preview.toFixed(2)}</span>
           </div>
 
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

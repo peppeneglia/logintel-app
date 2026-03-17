@@ -4,6 +4,7 @@ import { useAuthStore } from '../../../stores/authStore'
 import { getDocumentExpiries, addDocumentExpiry, updateDocumentExpiry, deleteDocumentExpiry } from '../../../services/fleet'
 import type { DocumentExpiryRow, DocumentExpiryInput } from '../../../services/fleet'
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
+import type { ValidationError } from '../../../lib/validation'
 
 const STATUS_BADGE: Record<string, string> = {
   valid: 'bg-emerald-500/10 text-emerald-400',
@@ -88,6 +89,7 @@ export function DocumentExpiry() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DocumentExpiryInput>({ ...EMPTY_FORM })
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   const rawDocuments: DocumentExpiryRow[] = isDemo
     ? mockDocumentExpiries.map(mapMockToRow)
@@ -120,6 +122,7 @@ export function DocumentExpiry() {
   function openAdd() {
     setEditingId(null)
     setForm({ ...EMPTY_FORM, user_id: userId ?? '' })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -133,16 +136,29 @@ export function DocumentExpiry() {
       expiry_date: row.expiry_date,
       status: row.status,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setEditingId(null)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    const validationErrors: ValidationError[] = []
+    if (!form.document_type.trim()) validationErrors.push({ field: 'document_type', message: 'Il tipo documento è obbligatorio' })
+    if (!form.expiry_date) validationErrors.push({ field: 'expiry_date', message: 'La data scadenza è obbligatoria' })
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     const status = computeStatus(form.expiry_date)
     const payload: DocumentExpiryInput = {
       ...form,
@@ -293,8 +309,9 @@ export function DocumentExpiry() {
               required
               value={form.document_type}
               onChange={(e) => setField('document_type', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('document_type') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('document_type') && <p className="text-xs text-red-400 mt-1">{fieldError('document_type')}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Numero Documento</label>
@@ -312,8 +329,9 @@ export function DocumentExpiry() {
               required
               value={form.expiry_date}
               onChange={(e) => setField('expiry_date', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('expiry_date') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('expiry_date') && <p className="text-xs text-red-400 mt-1">{fieldError('expiry_date')}</p>}
           </div>
           {/* Status preview (auto-computed) */}
           {form.expiry_date && (
@@ -322,6 +340,14 @@ export function DocumentExpiry() {
               <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[computeStatus(form.expiry_date)]}`}>
                 {STATUS_LABEL[computeStatus(form.expiry_date)]}
               </span>
+            </div>
+          )}
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">

@@ -4,6 +4,8 @@ import { useAuthStore } from '../../../stores/authStore'
 import { getRouteMargins, addRouteMargin, updateRouteMargin, deleteRouteMargin, computeMargin } from '../../../services/finance'
 import type { RouteMarginRow, RouteMarginInput } from '../../../services/finance'
 import { mockRouteMargins } from '../../../data/mockFinanceData'
+import { validateRouteMarginForm } from '../../../lib/validation'
+import type { ValidationError } from '../../../lib/validation'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -58,6 +60,7 @@ export function RouteMargins() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<RouteMarginInput>({ ...EMPTY_FORM })
+  const [errors, setErrors] = useState<ValidationError[]>([])
 
   const rows: RouteMarginRow[] = isDemo
     ? mockRouteMargins.map(mapMockToRow)
@@ -87,6 +90,7 @@ export function RouteMargins() {
   function openAdd() {
     setEditingId(null)
     setForm({ ...EMPTY_FORM, user_id: userId ?? '' })
+    setErrors([])
     setModalOpen(true)
   }
 
@@ -106,16 +110,27 @@ export function RouteMargins() {
       tolls: row.tolls,
       vehicle_id: row.vehicle_id,
     })
+    setErrors([])
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setEditingId(null)
+    setErrors([])
+  }
+
+  function fieldError(field: string): string | undefined {
+    return errors.find((e) => e.field === field)?.message
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    const validationErrors = validateRouteMarginForm(form)
+    if (validationErrors.length > 0) { setErrors(validationErrors); return }
+    setErrors([])
+
     if (editingId) {
       await updateRouteMargin(editingId, form)
     } else {
@@ -257,8 +272,9 @@ export function RouteMargins() {
                 required
                 value={form.route}
                 onChange={(e) => setField('route', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('route') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('route') && <p className="text-xs text-red-400 mt-1">{fieldError('route')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Cliente</label>
@@ -278,8 +294,9 @@ export function RouteMargins() {
                 required
                 value={form.date}
                 onChange={(e) => setField('date', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('date') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Km</label>
@@ -289,8 +306,9 @@ export function RouteMargins() {
                 min={0}
                 value={form.km}
                 onChange={(e) => setNumField('km', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('km') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('km') && <p className="text-xs text-red-400 mt-1">{fieldError('km')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Ore Guida</label>
@@ -314,8 +332,9 @@ export function RouteMargins() {
               step="0.01"
               value={form.revenue}
               onChange={(e) => setNumField('revenue', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('revenue') ? 'border-red-500' : 'border-[#334155]'}`}
             />
+            {fieldError('revenue') && <p className="text-xs text-red-400 mt-1">{fieldError('revenue')}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -327,8 +346,9 @@ export function RouteMargins() {
                 step="0.01"
                 value={form.fuel_cost}
                 onChange={(e) => setNumField('fuel_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('fuel_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('fuel_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('fuel_cost')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Costo Autista</label>
@@ -339,8 +359,9 @@ export function RouteMargins() {
                 step="0.01"
                 value={form.driver_cost}
                 onChange={(e) => setNumField('driver_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('driver_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('driver_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('driver_cost')}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -353,8 +374,9 @@ export function RouteMargins() {
                 step="0.01"
                 value={form.fixed_cost}
                 onChange={(e) => setNumField('fixed_cost', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('fixed_cost') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('fixed_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('fixed_cost')}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Pedaggi</label>
@@ -365,8 +387,9 @@ export function RouteMargins() {
                 step="0.01"
                 value={form.tolls}
                 onChange={(e) => setNumField('tolls', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('tolls') ? 'border-red-500' : 'border-[#334155]'}`}
               />
+              {fieldError('tolls') && <p className="text-xs text-red-400 mt-1">{fieldError('tolls')}</p>}
             </div>
           </div>
 
@@ -390,6 +413,14 @@ export function RouteMargins() {
             </div>
           </div>
 
+          {errors.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-medium text-red-400 mb-1">Correggi i seguenti errori:</p>
+              <ul className="text-xs text-red-400 list-disc list-inside">
+                {errors.map((err, i) => <li key={i}>{err.message}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-colors">
               Annulla
