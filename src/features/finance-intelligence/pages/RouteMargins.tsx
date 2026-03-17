@@ -77,9 +77,13 @@ export function RouteMargins() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    const data = await getRouteMargins(userId)
-    setSupabaseData(data)
-    await consume(CREDIT_COSTS.FINANCE_MARGINS_LOAD, 'FINANCE_MARGINS_LOAD')
+    try {
+      const data = await getRouteMargins(userId)
+      setSupabaseData(data)
+      consume(CREDIT_COSTS.FINANCE_MARGINS_LOAD, 'FINANCE_MARGINS_LOAD')
+    } catch {
+      // silently fail on background refresh
+    }
   }, [isDemo, userId])
 
   useEffect(() => {

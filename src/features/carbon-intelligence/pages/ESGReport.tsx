@@ -72,17 +72,16 @@ export function ESGReport() {
   const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
-      await consume(CREDIT_COSTS.CARBON_ESG_LOAD, 'CARBON_ESG_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.CARBON_ESG_LOAD, 'CARBON_ESG_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

@@ -64,17 +64,16 @@ export function ETAAccuracy() {
   const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DisplayAccuracy[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getDeliveries(userId)
       setSupabaseData(computeAccuracyFromDeliveries(rows))
-      await consume(CREDIT_COSTS.DELIVERY_ETA_LOAD, 'DELIVERY_ETA_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.DELIVERY_ETA_LOAD, 'DELIVERY_ETA_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

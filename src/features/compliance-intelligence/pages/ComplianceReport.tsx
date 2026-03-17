@@ -97,13 +97,12 @@ export function ComplianceReport() {
   const [supabaseDocs, setSupabaseDocs] = useState<ComplianceDocumentRow[]>([])
   const [supabaseHours, setSupabaseHours] = useState<DrivingHoursRow[]>([])
   const [supabaseShipments, setSupabaseShipments] = useState<ADRShipmentRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
 
   // ── Fetch from Supabase ──
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const [docs, hours, shipments] = await Promise.all([
         getComplianceDocuments(userId),
@@ -113,9 +112,9 @@ export function ComplianceReport() {
       setSupabaseDocs(docs)
       setSupabaseHours(hours)
       setSupabaseShipments(shipments)
-      await consume(CREDIT_COSTS.COMPLIANCE_REPORT_LOAD, 'COMPLIANCE_REPORT_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.COMPLIANCE_REPORT_LOAD, 'COMPLIANCE_REPORT_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

@@ -74,9 +74,13 @@ export function OperationalCosts() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    const rows = await getOperationalCosts(userId)
-    setSupabaseData(rows)
-    await consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
+    try {
+      const rows = await getOperationalCosts(userId)
+      setSupabaseData(rows)
+      consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
+    } catch {
+      // silently fail on background refresh
+    }
   }, [isDemo, userId])
 
   useEffect(() => {

@@ -130,7 +130,7 @@ export function PredictiveMaintenance() {
   const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseAlerts, setSupabaseAlerts] = useState<MaintenanceAlertRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -143,13 +143,12 @@ export function PredictiveMaintenance() {
   // Fetch from Supabase when not demo
   const fetchAlerts = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getMaintenanceAlerts(userId)
       setSupabaseAlerts(rows)
-      await consume(CREDIT_COSTS.FLEET_MAINTENANCE_LOAD, 'FLEET_MAINTENANCE_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.FLEET_MAINTENANCE_LOAD, 'FLEET_MAINTENANCE_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

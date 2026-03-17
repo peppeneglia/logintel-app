@@ -70,9 +70,13 @@ export function ClientProfitability() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    const data = await getRouteMargins(userId)
-    setSupabaseRows(data)
-    await consume(CREDIT_COSTS.FINANCE_CLIENTS_LOAD, 'FINANCE_CLIENTS_LOAD')
+    try {
+      const data = await getRouteMargins(userId)
+      setSupabaseRows(data)
+      consume(CREDIT_COSTS.FINANCE_CLIENTS_LOAD, 'FINANCE_CLIENTS_LOAD')
+    } catch {
+      // silently fail on background refresh
+    }
   }, [isDemo, userId])
 
   useEffect(() => {

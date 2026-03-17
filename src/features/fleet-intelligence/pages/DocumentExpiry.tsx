@@ -116,9 +116,13 @@ export function DocumentExpiry() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    const rows = await getDocumentExpiries(userId)
-    setSupabaseData(rows)
-    await consume(CREDIT_COSTS.FLEET_DOCUMENT_LOAD, 'FLEET_DOCUMENT_LOAD')
+    try {
+      const rows = await getDocumentExpiries(userId)
+      setSupabaseData(rows)
+      consume(CREDIT_COSTS.FLEET_DOCUMENT_LOAD, 'FLEET_DOCUMENT_LOAD')
+    } catch {
+      // silently fail on background refresh
+    }
   }, [isDemo, userId])
 
   useEffect(() => {

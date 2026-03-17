@@ -112,7 +112,7 @@ export function DeliveryPerformance() {
   const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DeliveryRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DisplayDelivery>(emptyForm)
@@ -125,13 +125,12 @@ export function DeliveryPerformance() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getDeliveries(userId)
       setSupabaseData(rows)
-      await consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

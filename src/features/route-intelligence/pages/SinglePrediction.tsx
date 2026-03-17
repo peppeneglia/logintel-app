@@ -8,6 +8,7 @@ import { ConfidenceBar } from '../../../components/ConfidenceBar'
 import { CreditConfirmModal } from '../../../components/CreditConfirmModal'
 import { CityAutocomplete } from '../../../components/CityAutocomplete'
 import type { CitySelection } from '../../../components/CityAutocomplete'
+import { DateTimeInput } from '../../../components/DateTimeInput'
 import { RouteMap } from '../../../components/RouteMap'
 import { predictRoute } from '../../../services/api'
 import type { PredictionResponse } from '../../../services/api'
@@ -104,7 +105,9 @@ export function SinglePrediction() {
   const [originCoords, setOriginCoords] = useState<CitySelection | null>(null)
   const [destination, setDestination] = useState(isDemo ? 'Roma' : '')
   const [destinationCoords, setDestinationCoords] = useState<CitySelection | null>(null)
-  const [departureTime, setDepartureTime] = useState(isDemo ? '2026-02-25T08:00' : '')
+  const [departureDate, setDepartureDate] = useState(isDemo ? '2026-02-25' : '')
+  const [departureTimeStr, setDepartureTimeStr] = useState(isDemo ? '08:00' : '')
+  const departureTime = departureDate && departureTimeStr ? `${departureDate}T${departureTimeStr}` : ''
   const [vehicleType, setVehicleType] = useState('truck_standard')
   const [showResult, setShowResult] = useState(isDemo)
   const [loading, setLoading] = useState(false)
@@ -234,7 +237,7 @@ export function SinglePrediction() {
   const lastSegmentArrival = result?.segments.length
     ? new Date(result.segments[result.segments.length - 1].estimated_arrival)
     : null
-  const departureDate = submittedDeparture ? new Date(submittedDeparture) : null
+  const departureDateObj = submittedDeparture ? new Date(submittedDeparture) : null
   const correctedETA = lastSegmentArrival
 
   return (
@@ -262,15 +265,12 @@ export function SinglePrediction() {
               className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Data e ora partenza</label>
-            <input
-              type="datetime-local"
-              value={departureTime}
-              onChange={(e) => setDepartureTime(e.target.value)}
-              className="w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
-            />
-          </div>
+          <DateTimeInput
+            date={departureDate}
+            time={departureTimeStr}
+            onDateChange={setDepartureDate}
+            onTimeChange={setDepartureTimeStr}
+          />
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Tipo veicolo</label>
             <select
@@ -489,12 +489,12 @@ export function SinglePrediction() {
           </div>
 
           {/* ETA — da partenza a arrivo */}
-          {departureDate && correctedETA && (
+          {departureDateObj && correctedETA && (
             <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-6">
                 <div>
                   <p className="text-xs text-slate-500">Partenza</p>
-                  <p className="text-2xl font-bold text-white">{formatDateTime(departureDate)}</p>
+                  <p className="text-2xl font-bold text-white">{formatDateTime(departureDateObj!)}</p>
                 </div>
                 <span className="text-slate-500 text-2xl">&rarr;</span>
                 <div>

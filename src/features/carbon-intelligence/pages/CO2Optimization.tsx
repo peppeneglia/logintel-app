@@ -176,18 +176,17 @@ export function CO2Optimization() {
   const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<EmissionsRecordRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [optState, setOptState] = useState<Record<string, CO2OptType['status']>>(loadOptState)
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getEmissionsRecords(userId)
       setSupabaseData(rows)
-      await consume(CREDIT_COSTS.CARBON_OPTIMIZATION_LOAD, 'CARBON_OPTIMIZATION_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.CARBON_OPTIMIZATION_LOAD, 'CARBON_OPTIMIZATION_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

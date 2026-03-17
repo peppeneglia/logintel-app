@@ -78,7 +78,7 @@ export function DeliveryWindows() {
 
   const [deliveries, setDeliveries] = useState<DeliveryRow[]>([])
   const [windowRows, setWindowRows] = useState<DeliveryWindowRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
@@ -91,7 +91,6 @@ export function DeliveryWindows() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getDeliveries(userId)
       setDeliveries(rows)
@@ -102,9 +101,9 @@ export function DeliveryWindows() {
         allWindows.push(...w)
       }
       setWindowRows(allWindows)
-      await consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

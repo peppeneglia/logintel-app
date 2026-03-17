@@ -63,9 +63,13 @@ export function CostAnalysis() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    const rows = await getOperationalCosts(userId)
-    setSupabaseData(rows)
-    await consume(CREDIT_COSTS.FINANCE_COSTS_LOAD, 'FINANCE_COSTS_LOAD')
+    try {
+      const rows = await getOperationalCosts(userId)
+      setSupabaseData(rows)
+      consume(CREDIT_COSTS.FINANCE_COSTS_LOAD, 'FINANCE_COSTS_LOAD')
+    } catch {
+      // silently fail on background refresh
+    }
   }, [isDemo, userId])
 
   useEffect(() => {

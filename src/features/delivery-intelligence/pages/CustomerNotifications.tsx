@@ -73,17 +73,16 @@ export function CustomerNotifications() {
   const userId = useAuthStore((s) => s.user?.id)
 
   const [supabaseNotifications, setSupabaseNotifications] = useState<DisplayNotification[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getDeliveries(userId)
       const derived = rows.flatMap(deliveryToNotifications)
       setSupabaseNotifications(derived)
-    } finally {
-      setLoading(false)
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

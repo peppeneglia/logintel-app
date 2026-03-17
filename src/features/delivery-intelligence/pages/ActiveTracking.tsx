@@ -73,17 +73,16 @@ export function ActiveTracking() {
   const { consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DeliveryRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getDeliveries(userId)
       setSupabaseData(rows.filter((r) => r.status === 'in_transit'))
-      await consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.DELIVERY_LOAD, 'DELIVERY_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

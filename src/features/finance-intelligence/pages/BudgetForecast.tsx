@@ -74,9 +74,13 @@ export function BudgetForecast() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    const rows = await getOperationalCosts(userId)
-    setSupabaseData(rows)
-    await consume(CREDIT_COSTS.FINANCE_BUDGET_LOAD, 'FINANCE_BUDGET_LOAD')
+    try {
+      const rows = await getOperationalCosts(userId)
+      setSupabaseData(rows)
+      consume(CREDIT_COSTS.FINANCE_BUDGET_LOAD, 'FINANCE_BUDGET_LOAD')
+    } catch {
+      // silently fail on background refresh
+    }
   }, [isDemo, userId])
 
   useEffect(() => {

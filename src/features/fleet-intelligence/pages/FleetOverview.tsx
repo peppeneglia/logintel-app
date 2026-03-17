@@ -121,7 +121,7 @@ export function FleetOverview() {
   const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<VehicleRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DisplayVehicle>(emptyForm)
@@ -135,13 +135,12 @@ export function FleetOverview() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getVehicles(userId)
       setSupabaseData(rows)
-      await consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.FLEET_OVERVIEW_LOAD, 'FLEET_OVERVIEW_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 

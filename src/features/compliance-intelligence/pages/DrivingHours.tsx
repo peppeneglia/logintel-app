@@ -107,7 +107,7 @@ export function DrivingHours() {
   const { creditsRemaining, dailyLimit, extraCredits, canAfford, consume } = useCredits()
 
   const [supabaseData, setSupabaseData] = useState<DrivingHoursRow[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<DisplayRecord>(emptyForm)
@@ -120,13 +120,12 @@ export function DrivingHours() {
 
   const fetchData = useCallback(async () => {
     if (isDemo || !userId) return
-    setLoading(true)
     try {
       const rows = await getDrivingHours(userId)
       setSupabaseData(rows)
-      await consume(CREDIT_COSTS.COMPLIANCE_HOURS_LOAD, 'COMPLIANCE_HOURS_LOAD')
-    } finally {
-      setLoading(false)
+      consume(CREDIT_COSTS.COMPLIANCE_HOURS_LOAD, 'COMPLIANCE_HOURS_LOAD')
+    } catch {
+      // silently fail on background refresh
     }
   }, [isDemo, userId])
 
