@@ -64,6 +64,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const session = await authService.getSession()
 
       if (session?.user) {
+        // "Remember Me" check: if user logged in without "Ricordami",
+        // sessionStorage flag was set. On cold start (browser reopened),
+        // sessionStorage is cleared, so we check localStorage for the marker.
+        const sessionOnly = localStorage.getItem('logintel-no-remember')
+        if (sessionOnly && !sessionStorage.getItem('logintel-session-active')) {
+          // Browser was closed and reopened without "Ricordami" — sign out
+          localStorage.removeItem('logintel-no-remember')
+          await supabase.auth.signOut()
+          set({ loading: false, initialized: true })
+          return undefined
+        }
+        // Mark this session as active (survives tab refresh, cleared on browser close)
+        sessionStorage.setItem('logintel-session-active', '1')
+
         set({
           user: { id: session.user.id, email: session.user.email || '' },
         })
@@ -116,7 +130,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { user } = await authService.signIn(email, password)
       if (user) {
         set({ user: { id: user.id, email: user.email || '' } })
-        // fetchProfile + resetDailyCredits will be handled by onAuthStateChange
+        await get().fetchProfile(user.id)
       }
     } finally {
       set({ loading: false })

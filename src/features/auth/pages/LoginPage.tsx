@@ -45,18 +45,16 @@ export function LoginPage() {
       await signIn(email.trim(), password)
       setFailedAttempts(0)
 
-      // If "Remember Me" is NOT checked, move Supabase session from
-      // localStorage to sessionStorage so it expires when the browser closes.
+      // "Remember Me" logic: store a marker in localStorage so the app
+      // knows to sign out on next cold start (browser reopen).
+      // sessionStorage('logintel-session-active') is set during initialize
+      // and cleared automatically when the browser closes.
       if (!remember) {
-        const keys = Object.keys(localStorage).filter((k) => k.startsWith('sb-'))
-        for (const key of keys) {
-          const value = localStorage.getItem(key)
-          if (value) {
-            sessionStorage.setItem(key, value)
-            localStorage.removeItem(key)
-          }
-        }
+        localStorage.setItem('logintel-no-remember', '1')
+      } else {
+        localStorage.removeItem('logintel-no-remember')
       }
+      sessionStorage.setItem('logintel-session-active', '1')
 
       navigate('/', { replace: true })
     } catch (err) {
