@@ -6,6 +6,7 @@ import type { OperationalCostRow, OperationalCostInput } from '../../../services
 import { mockOperationalCosts } from '../../../data/mockFleetData'
 import { isValidYear, isValidKm, isValidCost } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, inputCls } from '../../../components/FormFields'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -155,11 +156,6 @@ export function OperationalCosts() {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function setNumField(key: keyof OperationalCostInput, raw: string) {
-    const num = parseFloat(raw) || 0
-    setField(key, num as never)
-  }
-
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -281,111 +277,99 @@ export function OperationalCosts() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Costo' : 'Nuovo Costo Operativo'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Veicolo (ID)</label>
-            <input
-              type="text"
-              required
-              value={form.vehicle_id}
-              onChange={(e) => setField('vehicle_id', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Mese</label>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Veicolo (ID)">
               <input
-                type="number"
+                type="text"
                 required
+                value={form.vehicle_id}
+                onChange={(e) => setField('vehicle_id', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Mese" error={fieldError('month')}>
+              <NumericInput
+                value={form.month}
+                onChange={(val) => setField('month', val)}
                 min={1}
                 max={12}
-                value={form.month}
-                onChange={(e) => setNumField('month', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('month') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('month') && <p className="text-xs text-red-400 mt-1">{fieldError('month')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Anno</label>
-              <input
-                type="number"
+                maxLength={2}
+                integer
                 required
+                className={`${inputCls} ${fieldError('month') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Anno" error={fieldError('year')}>
+              <NumericInput
+                value={form.year}
+                onChange={(val) => setField('year', val)}
                 min={2020}
                 max={2099}
-                value={form.year}
-                onChange={(e) => setNumField('year', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('year') ? 'border-red-500' : 'border-[#334155]'}`}
+                maxLength={4}
+                integer
+                required
+                className={`${inputCls} ${fieldError('year') ? 'border-red-500' : ''}`}
               />
-              {fieldError('year') && <p className="text-xs text-red-400 mt-1">{fieldError('year')}</p>}
-            </div>
+            </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Carburante</label>
-              <input
-                type="number"
-                required
-                min={0}
-                step="0.01"
+            <Field label="Costo Carburante" error={fieldError('fuel_cost')}>
+              <NumericInput
                 value={form.fuel_cost}
-                onChange={(e) => setNumField('fuel_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('fuel_cost') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('fuel_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('fuel_cost')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Manutenzione</label>
-              <input
-                type="number"
+                onChange={(val) => setField('fuel_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
                 required
-                min={0}
-                step="0.01"
+                className={`${inputCls} ${fieldError('fuel_cost') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Costo Manutenzione" error={fieldError('maintenance_cost')}>
+              <NumericInput
                 value={form.maintenance_cost}
-                onChange={(e) => setNumField('maintenance_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('maintenance_cost') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('maintenance_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('maintenance_cost')}</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Pedaggi</label>
-              <input
-                type="number"
+                onChange={(val) => setField('maintenance_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
                 required
-                min={0}
-                step="0.01"
+                className={`${inputCls} ${fieldError('maintenance_cost') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Costo Pedaggi" error={fieldError('toll_cost')}>
+              <NumericInput
                 value={form.toll_cost}
-                onChange={(e) => setNumField('toll_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('toll_cost') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('toll_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('toll_cost')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Autista</label>
-              <input
-                type="number"
+                onChange={(val) => setField('toll_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
                 required
-                min={0}
-                step="0.01"
-                value={form.driver_cost}
-                onChange={(e) => setNumField('driver_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('driver_cost') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('toll_cost') ? 'border-red-500' : ''}`}
               />
-              {fieldError('driver_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('driver_cost')}</p>}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Km Totali</label>
-            <input
-              type="number"
-              required
-              min={0}
-              value={form.total_km}
-              onChange={(e) => setNumField('total_km', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('total_km') ? 'border-red-500' : 'border-[#334155]'}`}
-            />
-            {fieldError('total_km') && <p className="text-xs text-red-400 mt-1">{fieldError('total_km')}</p>}
+            </Field>
+            <Field label="Costo Autista" error={fieldError('driver_cost')}>
+              <NumericInput
+                value={form.driver_cost}
+                onChange={(val) => setField('driver_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
+                required
+                className={`${inputCls} ${fieldError('driver_cost') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Km Totali" error={fieldError('total_km')}>
+              <NumericInput
+                value={form.total_km}
+                onChange={(val) => setField('total_km', val)}
+                max={9999999}
+                maxLength={7}
+                integer
+                required
+                className={`${inputCls} ${fieldError('total_km') ? 'border-red-500' : ''}`}
+              />
+            </Field>
           </div>
           {/* Computed preview */}
           <div className="rounded-xl bg-[#0f172a] border border-[#334155] p-3 text-sm">

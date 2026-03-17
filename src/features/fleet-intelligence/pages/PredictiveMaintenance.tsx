@@ -13,6 +13,7 @@ import {
 import type { MaintenanceAlertRow, MaintenanceAlertInput } from '../../../services/fleet'
 import { isFutureDate } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, inputCls } from '../../../components/FormFields'
 
 // ── Display types ────────────────────────────────────
 
@@ -101,7 +102,7 @@ interface FormState {
   type: string
   description: string
   urgency: string
-  km_threshold: string
+  km_threshold: number
   due_date: string
   resolved: boolean
 }
@@ -111,7 +112,7 @@ const emptyForm: FormState = {
   type: '',
   description: '',
   urgency: 'low',
-  km_threshold: '',
+  km_threshold: 0,
   due_date: '',
   resolved: false,
 }
@@ -174,7 +175,7 @@ export function PredictiveMaintenance() {
       type: alert.type,
       description: alert.description,
       urgency: alert.urgency,
-      km_threshold: alert.km_threshold != null ? String(alert.km_threshold) : '',
+      km_threshold: alert.km_threshold ?? 0,
       due_date: alert.due_date ?? '',
       resolved: alert.resolved,
     })
@@ -193,14 +194,14 @@ export function PredictiveMaintenance() {
     return errors.find((e) => e.field === field)?.message
   }
 
-  function handleChange(field: keyof FormState, value: string | boolean) {
+  function handleChange(field: keyof FormState, value: string | boolean | number) {
     setForm((prev) => {
       const next = { ...prev, [field]: value }
       // Auto-compute urgency when due_date or km_threshold change
       if (field === 'due_date' || field === 'km_threshold') {
-        const km = field === 'km_threshold' ? (value as string) : next.km_threshold
+        const km = field === 'km_threshold' ? (value as number) : next.km_threshold
         const date = field === 'due_date' ? (value as string) : next.due_date
-        const auto = computeUrgency(date || null, km ? Number(km) : null)
+        const auto = computeUrgency(date || null, km || null)
         if (auto) next.urgency = auto
       }
       return next
@@ -226,7 +227,7 @@ export function PredictiveMaintenance() {
         type: form.type,
         description: form.description || null,
         urgency: form.urgency,
-        km_threshold: form.km_threshold ? Number(form.km_threshold) : null,
+        km_threshold: form.km_threshold || null,
         due_date: form.due_date || null,
         resolved: form.resolved,
       }
@@ -367,94 +368,83 @@ export function PredictiveMaintenance() {
         title={editingId ? 'Modifica Alert' : 'Nuovo Alert Manutenzione'}
       >
         <div className="space-y-4">
-          {/* vehicle_id */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Veicolo (ID)</label>
-            <input
-              type="text"
-              value={form.vehicle_id}
-              onChange={(e) => handleChange('vehicle_id', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="es. MI 567 CD"
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Veicolo (ID)">
+              <input
+                type="text"
+                value={form.vehicle_id}
+                onChange={(e) => handleChange('vehicle_id', e.target.value)}
+                className={inputCls}
+                placeholder="es. MI 567 CD"
+              />
+            </Field>
+            <Field label="Tipo" error={fieldError('type')}>
+              <input
+                type="text"
+                value={form.type}
+                onChange={(e) => handleChange('type', e.target.value)}
+                className={`${inputCls} ${fieldError('type') ? 'border-red-500' : ''}`}
+                placeholder="es. Pastiglie freno"
+              />
+            </Field>
+            <Field label="Urgenza">
+              <select
+                value={form.urgency}
+                onChange={(e) => handleChange('urgency', e.target.value)}
+                className={inputCls}
+              >
+                <option value="low">Bassa</option>
+                <option value="medium">Media</option>
+                <option value="high">Alta</option>
+                <option value="critical">Critica</option>
+              </select>
+            </Field>
           </div>
 
-          {/* type */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Tipo</label>
-            <input
-              type="text"
-              value={form.type}
-              onChange={(e) => handleChange('type', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('type') ? 'border-red-500' : 'border-[#334155]'}`}
-              placeholder="es. Pastiglie freno"
-            />
-            {fieldError('type') && <p className="text-xs text-red-400 mt-1">{fieldError('type')}</p>}
-          </div>
-
-          {/* description */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Descrizione</label>
+          <Field label="Descrizione">
             <textarea
               value={form.description}
               onChange={(e) => handleChange('description', e.target.value)}
               rows={2}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              className={inputCls + ' resize-none'}
               placeholder="Dettagli opzionali..."
             />
-          </div>
+          </Field>
 
-          {/* urgency */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Urgenza</label>
-            <select
-              value={form.urgency}
-              onChange={(e) => handleChange('urgency', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="low">Bassa</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-              <option value="critical">Critica</option>
-            </select>
-          </div>
-
-          {/* km_threshold */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Soglia Km</label>
-            <input
-              type="number"
-              value={form.km_threshold}
-              onChange={(e) => handleChange('km_threshold', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="es. 5000"
-            />
-          </div>
-
-          {/* due_date */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Scadenza</label>
-            <input
-              type="date"
-              value={form.due_date}
-              onChange={(e) => handleChange('due_date', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('due_date') ? 'border-red-500' : 'border-[#334155]'}`}
-            />
-            {fieldError('due_date') && <p className="text-xs text-red-400 mt-1">{fieldError('due_date')}</p>}
-          </div>
-
-          {/* resolved */}
-          <div className="flex items-center gap-2">
-            <input
-              id="resolved"
-              type="checkbox"
-              checked={form.resolved}
-              onChange={(e) => handleChange('resolved', e.target.checked)}
-              className="h-4 w-4 rounded border-[#334155] bg-[#0f172a] text-primary-500 focus:ring-primary-500"
-            />
-            <label htmlFor="resolved" className="text-sm font-medium text-slate-300">
-              Risolto
-            </label>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Soglia Km">
+              <NumericInput
+                value={form.km_threshold}
+                onChange={(val) => handleChange('km_threshold', val)}
+                max={9999999}
+                maxLength={7}
+                integer
+                placeholder="es. 5000"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Scadenza" error={fieldError('due_date')}>
+              <input
+                type="date"
+                value={form.due_date}
+                onChange={(e) => handleChange('due_date', e.target.value)}
+                className={`${inputCls} ${fieldError('due_date') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Risolto">
+              <div className="flex items-center gap-2 h-[38px]">
+                <input
+                  id="resolved"
+                  type="checkbox"
+                  checked={form.resolved}
+                  onChange={(e) => handleChange('resolved', e.target.checked)}
+                  className="h-4 w-4 rounded border-[#334155] bg-[#0f172a] text-primary-500 focus:ring-primary-500"
+                />
+                <label htmlFor="resolved" className="text-sm font-medium text-slate-300">
+                  Risolto
+                </label>
+              </div>
+            </Field>
           </div>
 
           {errors.length > 0 && (

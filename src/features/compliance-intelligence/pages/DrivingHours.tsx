@@ -10,6 +10,7 @@ import {
 import type { DrivingHoursRow, DrivingHoursInput } from '../../../services/compliance'
 import { validateDrivingHoursForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, inputCls } from '../../../components/FormFields'
 
 // ── Status maps ──
 
@@ -91,20 +92,6 @@ const emptyForm: DisplayRecord = {
   end_time: '15:00',
   rest_minutes_after: 660,
   status: 'ok',
-}
-
-// ── Input component ──
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
 }
 
 // ── Main component ──
@@ -367,8 +354,8 @@ export function DrivingHours() {
         title={editingId ? 'Modifica record' : 'Nuovo record ore guida'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Autista">
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Autista" error={fieldError('driver')}>
               <input
                 required
                 value={form.driver}
@@ -376,9 +363,8 @@ export function DrivingHours() {
                 placeholder="es. Marco Bianchi"
                 className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
               />
-              {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
             </Field>
-            <Field label="Data">
+            <Field label="Data" error={fieldError('date')}>
               <input
                 type="date"
                 required
@@ -386,34 +372,42 @@ export function DrivingHours() {
                 onChange={(e) => updateField('date', e.target.value)}
                 className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
+            </Field>
+            <Field label="Riposo Dopo (min)">
+              <NumericInput
+                value={form.rest_minutes_after}
+                onChange={(val) => updateField('rest_minutes_after', val)}
+                max={1440}
+                maxLength={4}
+                integer
+                required
+                className={inputCls}
+              />
             </Field>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Minuti Guida">
-              <input
-                type="number"
-                required
-                min={0}
-                max={1440}
+            <Field label="Minuti Guida" error={fieldError('driving_minutes')}>
+              <NumericInput
                 value={form.driving_minutes}
-                onChange={(e) => updateField('driving_minutes', Number(e.target.value))}
+                onChange={(val) => updateField('driving_minutes', val)}
+                max={1440}
+                maxLength={4}
+                integer
+                required
                 className={`${inputCls} ${fieldError('driving_minutes') ? 'border-red-500' : ''}`}
               />
-              {fieldError('driving_minutes') && <p className="text-xs text-red-400 mt-1">{fieldError('driving_minutes')}</p>}
             </Field>
-            <Field label="Minuti Pausa">
-              <input
-                type="number"
-                required
-                min={0}
-                max={1440}
+            <Field label="Minuti Pausa" error={fieldError('break_minutes')}>
+              <NumericInput
                 value={form.break_minutes}
-                onChange={(e) => updateField('break_minutes', Number(e.target.value))}
+                onChange={(val) => updateField('break_minutes', val)}
+                max={1440}
+                maxLength={4}
+                integer
+                required
                 className={`${inputCls} ${fieldError('break_minutes') ? 'border-red-500' : ''}`}
               />
-              {fieldError('break_minutes') && <p className="text-xs text-red-400 mt-1">{fieldError('break_minutes')}</p>}
             </Field>
           </div>
 
@@ -437,18 +431,6 @@ export function DrivingHours() {
               />
             </Field>
           </div>
-
-          <Field label="Riposo Dopo (min)">
-            <input
-              type="number"
-              required
-              min={0}
-              max={1440}
-              value={form.rest_minutes_after}
-              onChange={(e) => updateField('rest_minutes_after', Number(e.target.value))}
-              className={inputCls}
-            />
-          </Field>
 
           {errors.length > 0 && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

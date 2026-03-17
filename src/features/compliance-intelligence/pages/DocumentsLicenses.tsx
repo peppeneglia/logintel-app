@@ -9,6 +9,7 @@ import {
 } from '../../../services/compliance'
 import type { ComplianceDocumentRow, ComplianceDocumentInput } from '../../../services/compliance'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, inputCls } from '../../../components/FormFields'
 
 // ── Status maps ──
 
@@ -90,20 +91,6 @@ const emptyForm = {
   type: 'license',
   document_number: '',
   expiry_date: '',
-}
-
-// ── Input component ──
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
 }
 
 // ── Main component ──
@@ -376,39 +363,38 @@ export function DocumentsLicenses() {
         title={editingId ? 'Modifica documento' : 'Nuovo documento'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Autista">
-            <input
-              required
-              value={form.driver}
-              onChange={(e) => setForm((p) => ({ ...p, driver: e.target.value }))}
-              placeholder="es. Marco Bianchi"
-              className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
-            />
-            {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
-          </Field>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Autista" error={fieldError('driver')}>
+              <input
+                required
+                value={form.driver}
+                onChange={(e) => setForm((p) => ({ ...p, driver: e.target.value }))}
+                placeholder="es. Marco Bianchi"
+                className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Tipo" error={fieldError('type')}>
+              <select
+                value={form.type}
+                onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+                className={`${inputCls} ${fieldError('type') ? 'border-red-500' : ''}`}
+              >
+                {typeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Numero Documento">
+              <input
+                value={form.document_number}
+                onChange={(e) => setForm((p) => ({ ...p, document_number: e.target.value }))}
+                placeholder="es. CQC-2021-48271"
+                className={inputCls}
+              />
+            </Field>
+          </div>
 
-          <Field label="Tipo">
-            <select
-              value={form.type}
-              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
-              className={`${inputCls} ${fieldError('type') ? 'border-red-500' : ''}`}
-            >
-              {typeOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Numero Documento">
-            <input
-              value={form.document_number}
-              onChange={(e) => setForm((p) => ({ ...p, document_number: e.target.value }))}
-              placeholder="es. CQC-2021-48271"
-              className={inputCls}
-            />
-          </Field>
-
-          <Field label="Data Scadenza">
+          <Field label="Data Scadenza" error={fieldError('expiry_date')}>
             <input
               type="date"
               required
@@ -416,7 +402,6 @@ export function DocumentsLicenses() {
               onChange={(e) => setForm((p) => ({ ...p, expiry_date: e.target.value }))}
               className={`${inputCls} ${fieldError('expiry_date') ? 'border-red-500' : ''}`}
             />
-            {fieldError('expiry_date') && <p className="text-xs text-red-400 mt-1">{fieldError('expiry_date')}</p>}
           </Field>
 
           {errors.length > 0 && (

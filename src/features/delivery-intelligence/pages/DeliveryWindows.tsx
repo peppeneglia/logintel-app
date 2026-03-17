@@ -13,6 +13,7 @@ import {
 import type { DeliveryRow, DeliveryWindowRow, DeliveryWindowInput } from '../../../services/delivery'
 import { isDateAfter } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, inputCls } from '../../../components/FormFields'
 
 // ── Unified display type ──
 
@@ -62,20 +63,6 @@ const emptyForm = {
 }
 
 type FormState = typeof emptyForm
-
-// ── Shared UI helpers ──
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
-}
 
 // ── Main component ──
 
@@ -326,7 +313,7 @@ export function DeliveryWindows() {
         title={editingId ? 'Modifica finestra' : 'Nuova finestra di consegna'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Consegna">
+          <Field label="Consegna" error={fieldError('delivery_id')}>
             <select
               required
               value={form.delivery_id}
@@ -340,11 +327,10 @@ export function DeliveryWindows() {
                 </option>
               ))}
             </select>
-            {fieldError('delivery_id') && <p className="text-xs text-red-400 mt-1">{fieldError('delivery_id')}</p>}
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Inizio Finestra">
+            <Field label="Inizio Finestra" error={fieldError('window_start')}>
               <input
                 type="datetime-local"
                 required
@@ -352,9 +338,8 @@ export function DeliveryWindows() {
                 onChange={(e) => updateFormField('window_start', e.target.value)}
                 className={`${inputCls} ${fieldError('window_start') ? 'border-red-500' : ''}`}
               />
-              {fieldError('window_start') && <p className="text-xs text-red-400 mt-1">{fieldError('window_start')}</p>}
             </Field>
-            <Field label="Fine Finestra">
+            <Field label="Fine Finestra" error={fieldError('window_end')}>
               <input
                 type="datetime-local"
                 required
@@ -362,30 +347,30 @@ export function DeliveryWindows() {
                 onChange={(e) => updateFormField('window_end', e.target.value)}
                 className={`${inputCls} ${fieldError('window_end') ? 'border-red-500' : ''}`}
               />
-              {fieldError('window_end') && <p className="text-xs text-red-400 mt-1">{fieldError('window_end')}</p>}
             </Field>
           </div>
 
-          <Field label="Rispettata">
-            <select
-              value={form.met ? 'true' : 'false'}
-              onChange={(e) => updateFormField('met', e.target.value === 'true')}
-              className={inputCls}
-            >
-              <option value="false">No</option>
-              <option value="true">Sì</option>
-            </select>
-          </Field>
-
-          <Field label="Note">
-            <textarea
-              value={form.notes}
-              onChange={(e) => updateFormField('notes', e.target.value)}
-              rows={2}
-              placeholder="Note aggiuntive..."
-              className={inputCls + ' resize-none'}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Rispettata">
+              <select
+                value={form.met ? 'true' : 'false'}
+                onChange={(e) => updateFormField('met', e.target.value === 'true')}
+                className={inputCls}
+              >
+                <option value="false">No</option>
+                <option value="true">Sì</option>
+              </select>
+            </Field>
+            <Field label="Note">
+              <textarea
+                value={form.notes}
+                onChange={(e) => updateFormField('notes', e.target.value)}
+                rows={2}
+                placeholder="Note aggiuntive..."
+                className={inputCls + ' resize-none'}
+              />
+            </Field>
+          </div>
 
           {errors.length > 0 && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

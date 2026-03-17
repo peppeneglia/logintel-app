@@ -7,6 +7,9 @@ import { getADRShipments, addADRShipment, updateADRShipment, deleteADRShipment }
 import type { ADRShipmentRow, ADRShipmentInput } from '../../../services/compliance'
 import { isValidWeight } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, AutocompleteInput, inputCls } from '../../../components/FormFields'
+
+const ADR_CLASS_OPTIONS = ['1', '2', '3', '4.1', '4.2', '4.3', '5.1', '5.2', '6.1', '6.2', '7', '8', '9']
 
 // ── Status maps ──
 
@@ -75,20 +78,6 @@ const emptyForm = {
   driver: '',
   date: new Date().toISOString().slice(0, 10),
   compliant: true,
-}
-
-// ── Input component ──
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
 }
 
 // ── Main component ──
@@ -331,31 +320,42 @@ export function ADRRegulations() {
         title={editingId ? 'Modifica spedizione ADR' : 'Nuova spedizione ADR'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Classe ADR">
-              <input
-                required
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Classe ADR" error={fieldError('adr_class')}>
+              <AutocompleteInput
                 value={form.adr_class}
-                onChange={(e) => setForm((p) => ({ ...p, adr_class: e.target.value }))}
+                onChange={(val) => setForm((p) => ({ ...p, adr_class: val }))}
+                options={ADR_CLASS_OPTIONS}
                 placeholder="es. 3"
+                required
                 className={`${inputCls} ${fieldError('adr_class') ? 'border-red-500' : ''}`}
               />
-              {fieldError('adr_class') && <p className="text-xs text-red-400 mt-1">{fieldError('adr_class')}</p>}
             </Field>
-            <Field label="Peso (kg)">
-              <input
-                type="number"
-                required
-                min={0}
+            <Field label="Peso (kg)" error={fieldError('weight_kg')}>
+              <NumericInput
                 value={form.weight_kg}
-                onChange={(e) => setForm((p) => ({ ...p, weight_kg: Number(e.target.value) }))}
+                onChange={(val) => setForm((p) => ({ ...p, weight_kg: val }))}
+                max={100000}
+                maxLength={6}
+                integer
+                required
+                placeholder="es. 5000"
                 className={`${inputCls} ${fieldError('weight_kg') ? 'border-red-500' : ''}`}
               />
-              {fieldError('weight_kg') && <p className="text-xs text-red-400 mt-1">{fieldError('weight_kg')}</p>}
+            </Field>
+            <Field label="Conforme">
+              <select
+                value={form.compliant ? 'true' : 'false'}
+                onChange={(e) => setForm((p) => ({ ...p, compliant: e.target.value === 'true' }))}
+                className={inputCls}
+              >
+                <option value="true">Conforme</option>
+                <option value="false">Non Conforme</option>
+              </select>
             </Field>
           </div>
 
-          <Field label="Descrizione Carico">
+          <Field label="Descrizione Carico" error={fieldError('cargo_description')}>
             <input
               required
               value={form.cargo_description}
@@ -363,11 +363,10 @@ export function ADRRegulations() {
               placeholder="es. Benzina"
               className={`${inputCls} ${fieldError('cargo_description') ? 'border-red-500' : ''}`}
             />
-            {fieldError('cargo_description') && <p className="text-xs text-red-400 mt-1">{fieldError('cargo_description')}</p>}
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Autista">
+            <Field label="Autista" error={fieldError('driver')}>
               <input
                 required
                 value={form.driver}
@@ -375,9 +374,8 @@ export function ADRRegulations() {
                 placeholder="es. Marco Bianchi"
                 className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
               />
-              {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
             </Field>
-            <Field label="Data">
+            <Field label="Data" error={fieldError('date')}>
               <input
                 type="date"
                 required
@@ -385,20 +383,8 @@ export function ADRRegulations() {
                 onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
                 className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
             </Field>
           </div>
-
-          <Field label="Conforme">
-            <select
-              value={form.compliant ? 'true' : 'false'}
-              onChange={(e) => setForm((p) => ({ ...p, compliant: e.target.value === 'true' }))}
-              className={inputCls}
-            >
-              <option value="true">Conforme</option>
-              <option value="false">Non Conforme</option>
-            </select>
-          </Field>
 
           {errors.length > 0 && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

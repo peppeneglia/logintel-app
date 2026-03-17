@@ -6,6 +6,7 @@ import type { VehicleAllocationRow, VehicleAllocationInput } from '../../../serv
 import { mockVehicleAllocations } from '../../../data/mockFleetData'
 import { isDateAfter } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, inputCls } from '../../../components/FormFields'
 
 const STATUS_BADGE: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400',
@@ -250,72 +251,64 @@ export function VehicleAllocation() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Allocazione' : 'Nuova Allocazione'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Veicolo (ID)</label>
-            <input
-              type="text"
-              required
-              value={form.vehicle_id}
-              onChange={(e) => setField('vehicle_id', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Veicolo (ID)">
+              <input
+                type="text"
+                required
+                value={form.vehicle_id}
+                onChange={(e) => setField('vehicle_id', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Autista" error={fieldError('driver')}>
+              <input
+                type="text"
+                required
+                value={form.driver}
+                onChange={(e) => setField('driver', e.target.value)}
+                className={`${inputCls} ${fieldError('driver') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Rotta" error={fieldError('route')}>
+              <input
+                type="text"
+                required
+                value={form.route}
+                onChange={(e) => setField('route', e.target.value)}
+                className={`${inputCls} ${fieldError('route') ? 'border-red-500' : ''}`}
+              />
+            </Field>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Autista</label>
-            <input
-              type="text"
-              required
-              value={form.driver}
-              onChange={(e) => setField('driver', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('driver') ? 'border-red-500' : 'border-[#334155]'}`}
-            />
-            {fieldError('driver') && <p className="text-xs text-red-400 mt-1">{fieldError('driver')}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Rotta</label>
-            <input
-              type="text"
-              required
-              value={form.route}
-              onChange={(e) => setField('route', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('route') ? 'border-red-500' : 'border-[#334155]'}`}
-            />
-            {fieldError('route') && <p className="text-xs text-red-400 mt-1">{fieldError('route')}</p>}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Data Inizio</label>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Data Inizio" error={fieldError('start_date')}>
               <input
                 type="date"
                 required
                 value={form.start_date}
                 onChange={(e) => setField('start_date', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('start_date') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('start_date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('start_date') && <p className="text-xs text-red-400 mt-1">{fieldError('start_date')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Data Fine</label>
+            </Field>
+            <Field label="Data Fine" error={fieldError('end_date')}>
               <input
                 type="date"
                 value={form.end_date ?? ''}
                 onChange={(e) => setField('end_date', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('end_date') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('end_date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('end_date') && <p className="text-xs text-red-400 mt-1">{fieldError('end_date')}</p>}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Stato</label>
-            <select
-              value={form.status}
-              onChange={(e) => setField('status', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-              ))}
-            </select>
+            </Field>
+            <Field label="Stato">
+              <select
+                value={form.status}
+                onChange={(e) => setField('status', e.target.value)}
+                className={inputCls}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+                ))}
+              </select>
+            </Field>
           </div>
           {errors.length > 0 && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

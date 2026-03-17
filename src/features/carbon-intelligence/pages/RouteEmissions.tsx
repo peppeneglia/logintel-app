@@ -14,6 +14,7 @@ import {
 import type { EmissionsRecordRow, EmissionsRecordInput } from '../../../services/carbon'
 import { validateEmissionsForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, AutocompleteInput, EURO_CLASS_OPTIONS, inputCls } from '../../../components/FormFields'
 
 // ── Trend helpers ──
 
@@ -80,9 +81,9 @@ function rowToDisplay(r: EmissionsRecordRow): DisplayRow {
   }
 }
 
-// ── Euro class options ──
+// ── Euro class options (from CO2_FACTORS for the select) ──
 
-const euroClassOptions = Object.keys(CO2_FACTORS)
+const euroClassSelectOptions = Object.keys(CO2_FACTORS)
 
 // ── Form defaults ──
 
@@ -92,20 +93,6 @@ const emptyForm = {
   euro_class: 'Euro 6D',
   date: new Date().toISOString().slice(0, 10),
   vehicle_id: '',
-}
-
-// ── Shared input styles ──
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
 }
 
 // ── Main component ──
@@ -351,7 +338,7 @@ export function RouteEmissions() {
         title={editingId ? 'Modifica registrazione' : 'Nuova registrazione'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Rotta">
+          <Field label="Rotta" error={fieldError('route')}>
             <input
               required
               value={form.route}
@@ -359,37 +346,31 @@ export function RouteEmissions() {
               placeholder="es. Milano → Roma"
               className={`${inputCls} ${fieldError('route') ? 'border-red-500' : ''}`}
             />
-            {fieldError('route') && <p className="text-xs text-red-400 mt-1">{fieldError('route')}</p>}
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Km">
-              <input
-                type="number"
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Km" error={fieldError('km')}>
+              <NumericInput
+                value={form.km}
+                onChange={(val) => updateField('km', val)}
+                max={9999999}
+                maxLength={7}
+                integer
                 required
-                min={1}
-                value={form.km || ''}
-                onChange={(e) => updateField('km', Number(e.target.value))}
                 placeholder="es. 580"
                 className={`${inputCls} ${fieldError('km') ? 'border-red-500' : ''}`}
               />
-              {fieldError('km') && <p className="text-xs text-red-400 mt-1">{fieldError('km')}</p>}
             </Field>
-            <Field label="Classe Euro">
-              <select
+            <Field label="Classe Euro" error={fieldError('euro_class')}>
+              <AutocompleteInput
                 value={form.euro_class}
-                onChange={(e) => updateField('euro_class', e.target.value)}
+                onChange={(val) => updateField('euro_class', val)}
+                options={[...new Set([...EURO_CLASS_OPTIONS, ...euroClassSelectOptions])]}
+                placeholder="es. Euro 6D"
                 className={`${inputCls} ${fieldError('euro_class') ? 'border-red-500' : ''}`}
-              >
-                {euroClassOptions.map((ec) => (
-                  <option key={ec} value={ec}>{ec}</option>
-                ))}
-              </select>
+              />
             </Field>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Data">
+            <Field label="Data" error={fieldError('date')}>
               <input
                 type="date"
                 required
@@ -397,17 +378,17 @@ export function RouteEmissions() {
                 onChange={(e) => updateField('date', e.target.value)}
                 className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
-            </Field>
-            <Field label="Veicolo (ID)">
-              <input
-                value={form.vehicle_id}
-                onChange={(e) => updateField('vehicle_id', e.target.value)}
-                placeholder="opzionale"
-                className={inputCls}
-              />
             </Field>
           </div>
+
+          <Field label="Veicolo (ID)">
+            <input
+              value={form.vehicle_id}
+              onChange={(e) => updateField('vehicle_id', e.target.value)}
+              placeholder="opzionale"
+              className={inputCls}
+            />
+          </Field>
 
           {/* CO2 preview */}
           <div className="bg-[#334155]/50 rounded-xl p-3 flex items-center justify-between">

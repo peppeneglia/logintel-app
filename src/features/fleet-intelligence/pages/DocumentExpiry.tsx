@@ -5,6 +5,9 @@ import { getDocumentExpiries, addDocumentExpiry, updateDocumentExpiry, deleteDoc
 import type { DocumentExpiryRow, DocumentExpiryInput } from '../../../services/fleet'
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, AutocompleteInput, inputCls } from '../../../components/FormFields'
+
+const FLEET_DOC_TYPE_OPTIONS = ['Revisione', 'Assicurazione RCA', 'Autorizzazione conto terzi', 'Patente C', 'Patente CQC', 'Carta tachigrafica', 'Certificato ADR']
 
 const STATUS_BADGE: Record<string, string> = {
   valid: 'bg-emerald-500/10 text-emerald-400',
@@ -292,47 +295,44 @@ export function DocumentExpiry() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Documento' : 'Nuovo Documento'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Veicolo (ID)</label>
-            <input
-              type="text"
-              required
-              value={form.vehicle_id}
-              onChange={(e) => setField('vehicle_id', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Veicolo (ID)">
+              <input
+                type="text"
+                required
+                value={form.vehicle_id}
+                onChange={(e) => setField('vehicle_id', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Tipo Documento" error={fieldError('document_type')}>
+              <AutocompleteInput
+                value={form.document_type}
+                onChange={(val) => setField('document_type', val)}
+                options={FLEET_DOC_TYPE_OPTIONS}
+                placeholder="es. Revisione"
+                required
+                className={`${inputCls} ${fieldError('document_type') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Numero Documento">
+              <input
+                type="text"
+                value={form.document_number ?? ''}
+                onChange={(e) => setField('document_number', e.target.value)}
+                className={inputCls}
+              />
+            </Field>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Tipo Documento</label>
-            <input
-              type="text"
-              required
-              value={form.document_type}
-              onChange={(e) => setField('document_type', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('document_type') ? 'border-red-500' : 'border-[#334155]'}`}
-            />
-            {fieldError('document_type') && <p className="text-xs text-red-400 mt-1">{fieldError('document_type')}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Numero Documento</label>
-            <input
-              type="text"
-              value={form.document_number ?? ''}
-              onChange={(e) => setField('document_number', e.target.value)}
-              className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Data Scadenza</label>
+          <Field label="Data Scadenza" error={fieldError('expiry_date')}>
             <input
               type="date"
               required
               value={form.expiry_date}
               onChange={(e) => setField('expiry_date', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('expiry_date') ? 'border-red-500' : 'border-[#334155]'}`}
+              className={`${inputCls} ${fieldError('expiry_date') ? 'border-red-500' : ''}`}
             />
-            {fieldError('expiry_date') && <p className="text-xs text-red-400 mt-1">{fieldError('expiry_date')}</p>}
-          </div>
+          </Field>
           {/* Status preview (auto-computed) */}
           {form.expiry_date && (
             <div className="rounded-xl bg-[#0f172a] border border-[#334155] p-3 text-sm flex items-center justify-between">

@@ -104,19 +104,9 @@ const emptyForm: DisplayVehicle = {
   notes: '',
 }
 
-// ── Input component ──
+// ── Form components ──
 
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
-}
+import { Field, NumericInput, AutocompleteInput, EURO_CLASS_OPTIONS, VEHICLE_BRAND_OPTIONS, inputCls } from '../../../components/FormFields'
 
 // ── Main component ──
 
@@ -414,63 +404,63 @@ export function FleetOverview() {
         title={editingId ? 'Modifica veicolo' : 'Nuovo veicolo'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Targa">
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Targa" error={fieldError('plate')}>
               <input
                 required
+                maxLength={10}
                 value={form.plate}
                 onChange={(e) => {
                   const val = e.target.value.toUpperCase()
                   updateField('plate', val)
-                  setPlateWarning(val.length >= 5 && !isItalianPlateFormat(val) ? 'Formato targa non standard (es. AB 123 CD)' : '')
+                  setPlateWarning(val.length >= 5 && !isItalianPlateFormat(val) ? 'Formato non standard (es. AB 123 CD)' : '')
                   setErrors((prev) => prev.filter((err) => err.field !== 'plate'))
                 }}
                 placeholder="es. MI 123 AB"
                 className={`${inputCls} ${fieldError('plate') ? 'border-red-500' : ''}`}
               />
-              {fieldError('plate') && <p className="text-xs text-red-400 mt-1">{fieldError('plate')}</p>}
               {plateWarning && !fieldError('plate') && <p className="text-xs text-amber-400 mt-1">{plateWarning}</p>}
             </Field>
-            <Field label="Marca">
-              <input
-                required
+            <Field label="Marca" error={fieldError('brand')}>
+              <AutocompleteInput
                 value={form.brand}
-                onChange={(e) => updateField('brand', e.target.value)}
+                onChange={(val) => updateField('brand', val)}
+                options={VEHICLE_BRAND_OPTIONS}
                 placeholder="es. Iveco"
-                className={inputCls}
+                required
+                className={`${inputCls} ${fieldError('brand') ? 'border-red-500' : ''}`}
               />
             </Field>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Modello">
+            <Field label="Modello" error={fieldError('model')}>
               <input
                 required
                 value={form.model}
                 onChange={(e) => updateField('model', e.target.value)}
                 placeholder="es. Daily 35S16"
-                className={inputCls}
-              />
-            </Field>
-            <Field label="Anno">
-              <input
-                type="number"
-                required
-                min={1990}
-                max={2099}
-                value={form.year}
-                onChange={(e) => updateField('year', Number(e.target.value))}
-                className={inputCls}
+                className={`${inputCls} ${fieldError('model') ? 'border-red-500' : ''}`}
               />
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Classe Euro">
-              <input
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Anno" error={fieldError('year')}>
+              <NumericInput
+                value={form.year}
+                onChange={(val) => updateField('year', val)}
+                min={1990}
+                max={2099}
+                maxLength={4}
+                integer
+                required
+                className={`${inputCls} ${fieldError('year') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Classe Euro" error={fieldError('euro_class')}>
+              <AutocompleteInput
                 value={form.euro_class}
-                onChange={(e) => updateField('euro_class', e.target.value)}
-                placeholder="es. Euro 6"
+                onChange={(val) => updateField('euro_class', val)}
+                options={EURO_CLASS_OPTIONS}
+                placeholder="es. Euro 6D"
                 className={inputCls}
               />
             </Field>
@@ -490,54 +480,59 @@ export function FleetOverview() {
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Km Totali">
-              <input
-                type="number"
-                min={0}
+            <Field label="Km Totali" error={fieldError('total_km')}>
+              <NumericInput
                 value={form.total_km}
-                onChange={(e) => updateField('total_km', Number(e.target.value))}
-                className={inputCls}
+                onChange={(val) => updateField('total_km', val)}
+                max={9999999}
+                maxLength={7}
+                integer
+                placeholder="es. 87420"
+                className={`${inputCls} ${fieldError('total_km') ? 'border-red-500' : ''}`}
               />
             </Field>
-            <Field label="Km Mensili">
-              <input
-                type="number"
-                min={0}
+            <Field label="Km Mensili" error={fieldError('monthly_km')}>
+              <NumericInput
                 value={form.monthly_km}
-                onChange={(e) => updateField('monthly_km', Number(e.target.value))}
-                className={inputCls}
+                onChange={(val) => updateField('monthly_km', val)}
+                max={99999}
+                maxLength={5}
+                integer
+                placeholder="es. 4500"
+                className={`${inputCls} ${fieldError('monthly_km') ? 'border-red-500' : ''}`}
               />
             </Field>
-            <Field label="Consumo L/100km">
-              <input
-                type="number"
-                min={0}
-                step={0.1}
+            <Field label="Consumo L/100km" error={fieldError('fuel_consumption_per_100km')}>
+              <NumericInput
                 value={form.fuel_consumption_per_100km}
-                onChange={(e) => updateField('fuel_consumption_per_100km', Number(e.target.value))}
-                className={inputCls}
+                onChange={(val) => updateField('fuel_consumption_per_100km', val)}
+                max={100}
+                maxLength={5}
+                step={0.1}
+                placeholder="es. 12.8"
+                className={`${inputCls} ${fieldError('fuel_consumption_per_100km') ? 'border-red-500' : ''}`}
               />
             </Field>
           </div>
 
-          <Field label="Autista">
-            <input
-              value={form.driver}
-              onChange={(e) => updateField('driver', e.target.value)}
-              placeholder="es. Marco Bianchi"
-              className={inputCls}
-            />
-          </Field>
-
-          <Field label="Note">
-            <textarea
-              value={form.notes}
-              onChange={(e) => updateField('notes', e.target.value)}
-              rows={2}
-              placeholder="Note aggiuntive..."
-              className={inputCls + ' resize-none'}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Autista">
+              <input
+                value={form.driver}
+                onChange={(e) => updateField('driver', e.target.value)}
+                placeholder="es. Marco Bianchi"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Note">
+              <input
+                value={form.notes}
+                onChange={(e) => updateField('notes', e.target.value)}
+                placeholder="Note aggiuntive..."
+                className={inputCls}
+              />
+            </Field>
+          </div>
 
           {errors.length > 0 && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">

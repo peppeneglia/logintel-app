@@ -7,6 +7,7 @@ import { getDeliveries, addDelivery, updateDelivery, deleteDelivery } from '../.
 import type { DeliveryRow, DeliveryInput } from '../../../services/delivery'
 import { validateDeliveryForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, inputCls } from '../../../components/FormFields'
 
 // ── Status maps ──
 
@@ -96,20 +97,6 @@ const emptyForm: DisplayDelivery = {
   weight_kg: 0,
   status: 'pending',
   driver: '',
-}
-
-// ── Shared UI helpers ──
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      {children}
-    </div>
-  )
 }
 
 // ── Main component ──
@@ -374,19 +361,17 @@ export function DeliveryPerformance() {
         title={editingId ? 'Modifica consegna' : 'Nuova consegna'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Cliente">
-            <input
-              required
-              value={form.customer}
-              onChange={(e) => updateField('customer', e.target.value)}
-              placeholder="es. Ferrero S.p.A."
-              className={`${inputCls} ${fieldError('customer') ? 'border-red-500' : ''}`}
-            />
-            {fieldError('customer') && <p className="text-xs text-red-400 mt-1">{fieldError('customer')}</p>}
-          </Field>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Origine">
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Cliente" error={fieldError('customer')}>
+              <input
+                required
+                value={form.customer}
+                onChange={(e) => updateField('customer', e.target.value)}
+                placeholder="es. Ferrero S.p.A."
+                className={`${inputCls} ${fieldError('customer') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Origine" error={fieldError('origin')}>
               <input
                 required
                 value={form.origin}
@@ -394,9 +379,8 @@ export function DeliveryPerformance() {
                 placeholder="es. Torino"
                 className={`${inputCls} ${fieldError('origin') ? 'border-red-500' : ''}`}
               />
-              {fieldError('origin') && <p className="text-xs text-red-400 mt-1">{fieldError('origin')}</p>}
             </Field>
-            <Field label="Destinazione">
+            <Field label="Destinazione" error={fieldError('destination')}>
               <input
                 required
                 value={form.destination}
@@ -404,12 +388,11 @@ export function DeliveryPerformance() {
                 placeholder="es. Milano"
                 className={`${inputCls} ${fieldError('destination') ? 'border-red-500' : ''}`}
               />
-              {fieldError('destination') && <p className="text-xs text-red-400 mt-1">{fieldError('destination')}</p>}
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Data Partenza">
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Data Partenza" error={fieldError('departure_date')}>
               <input
                 type="datetime-local"
                 required
@@ -417,9 +400,8 @@ export function DeliveryPerformance() {
                 onChange={(e) => updateField('departure_date', e.target.value)}
                 className={`${inputCls} ${fieldError('departure_date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('departure_date') && <p className="text-xs text-red-400 mt-1">{fieldError('departure_date')}</p>}
             </Field>
-            <Field label="Consegna Prevista">
+            <Field label="Consegna Prevista" error={fieldError('scheduled_delivery_date')}>
               <input
                 type="datetime-local"
                 required
@@ -427,31 +409,28 @@ export function DeliveryPerformance() {
                 onChange={(e) => updateField('scheduled_delivery_date', e.target.value)}
                 className={`${inputCls} ${fieldError('scheduled_delivery_date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('scheduled_delivery_date') && <p className="text-xs text-red-400 mt-1">{fieldError('scheduled_delivery_date')}</p>}
+            </Field>
+            <Field label="Consegna Effettiva" error={fieldError('actual_delivery_date')}>
+              <input
+                type="datetime-local"
+                value={form.actual_delivery_date}
+                onChange={(e) => updateField('actual_delivery_date', e.target.value)}
+                className={`${inputCls} ${fieldError('actual_delivery_date') ? 'border-red-500' : ''}`}
+              />
             </Field>
           </div>
 
-          <Field label="Consegna Effettiva">
-            <input
-              type="datetime-local"
-              value={form.actual_delivery_date}
-              onChange={(e) => updateField('actual_delivery_date', e.target.value)}
-              className={`${inputCls} ${fieldError('actual_delivery_date') ? 'border-red-500' : ''}`}
-            />
-            {fieldError('actual_delivery_date') && <p className="text-xs text-red-400 mt-1">{fieldError('actual_delivery_date')}</p>}
-          </Field>
-
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Peso (kg)">
-              <input
-                type="number"
-                min={0}
-                step={0.1}
+            <Field label="Peso (kg)" error={fieldError('weight_kg')}>
+              <NumericInput
                 value={form.weight_kg}
-                onChange={(e) => updateField('weight_kg', Number(e.target.value))}
+                onChange={(val) => updateField('weight_kg', val)}
+                max={999999}
+                maxLength={6}
+                step={0.1}
+                placeholder="es. 1500"
                 className={`${inputCls} ${fieldError('weight_kg') ? 'border-red-500' : ''}`}
               />
-              {fieldError('weight_kg') && <p className="text-xs text-red-400 mt-1">{fieldError('weight_kg')}</p>}
             </Field>
             <Field label="Stato">
               <select

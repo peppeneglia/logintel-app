@@ -6,6 +6,7 @@ import type { RouteMarginRow, RouteMarginInput } from '../../../services/finance
 import { mockRouteMargins } from '../../../data/mockFinanceData'
 import { validateRouteMarginForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
+import { Field, NumericInput, inputCls } from '../../../components/FormFields'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -150,11 +151,6 @@ export function RouteMargins() {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function setNumField(key: keyof RouteMarginInput, raw: string) {
-    const num = parseFloat(raw) || 0
-    setField(key, num as never)
-  }
-
   // Preview margin in modal
   const formPreview = computeMargin({
     ...form,
@@ -264,133 +260,115 @@ export function RouteMargins() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Marginalità' : 'Nuova Marginalità Rotta'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Rotta</label>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Rotta" error={fieldError('route')}>
               <input
                 type="text"
                 required
                 value={form.route}
                 onChange={(e) => setField('route', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('route') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('route') ? 'border-red-500' : ''}`}
               />
-              {fieldError('route') && <p className="text-xs text-red-400 mt-1">{fieldError('route')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Cliente</label>
+            </Field>
+            <Field label="Cliente">
               <input
                 type="text"
                 value={form.customer}
                 onChange={(e) => setField('customer', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={inputCls}
               />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Data</label>
+            </Field>
+            <Field label="Data" error={fieldError('date')}>
               <input
                 type="date"
                 required
                 value={form.date}
                 onChange={(e) => setField('date', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('date') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('date') ? 'border-red-500' : ''}`}
               />
-              {fieldError('date') && <p className="text-xs text-red-400 mt-1">{fieldError('date')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Km</label>
-              <input
-                type="number"
-                required
-                min={0}
+            </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Km" error={fieldError('km')}>
+              <NumericInput
                 value={form.km}
-                onChange={(e) => setNumField('km', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('km') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('km') && <p className="text-xs text-red-400 mt-1">{fieldError('km')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Ore Guida</label>
-              <input
-                type="number"
+                onChange={(val) => setField('km', val)}
+                max={9999999}
+                maxLength={7}
+                integer
                 required
-                min={0}
-                step="0.5"
+                className={`${inputCls} ${fieldError('km') ? 'border-red-500' : ''}`}
+              />
+            </Field>
+            <Field label="Ore Guida">
+              <NumericInput
                 value={form.driving_hours}
-                onChange={(e) => setNumField('driving_hours', e.target.value)}
-                className="w-full rounded-xl bg-[#0f172a] border border-[#334155] px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                onChange={(val) => setField('driving_hours', val)}
+                max={999}
+                maxLength={5}
+                step={0.5}
+                className={inputCls}
               />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Ricavo</label>
-            <input
-              type="number"
-              required
-              min={0}
-              step="0.01"
-              value={form.revenue}
-              onChange={(e) => setNumField('revenue', e.target.value)}
-              className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('revenue') ? 'border-red-500' : 'border-[#334155]'}`}
-            />
-            {fieldError('revenue') && <p className="text-xs text-red-400 mt-1">{fieldError('revenue')}</p>}
+            </Field>
+            <Field label="Ricavo" error={fieldError('revenue')}>
+              <NumericInput
+                value={form.revenue}
+                onChange={(val) => setField('revenue', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
+                required
+                className={`${inputCls} ${fieldError('revenue') ? 'border-red-500' : ''}`}
+              />
+            </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Carburante</label>
-              <input
-                type="number"
-                required
-                min={0}
-                step="0.01"
+            <Field label="Costo Carburante" error={fieldError('fuel_cost')}>
+              <NumericInput
                 value={form.fuel_cost}
-                onChange={(e) => setNumField('fuel_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('fuel_cost') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('fuel_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('fuel_cost')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costo Autista</label>
-              <input
-                type="number"
+                onChange={(val) => setField('fuel_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
                 required
-                min={0}
-                step="0.01"
-                value={form.driver_cost}
-                onChange={(e) => setNumField('driver_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('driver_cost') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('fuel_cost') ? 'border-red-500' : ''}`}
               />
-              {fieldError('driver_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('driver_cost')}</p>}
-            </div>
+            </Field>
+            <Field label="Costo Autista" error={fieldError('driver_cost')}>
+              <NumericInput
+                value={form.driver_cost}
+                onChange={(val) => setField('driver_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
+                required
+                className={`${inputCls} ${fieldError('driver_cost') ? 'border-red-500' : ''}`}
+              />
+            </Field>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Costi Fissi</label>
-              <input
-                type="number"
-                required
-                min={0}
-                step="0.01"
+            <Field label="Costi Fissi" error={fieldError('fixed_cost')}>
+              <NumericInput
                 value={form.fixed_cost}
-                onChange={(e) => setNumField('fixed_cost', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('fixed_cost') ? 'border-red-500' : 'border-[#334155]'}`}
-              />
-              {fieldError('fixed_cost') && <p className="text-xs text-red-400 mt-1">{fieldError('fixed_cost')}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Pedaggi</label>
-              <input
-                type="number"
+                onChange={(val) => setField('fixed_cost', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
                 required
-                min={0}
-                step="0.01"
-                value={form.tolls}
-                onChange={(e) => setNumField('tolls', e.target.value)}
-                className={`w-full rounded-xl bg-[#0f172a] border px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${fieldError('tolls') ? 'border-red-500' : 'border-[#334155]'}`}
+                className={`${inputCls} ${fieldError('fixed_cost') ? 'border-red-500' : ''}`}
               />
-              {fieldError('tolls') && <p className="text-xs text-red-400 mt-1">{fieldError('tolls')}</p>}
-            </div>
+            </Field>
+            <Field label="Pedaggi" error={fieldError('tolls')}>
+              <NumericInput
+                value={form.tolls}
+                onChange={(val) => setField('tolls', val)}
+                max={999999}
+                maxLength={6}
+                step={0.01}
+                required
+                className={`${inputCls} ${fieldError('tolls') ? 'border-red-500' : ''}`}
+              />
+            </Field>
           </div>
 
           {/* Computed preview */}
