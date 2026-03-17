@@ -143,8 +143,50 @@ function MaskedField({
 
     // Digit input
     if (/^[0-9]$/.test(e.key)) {
+      const digit = e.key
       const next = [...digits]
-      next[cursorDigitIdx] = e.key
+
+      // Auto-prefix with 0 for date DD (pos 0) and MM (pos 2) and time HH (pos 0)
+      if (numDigits === 8) {
+        // Date: DD/MM/YYYY
+        if (cursorDigitIdx === 0 && parseInt(digit) > 3) {
+          // Day > 3 → auto "0X"
+          next[0] = '0'
+          next[1] = digit
+          onDigitsChange(next)
+          setCursorDigitIdx(2)
+          return
+        }
+        if (cursorDigitIdx === 2 && parseInt(digit) > 1) {
+          // Month > 1 → auto "0X"
+          next[2] = '0'
+          next[3] = digit
+          onDigitsChange(next)
+          setCursorDigitIdx(4)
+          return
+        }
+      }
+      if (numDigits === 4) {
+        // Time: HH:MM
+        if (cursorDigitIdx === 0 && parseInt(digit) > 2) {
+          // Hour > 2 → auto "0X"
+          next[0] = '0'
+          next[1] = digit
+          onDigitsChange(next)
+          setCursorDigitIdx(2)
+          return
+        }
+        if (cursorDigitIdx === 2 && parseInt(digit) > 5) {
+          // Minutes tens > 5 → auto "0X"
+          next[2] = '0'
+          next[3] = digit
+          onDigitsChange(next)
+          setCursorDigitIdx(Math.min(numDigits - 1, 3))
+          return
+        }
+      }
+
+      next[cursorDigitIdx] = digit
       onDigitsChange(next)
       // Advance cursor
       if (cursorDigitIdx < numDigits - 1) {

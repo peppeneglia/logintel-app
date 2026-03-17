@@ -19,7 +19,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className="max-w-[80%]">
         <div
-          className={`px-4 py-3 text-sm leading-relaxed ${
+          className={`px-4 py-3 text-[15px] leading-relaxed ${
             isUser
               ? 'bg-primary-500/15 text-slate-100 rounded-2xl rounded-tr-sm'
               : 'bg-[#334155] text-slate-200 rounded-2xl rounded-tl-sm'

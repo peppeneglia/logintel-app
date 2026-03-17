@@ -1,82 +1,135 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { ChatMessage } from '../../../types'
 import { mockSinglePrediction, mockConversations } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
+import { useCredits } from '../../../hooks/useCredits'
+import { CREDIT_COSTS } from '../../../lib/creditCosts'
 import { WelcomeScreen } from '../components/WelcomeScreen'
 import { MessageList } from '../components/MessageList'
 import { ChatInput } from '../components/ChatInput'
 import { ChatSidebar } from '../components/ChatSidebar'
-import { sendChatMessage } from '../../../services/api'
+import { streamChatMessage } from '../../../services/api'
 
 const PREDICTION_KEYWORDS = ['predizione', 'calcola', 'prevedi', 'eta']
+const STORAGE_KEY = 'logintel-conversations'
 
 function isPredictionRequest(text: string): boolean {
   const lower = text.toLowerCase()
   return PREDICTION_KEYWORDS.some((kw) => lower.includes(kw))
 }
 
-function createUserMessage(content: string): ChatMessage {
-  return {
-    id: `msg-${Date.now()}-user`,
-    role: 'user',
-    content,
-    timestamp: new Date(),
-  }
-}
-
-function createAssistantMessage(
-  content: string,
-  prediction?: typeof mockSinglePrediction
-): ChatMessage {
-  return {
-    id: `msg-${Date.now()}-assistant`,
-    role: 'assistant',
-    content,
-    timestamp: new Date(),
-    prediction,
-  }
-}
-
-interface ConversationItem {
+interface StoredConversation {
   id: string
   title: string
+  messages: ChatMessage[]
   updatedAt: string
 }
 
-function getDemoConversations(): ConversationItem[] {
-  return mockConversations.map((c) => ({
-    id: c.id,
-    title: c.title,
-    updatedAt: c.createdAt.toISOString(),
-  }))
+function loadConversations(): StoredConversation[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveConversations(convs: StoredConversation[]) {
+  // Keep max 50 conversations
+  const trimmed = convs.slice(0, 50)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed))
+}
+
+function generateTitle(firstMessage: string): string {
+  // Use first 40 chars of the first user message
+  const clean = firstMessage.replace(/\n/g, ' ').trim()
+  return clean.length > 40 ? clean.slice(0, 40) + '…' : clean
 }
 
 export function ChatPage() {
   const isDemo = useAuthStore((s) => s.isDemo)
+  const { consume } = useCredits()
 
+  const [conversations, setConversations] = useState<StoredConversation[]>(() => loadConversations())
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const conversations: ConversationItem[] = isDemo ? getDemoConversations() : []
+  // Persist conversations on change
+  useEffect(() => {
+    saveConversations(conversations)
+  }, [conversations])
+
+  // Sidebar items: saved + demo mock
+  const sidebarItems = isDemo
+    ? [
+        ...conversations.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt })),
+        ...mockConversations.map((c) => ({ id: c.id, title: c.title, updatedAt: c.createdAt.toISOString() })),
+      ]
+    : conversations.map((c) => ({ id: c.id, title: c.title, updatedAt: c.updatedAt }))
 
   function handleSelectConversation(id: string) {
-    setActiveConversationId(id)
+    // Save current conversation before switching
+    if (activeId && messages.length > 0) {
+      persistCurrentConversation()
+    }
+
+    setActiveId(id)
+    // Check stored conversations
+    const stored = conversations.find((c) => c.id === id)
+    if (stored) {
+      setMessages(stored.messages)
+      return
+    }
+    // Check demo mock conversations
     if (isDemo) {
-      const conv = mockConversations.find((c) => c.id === id)
-      setMessages(conv ? conv.messages : [])
-    } else {
-      setMessages([])
+      const mock = mockConversations.find((c) => c.id === id)
+      setMessages(mock ? mock.messages : [])
     }
   }
 
+  const persistCurrentConversation = useCallback(() => {
+    if (!activeId || messages.length === 0) return
+    setConversations((prev) => {
+      const existing = prev.findIndex((c) => c.id === activeId)
+      const conv: StoredConversation = {
+        id: activeId,
+        title: generateTitle(messages.find((m) => m.role === 'user')?.content || 'Nuova chat'),
+        messages,
+        updatedAt: new Date().toISOString(),
+      }
+      if (existing >= 0) {
+        const updated = [...prev]
+        updated[existing] = conv
+        return updated
+      }
+      return [conv, ...prev]
+    })
+  }, [activeId, messages])
+
   function handleNewChat() {
-    setActiveConversationId(null)
+    // Save current before creating new
+    if (activeId && messages.length > 0) {
+      persistCurrentConversation()
+    }
+    setActiveId(null)
     setMessages([])
   }
 
   async function handleSend(text: string) {
-    const userMsg = createUserMessage(text)
+    // Create conversation ID if this is a new chat
+    let convId = activeId
+    if (!convId) {
+      convId = `conv-${Date.now()}`
+      setActiveId(convId)
+    }
+
+    const userMsg: ChatMessage = {
+      id: `msg-${Date.now()}-user`,
+      role: 'user',
+      content: text,
+      timestamp: new Date(),
+    }
     setMessages((prev) => [...prev, userMsg])
     setIsLoading(true)
 
@@ -88,43 +141,66 @@ export function ChatPage() {
         content: m.content,
       }))
 
-      const { response: responseText } = await sendChatMessage(text, history)
+      // Create placeholder for streaming
+      const streamMsgId = `msg-${Date.now()}-assistant`
+      const placeholder: ChatMessage = {
+        id: streamMsgId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, placeholder])
+
+      const responseText = await streamChatMessage(text, history, (partial) => {
+        setMessages((prev) =>
+          prev.map((m) => m.id === streamMsgId ? { ...m, content: partial } : m)
+        )
+      })
 
       const prediction = isPrediction && isDemo ? mockSinglePrediction : undefined
       const content = isPrediction && isDemo
         ? `${responseText}\n\nEcco la predizione per la tua rotta:`
         : responseText
 
-      const assistantMsg = createAssistantMessage(content, prediction)
-      setMessages((prev) => [...prev, assistantMsg])
+      setMessages((prev) =>
+        prev.map((m) => m.id === streamMsgId ? { ...m, content, prediction } : m)
+      )
+      consume(CREDIT_COSTS.CHAT_MESSAGE, 'CHAT_MESSAGE')
     } catch (err) {
       console.error('Chat API error:', err)
       const errorMsg = err instanceof Error ? err.message : 'Errore sconosciuto'
-      const assistantMsg = createAssistantMessage(
-        `⚠️ Errore nella comunicazione con l'AI: ${errorMsg}\n\nRiprova tra qualche secondo.`
-      )
-      setMessages((prev) => [...prev, assistantMsg])
+      const errorMessage: ChatMessage = {
+        id: `msg-${Date.now()}-error`,
+        role: 'assistant',
+        content: `Errore nella comunicazione con l'AI: ${errorMsg}\n\nRiprova tra qualche secondo.`,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
   }
 
-  function handleSuggestionClick(text: string) {
-    handleSend(text)
-  }
+  // Auto-save on messages change
+  useEffect(() => {
+    if (activeId && messages.length > 0) {
+      const timer = setTimeout(() => persistCurrentConversation(), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [messages, activeId, persistCurrentConversation])
 
   return (
     <div className="flex flex-1 min-h-0 gap-3">
       <ChatSidebar
-        activeConversationId={activeConversationId}
+        activeConversationId={activeId}
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChat}
-        conversations={conversations}
+        conversations={sidebarItems}
       />
 
       <div className="flex-1 flex flex-col min-h-0">
         {messages.length === 0 ? (
-          <WelcomeScreen onSuggestionClick={handleSuggestionClick} />
+          <WelcomeScreen onSuggestionClick={handleSend} />
         ) : (
           <MessageList messages={messages} />
         )}

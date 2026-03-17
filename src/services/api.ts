@@ -2,8 +2,66 @@ import { geocode } from './geocode'
 
 // ── Chat (Gemini via Vercel serverless) ──
 
+// Non-streaming fallback
 export function sendChatMessage(message: string, history: { role: string; content: string }[]) {
   return apiCall<{ response: string }>('/api/chat', { message, history })
+}
+
+// Streaming chat — calls onChunk with partial text as it arrives
+export async function streamChatMessage(
+  message: string,
+  history: { role: string; content: string }[],
+  onChunk: (fullText: string) => void,
+): Promise<string> {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+    },
+    body: JSON.stringify({ message, history }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Errore del server' }))
+    throw new Error(err.error || `Errore ${res.status}`)
+  }
+
+  const reader = res.body?.getReader()
+  if (!reader) throw new Error('Streaming non supportato')
+
+  const decoder = new TextDecoder()
+  let fullText = ''
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+
+    // Parse SSE events from buffer
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || '' // keep incomplete line
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const data = line.slice(6).trim()
+      if (!data || data === '[DONE]') continue
+      try {
+        const parsed = JSON.parse(data)
+        const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text
+        if (chunk) {
+          fullText += chunk
+          onChunk(fullText)
+        }
+      } catch {
+        // skip unparseable chunks
+      }
+    }
+  }
+
+  return fullText
 }
 
 // ── Railway Prediction API types ──
