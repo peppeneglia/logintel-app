@@ -97,18 +97,12 @@ export function ChatPage() {
 
       const assistantMsg = createAssistantMessage(content, prediction)
       setMessages((prev) => [...prev, assistantMsg])
-    } catch {
-      const FALLBACK_RESPONSES = [
-        'Le condizioni meteo lungo i corridoi principali sono nella norma per questa settimana. Non si prevedono particolari criticità sulle tratte autostradali del Nord Italia.',
-        'I corridoi alpini al momento sono tutti percorribili senza restrizioni particolari. Il Brennero e il Frejus presentano condizioni stabili.',
-        'Per le rotte che hai indicato, le condizioni generali sono buone. Posso calcolare una predizione dettagliata se vuoi.',
-      ]
-      const responseContent = isPrediction && isDemo
-        ? 'Ecco la predizione per la tua rotta:'
-        : FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)]
-      const prediction = isPrediction && isDemo ? mockSinglePrediction : undefined
-
-      const assistantMsg = createAssistantMessage(responseContent, prediction)
+    } catch (err) {
+      console.error('Chat API error:', err)
+      const errorMsg = err instanceof Error ? err.message : 'Errore sconosciuto'
+      const assistantMsg = createAssistantMessage(
+        `⚠️ Errore nella comunicazione con l'AI: ${errorMsg}\n\nRiprova tra qualche secondo.`
+      )
       setMessages((prev) => [...prev, assistantMsg])
     } finally {
       setIsLoading(false)
