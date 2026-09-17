@@ -263,7 +263,7 @@ export function UpgradePlanModal({ open, onClose }: UpgradePlanModalProps) {
                 <CreditCard size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Scadenza MM/AA</label>
                 <input

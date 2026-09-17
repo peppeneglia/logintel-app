@@ -10,7 +10,8 @@ import type { RouteMarginRow, RouteMarginInput } from '../../../services/finance
 import { mockRouteMargins } from '../../../data/mockFinanceData'
 import { validateRouteMarginForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -84,7 +85,7 @@ export function RouteMargins() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -273,7 +274,7 @@ export function RouteMargins() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Marginalità' : 'Nuova Marginalità Rotta'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Rotta" error={fieldError('route')}>
               <input
                 type="text"
@@ -301,7 +302,7 @@ export function RouteMargins() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Km" error={fieldError('km')}>
               <NumericInput
                 value={form.km}
@@ -335,7 +336,7 @@ export function RouteMargins() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Costo Carburante" error={fieldError('fuel_cost')}>
               <NumericInput
                 value={form.fuel_cost}
@@ -359,7 +360,7 @@ export function RouteMargins() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Costi Fissi" error={fieldError('fixed_cost')}>
               <NumericInput
                 value={form.fixed_cost}

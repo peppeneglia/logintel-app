@@ -34,11 +34,10 @@ export function Header() {
   }
 
   return (
-    <header className="bg-[#1e293b] border border-[#334155] rounded-2xl px-8 py-2.5 shrink-0 select-none">
+    <header className="bg-[#1e293b] border border-[#334155] rounded-2xl px-3 md:px-8 py-2.5 shrink-0 select-none">
       <div className="flex items-center gap-3">
-        {/* w-72 = sidebar width → con px-8 (32px) + gap-3 (12px): nav left = 32+288+12 = 332px = content p-8 left edge */}
         <div
-          className="w-72 flex items-center gap-3 cursor-pointer shrink-0"
+          className="flex items-center gap-3 cursor-pointer shrink-0 lg:w-72"
           onClick={() => navigate('/')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -56,7 +55,7 @@ export function Header() {
               <circle cx="7" cy="18" r="2"/>
             </g>
           </svg>
-          <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">Logintel</span>
+          <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-400 to-cyan-500 bg-clip-text text-transparent">Logintel</span>
         </div>
 
         <nav className="hidden xl:flex flex-1 items-center justify-between bg-[#334155]/60 rounded-2xl p-1">

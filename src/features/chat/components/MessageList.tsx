@@ -16,8 +16,8 @@ export function MessageList({ messages }: MessageListProps) {
   if (messages.length === 0) return null
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6">
-      <div className="max-w-3xl mx-auto flex flex-col gap-4">
+    <div className="flex-1 overflow-y-auto px-2 sm:px-4 py-4 sm:py-6">
+      <div className="max-w-3xl mx-auto flex flex-col gap-3 sm:gap-4">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}

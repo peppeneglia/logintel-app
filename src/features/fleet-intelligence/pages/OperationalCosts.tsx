@@ -10,7 +10,8 @@ import type { OperationalCostRow, OperationalCostInput } from '../../../services
 import { mockOperationalCosts } from '../../../data/mockFleetData'
 import { isValidYear, isValidKm, isValidCost } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 function euro(value: number): string {
   return value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
@@ -81,7 +82,7 @@ export function OperationalCosts() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -291,7 +292,7 @@ export function OperationalCosts() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Costo' : 'Nuovo Costo Operativo'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Veicolo (ID)">
               <input
                 type="text"
@@ -326,7 +327,7 @@ export function OperationalCosts() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Costo Carburante" error={fieldError('fuel_cost')}>
               <NumericInput
                 value={form.fuel_cost}
@@ -350,7 +351,7 @@ export function OperationalCosts() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Costo Pedaggi" error={fieldError('toll_cost')}>
               <NumericInput
                 value={form.toll_cost}

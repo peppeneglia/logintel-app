@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-
-const inputCls =
-  'w-full px-3 py-2 bg-[#334155] border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500'
+import { inputCls } from '../lib/formConstants'
 
 // ── Field wrapper ──
 
@@ -198,12 +196,3 @@ export function AutocompleteInput({
     </div>
   )
 }
-
-// ── Euro class options ──
-export const EURO_CLASS_OPTIONS = ['Euro 6E', 'Euro 6D', 'Euro 6C', 'Euro 6B', 'Euro 5', 'Euro 4', 'Euro 3']
-
-// ── Brand options ──
-export const VEHICLE_BRAND_OPTIONS = ['Iveco', 'MAN', 'Mercedes-Benz', 'Scania', 'Volvo', 'DAF', 'Renault Trucks', 'FIAT']
-
-// ── Shared input class export ──
-export { inputCls }

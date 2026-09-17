@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { MessageSquare } from 'lucide-react'
 import type { ChatMessage } from '../../../types'
 import { mockSinglePrediction, mockConversations } from '../../../data/mockData'
 import { useAuthStore } from '../../../stores/authStore'
@@ -54,6 +55,7 @@ export function ChatPage() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Persist conversations on change
   useEffect(() => {
@@ -196,9 +198,19 @@ export function ChatPage() {
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChat}
         conversations={sidebarItems}
+        mobileOpen={sidebarOpen}
+        onMobileClose={() => setSidebarOpen(false)}
       />
 
       <div className="flex-1 flex flex-col min-h-0">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden flex items-center gap-2 mx-3 mb-2 px-3 py-2 text-sm text-slate-400 hover:text-slate-200 bg-[#1e293b] border border-[#334155] rounded-xl transition-colors self-start shrink-0"
+        >
+          <MessageSquare size={16} />
+          Conversazioni
+        </button>
+
         {messages.length === 0 ? (
           <WelcomeScreen onSuggestionClick={handleSend} />
         ) : (

@@ -9,7 +9,8 @@ import { getDocumentExpiries, addDocumentExpiry, updateDocumentExpiry, deleteDoc
 import type { DocumentExpiryRow, DocumentExpiryInput } from '../../../services/fleet'
 import { mockDocumentExpiries } from '../../../data/mockFleetData'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, AutocompleteInput, inputCls } from '../../../components/FormFields'
+import { Field, AutocompleteInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 const FLEET_DOC_TYPE_OPTIONS = ['Revisione', 'Assicurazione RCA', 'Autorizzazione conto terzi', 'Patente C', 'Patente CQC', 'Carta tachigrafica', 'Certificato ADR']
 
@@ -123,7 +124,7 @@ export function DocumentExpiry() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -222,7 +223,7 @@ export function DocumentExpiry() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Scaduti</p>
           <p className="text-lg font-bold text-red-400">{expiredCount}</p>
@@ -309,7 +310,7 @@ export function DocumentExpiry() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Documento' : 'Nuovo Documento'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Veicolo (ID)">
               <input
                 type="text"

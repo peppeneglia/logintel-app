@@ -10,7 +10,8 @@ import type { VehicleAllocationRow, VehicleAllocationInput } from '../../../serv
 import { mockVehicleAllocations } from '../../../data/mockFleetData'
 import { isDateAfter } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, inputCls } from '../../../components/FormFields'
+import { Field } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 const STATUS_BADGE: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400',
@@ -86,7 +87,7 @@ export function VehicleAllocation() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -188,7 +189,7 @@ export function VehicleAllocation() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Attive</p>
           <p className="text-lg font-bold text-emerald-400">{activeCount}</p>
@@ -265,7 +266,7 @@ export function VehicleAllocation() {
       {/* Modal */}
       <Modal open={modalOpen} onClose={closeModal} title={editingId ? 'Modifica Allocazione' : 'Nuova Allocazione'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Veicolo (ID)">
               <input
                 type="text"
@@ -294,7 +295,7 @@ export function VehicleAllocation() {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Data Inizio" error={fieldError('start_date')}>
               <input
                 type="date"

@@ -43,7 +43,7 @@ export function RouteMap({ segments }: Props) {
   const bounds = L.latLngBounds(points.map((p) => L.latLng(p[0], p[1])))
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-[#334155]" style={{ height: 400 }}>
+    <div className="rounded-2xl overflow-hidden border border-[#334155] h-64 sm:h-80 md:h-96">
       <MapContainer
         bounds={bounds}
         boundsOptions={{ padding: [30, 30] }}

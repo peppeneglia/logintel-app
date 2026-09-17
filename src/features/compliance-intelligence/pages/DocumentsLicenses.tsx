@@ -13,7 +13,8 @@ import {
 } from '../../../services/compliance'
 import type { ComplianceDocumentRow, ComplianceDocumentInput } from '../../../services/compliance'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, inputCls } from '../../../components/FormFields'
+import { Field } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 // ── Status maps ──
 
@@ -127,7 +128,7 @@ export function DocumentsLicenses() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -361,7 +362,7 @@ export function DocumentsLicenses() {
         title={editingId ? 'Modifica documento' : 'Nuovo documento'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Autista" error={fieldError('driver')}>
               <input
                 required

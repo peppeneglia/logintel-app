@@ -14,8 +14,8 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
     <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4 py-4">
       {/* Background subtle glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] max-w-[600px] h-[80vw] max-h-[600px] bg-primary-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-1/3 w-[60vw] max-w-[400px] h-[60vw] max-h-[400px] bg-cyan-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">

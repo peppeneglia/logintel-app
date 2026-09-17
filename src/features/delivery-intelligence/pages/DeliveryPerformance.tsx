@@ -11,7 +11,8 @@ import { getDeliveries, addDelivery, updateDelivery, deleteDelivery } from '../.
 import type { DeliveryRow, DeliveryInput } from '../../../services/delivery'
 import { validateDeliveryForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 // ── Status maps ──
 
@@ -132,7 +133,7 @@ export function DeliveryPerformance() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -360,7 +361,7 @@ export function DeliveryPerformance() {
         title={editingId ? 'Modifica consegna' : 'Nuova consegna'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Cliente" error={fieldError('customer')}>
               <input
                 required
@@ -390,7 +391,7 @@ export function DeliveryPerformance() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Data Partenza" error={fieldError('departure_date')}>
               <input
                 type="datetime-local"
@@ -419,7 +420,7 @@ export function DeliveryPerformance() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Peso (kg)" error={fieldError('weight_kg')}>
               <NumericInput
                 value={form.weight_kg}

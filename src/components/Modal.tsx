@@ -30,9 +30,9 @@ export function Modal({ open, onClose, title, children, width = 'max-w-2xl' }: M
       onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
     >
-      <div className={`bg-[#1e293b] border border-[#334155] rounded-2xl shadow-2xl w-full ${width} mx-4`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#334155]">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+      <div className={`bg-[#1e293b] border border-[#334155] rounded-2xl shadow-2xl w-full ${width} mx-3 sm:mx-4 max-h-[90vh] flex flex-col`}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#334155] shrink-0">
+          <h2 className="text-base sm:text-lg font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#334155] transition-colors"
@@ -40,7 +40,7 @@ export function Modal({ open, onClose, title, children, width = 'max-w-2xl' }: M
             <X size={18} />
           </button>
         </div>
-        <div className="px-6 py-5">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto">
           {children}
         </div>
       </div>

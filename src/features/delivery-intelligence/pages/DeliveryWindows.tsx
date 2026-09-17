@@ -17,7 +17,8 @@ import {
 import type { DeliveryRow, DeliveryWindowRow, DeliveryWindowInput } from '../../../services/delivery'
 import { isDateAfter } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, inputCls } from '../../../components/FormFields'
+import { Field } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 // ── Unified display type ──
 
@@ -105,7 +106,7 @@ export function DeliveryWindows() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -327,7 +328,7 @@ export function DeliveryWindows() {
             </select>
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Inizio Finestra" error={fieldError('window_start')}>
               <input
                 type="datetime-local"
@@ -348,7 +349,7 @@ export function DeliveryWindows() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Rispettata">
               <select
                 value={form.met ? 'true' : 'false'}

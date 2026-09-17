@@ -17,13 +17,13 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [isDemo, dismissed])
 
   return (
-    <div className="h-screen bg-[#0f172a] flex flex-col overflow-hidden px-3 pt-3 gap-3">
+    <div className="h-screen bg-[#0f172a] flex flex-col overflow-hidden px-1.5 sm:px-3 pt-2 sm:pt-3 gap-2 sm:gap-3">
       <Header />
       <main className="flex-1 flex min-h-0 relative">
         {children}
 
         {isDemo && showBanner && !dismissed && (
-          <div className="absolute bottom-4 right-4 z-50 w-80 bg-[#1e293b] border border-emerald-500/30 rounded-2xl p-4 shadow-xl shadow-black/30 animate-in">
+          <div className="absolute bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] bg-[#1e293b] border border-emerald-500/30 rounded-2xl p-4 shadow-xl shadow-black/30 animate-in">
             <button
               onClick={() => setDismissed(true)}
               className="absolute top-3 right-3 text-slate-500 hover:text-slate-300 transition-colors"

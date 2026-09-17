@@ -34,7 +34,7 @@ export async function streamChatMessage(
   let fullText = ''
   let buffer = ''
 
-  while (true) {
+  for (;;) {
     const { done, value } = await reader.read()
     if (done) break
 

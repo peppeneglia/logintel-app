@@ -238,16 +238,14 @@ export function DateTimeInput({ date, time, onDateChange, onTimeChange, classNam
   // Sync from parent on external change
   useEffect(() => {
     const parentDigits = isoDateToDigits(date)
-    if (parentDigits.join('') && parentDigits.join('') !== dateDigits.join('')) {
-      setDateDigits(parentDigits)
-    }
+    if (!parentDigits.join('')) return
+    setDateDigits((prev) => (prev.join('') === parentDigits.join('') ? prev : parentDigits))
   }, [date])
 
   useEffect(() => {
     const parentDigits = isoTimeToDigits(time)
-    if (parentDigits.join('') && parentDigits.join('') !== timeDigits.join('')) {
-      setTimeDigits(parentDigits)
-    }
+    if (!parentDigits.join('')) return
+    setTimeDigits((prev) => (prev.join('') === parentDigits.join('') ? prev : parentDigits))
   }, [time])
 
   const handleDateDigits = (digits: string[]) => {

@@ -17,7 +17,8 @@ import {
 import type { MaintenanceAlertRow, MaintenanceAlertInput } from '../../../services/fleet'
 import { isFutureDate } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 // ── Display types ────────────────────────────────────
 
@@ -150,7 +151,7 @@ export function PredictiveMaintenance() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchAlerts()
@@ -290,7 +291,7 @@ export function PredictiveMaintenance() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
         <div className="bg-[#1e293b] rounded-2xl border border-[#334155] p-4">
           <p className="text-xs text-slate-400">Urgenza Critica</p>
           <p className="text-lg font-bold text-red-300">{criticalCount}</p>
@@ -382,7 +383,7 @@ export function PredictiveMaintenance() {
         title={editingId ? 'Modifica Alert' : 'Nuovo Alert Manutenzione'}
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Veicolo (ID)">
               <input
                 type="text"
@@ -425,7 +426,7 @@ export function PredictiveMaintenance() {
             />
           </Field>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Soglia Km">
               <NumericInput
                 value={form.km_threshold}

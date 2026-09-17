@@ -14,7 +14,8 @@ import {
 import type { DrivingHoursRow, DrivingHoursInput } from '../../../services/compliance'
 import { validateDrivingHoursForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 // ── Status maps ──
 
@@ -127,7 +128,7 @@ export function DrivingHours() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -352,7 +353,7 @@ export function DrivingHours() {
         title={editingId ? 'Modifica record' : 'Nuovo record ore guida'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Autista" error={fieldError('driver')}>
               <input
                 required
@@ -384,7 +385,7 @@ export function DrivingHours() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Minuti Guida" error={fieldError('driving_minutes')}>
               <NumericInput
                 value={form.driving_minutes}
@@ -409,7 +410,7 @@ export function DrivingHours() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Ora Inizio">
               <input
                 type="time"

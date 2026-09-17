@@ -51,7 +51,7 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
   } = prediction
 
   return (
-    <div className="border border-slate-600 rounded-2xl overflow-hidden bg-[#334155] max-w-lg mt-3">
+    <div className="border border-slate-600 rounded-2xl overflow-hidden bg-[#334155] max-w-lg w-full mt-3">
       {/* Header */}
       <div className="bg-[#1e293b] text-white p-4">
         <div className="text-lg font-semibold">
@@ -65,7 +65,7 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
       {/* Delay section */}
       <div className="p-4">
         <div className="flex items-baseline gap-2">
-          <span className={`text-4xl font-bold ${getDelayColor(estimatedDelay)}`}>
+          <span className={`text-3xl sm:text-4xl font-bold ${getDelayColor(estimatedDelay)}`}>
             {estimatedDelay}
           </span>
           <span className="text-slate-400 text-sm">minuti di ritardo stimato</span>

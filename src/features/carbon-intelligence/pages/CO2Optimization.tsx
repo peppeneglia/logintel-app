@@ -188,7 +188,7 @@ export function CO2Optimization() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -236,7 +236,7 @@ export function CO2Optimization() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-slate-400 mb-1">Risparmio potenziale (suggerimenti attivi)</p>
-            <p className="text-3xl font-bold text-emerald-400">
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-400">
               {totalPotentialSaving.toLocaleString('it-IT')} <span className="text-lg">kg CO2</span>
             </p>
           </div>

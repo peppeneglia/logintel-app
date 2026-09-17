@@ -525,53 +525,6 @@ export const mockPredictionHistory: PredictionHistoryItem[] = [
   },
 ]
 
-// ─── Coming soon modules ──────────────────────────
-export interface ComingSoonModule {
-  key: string
-  title: string
-  description: string
-  icon: string
-  quarter: string
-}
-
-export const comingSoonModules: Record<string, ComingSoonModule> = {
-  fleet: {
-    key: 'fleet',
-    title: 'Fleet Intelligence',
-    description: 'Gestisci la tua flotta con analisi predittiva su manutenzione, allocazione veicoli, costi operativi e scadenze documentali.',
-    icon: 'Truck',
-    quarter: 'Q3 2026',
-  },
-  delivery: {
-    key: 'delivery',
-    title: 'Delivery Intelligence',
-    description: 'Ottimizza le consegne con tracking attivo, analisi performance, finestre di consegna intelligenti e notifiche clienti automatizzate.',
-    icon: 'Package',
-    quarter: 'Q3 2026',
-  },
-  compliance: {
-    key: 'compliance',
-    title: 'Compliance Intelligence',
-    description: 'Monitora ore di guida, tachigrafi, scadenze documenti e normative ADR. Report di conformità automatizzati per la tua flotta.',
-    icon: 'Shield',
-    quarter: 'Q4 2026',
-  },
-  finance: {
-    key: 'finance',
-    title: 'Finance Intelligence',
-    description: 'Analizza marginalità per rotta, costi per km, profittabilità clienti, budget vs actual e gestisci penali e fatturazione.',
-    icon: 'Wallet',
-    quarter: 'Q4 2026',
-  },
-  carbon: {
-    key: 'carbon',
-    title: 'Carbon Intelligence',
-    description: 'Traccia emissioni per rotta e veicolo, genera report ESG, ottimizza la CO2 e monitora lo storico emissioni della tua flotta.',
-    icon: 'Leaf',
-    quarter: 'Q1 2027',
-  },
-}
-
 // ─── ETA Report mock ──────────────────────────────
 export const mockETAReport = mockPredictionHistory.slice(0, 5)
 

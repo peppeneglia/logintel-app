@@ -1,4 +1,4 @@
-import { Plus, MessageSquare } from 'lucide-react'
+import { Plus, MessageSquare, X } from 'lucide-react'
 import { SidebarFooter } from '../../../components/SidebarFooter'
 
 interface ConversationItem {
@@ -12,6 +12,8 @@ interface ChatSidebarProps {
   onSelectConversation: (id: string) => void
   onNewChat: () => void
   conversations?: ConversationItem[]
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
 function formatDateItalian(dateStr: string): string {
@@ -26,12 +28,24 @@ export function ChatSidebar({
   onSelectConversation,
   onNewChat,
   conversations = [],
+  mobileOpen,
+  onMobileClose,
 }: ChatSidebarProps) {
-  return (
-    <div className="w-72 shrink-0 bg-[#1e293b] border border-[#334155] rounded-2xl flex flex-col overflow-y-auto select-none mb-3">
+  const handleSelect = (id: string) => {
+    onSelectConversation(id)
+    onMobileClose?.()
+  }
+
+  const handleNew = () => {
+    onNewChat()
+    onMobileClose?.()
+  }
+
+  const content = (
+    <>
       <div className="p-3">
         <button
-          onClick={onNewChat}
+          onClick={handleNew}
           className="w-full flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-600 text-slate-300 hover:bg-[#334155] hover:border-primary-500/50 transition-colors cursor-pointer text-sm font-medium"
         >
           <Plus size={18} />
@@ -50,7 +64,7 @@ export function ChatSidebar({
             return (
               <button
                 key={conv.id}
-                onClick={() => onSelectConversation(conv.id)}
+                onClick={() => handleSelect(conv.id)}
                 className={`w-full text-left px-3 py-3 rounded-xl transition-colors cursor-pointer flex items-start gap-3 ${
                   isActive
                     ? 'bg-[#334155] text-white'
@@ -71,6 +85,31 @@ export function ChatSidebar({
       </div>
 
       <SidebarFooter />
-    </div>
+    </>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex w-72 shrink-0 bg-[#1e293b] border border-[#334155] rounded-2xl flex-col overflow-y-auto select-none mb-3">
+        {content}
+      </div>
+
+      {/* Mobile overlay sidebar */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/60" onClick={onMobileClose} />
+          <div className="relative w-72 max-w-[85vw] bg-[#1e293b] border-r border-[#334155] flex flex-col overflow-y-auto select-none">
+            <button
+              onClick={onMobileClose}
+              className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-slate-200 hover:bg-[#334155] rounded-lg transition-colors z-10"
+            >
+              <X size={18} />
+            </button>
+            {content}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

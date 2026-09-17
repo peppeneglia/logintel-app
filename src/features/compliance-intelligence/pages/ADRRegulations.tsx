@@ -11,7 +11,8 @@ import { getADRShipments, addADRShipment, updateADRShipment, deleteADRShipment }
 import type { ADRShipmentRow, ADRShipmentInput } from '../../../services/compliance'
 import { isValidWeight } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, AutocompleteInput, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput, AutocompleteInput } from '../../../components/FormFields'
+import { inputCls } from '../../../lib/formConstants'
 
 const ADR_CLASS_OPTIONS = ['1', '2', '3', '4.1', '4.2', '4.3', '5.1', '5.2', '6.1', '6.2', '7', '8', '9']
 
@@ -113,7 +114,7 @@ export function ADRRegulations() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -318,7 +319,7 @@ export function ADRRegulations() {
         title={editingId ? 'Modifica spedizione ADR' : 'Nuova spedizione ADR'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Classe ADR" error={fieldError('adr_class')}>
               <AutocompleteInput
                 value={form.adr_class}
@@ -363,7 +364,7 @@ export function ADRRegulations() {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Autista" error={fieldError('driver')}>
               <input
                 required

@@ -11,9 +11,9 @@ const suggestions = [
 
 export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
   return (
-    <div className="flex flex-1 items-start justify-center px-4 pt-[12vh]">
+    <div className="flex flex-1 items-start justify-center px-3 sm:px-4 pt-[8vh] sm:pt-[12vh]">
       <div className="max-w-2xl mx-auto text-center">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">
           Ciao, come posso aiutarti?
         </h1>
         <p className="text-slate-400 mt-2">
@@ -21,7 +21,7 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
           logistici, o analisi dei percorsi.
         </p>
 
-        <div className="grid grid-cols-2 gap-3 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8">
           {suggestions.map((text) => (
             <button
               key={text}

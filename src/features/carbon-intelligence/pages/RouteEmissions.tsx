@@ -18,7 +18,8 @@ import {
 import type { EmissionsRecordRow, EmissionsRecordInput } from '../../../services/carbon'
 import { validateEmissionsForm } from '../../../lib/validation'
 import type { ValidationError } from '../../../lib/validation'
-import { Field, NumericInput, AutocompleteInput, EURO_CLASS_OPTIONS, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput, AutocompleteInput } from '../../../components/FormFields'
+import { EURO_CLASS_OPTIONS, inputCls } from '../../../lib/formConstants'
 
 // ── Trend helpers ──
 
@@ -128,7 +129,7 @@ export function RouteEmissions() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -346,7 +347,7 @@ export function RouteEmissions() {
             />
           </Field>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Km" error={fieldError('km')}>
               <NumericInput
                 value={form.km}

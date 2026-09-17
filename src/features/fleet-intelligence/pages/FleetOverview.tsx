@@ -110,7 +110,8 @@ const emptyForm: DisplayVehicle = {
 
 // ── Form components ──
 
-import { Field, NumericInput, AutocompleteInput, EURO_CLASS_OPTIONS, VEHICLE_BRAND_OPTIONS, inputCls } from '../../../components/FormFields'
+import { Field, NumericInput, AutocompleteInput } from '../../../components/FormFields'
+import { EURO_CLASS_OPTIONS, VEHICLE_BRAND_OPTIONS, inputCls } from '../../../lib/formConstants'
 
 // ── Main component ──
 
@@ -142,7 +143,7 @@ export function FleetOverview() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -403,7 +404,7 @@ export function FleetOverview() {
         title={editingId ? 'Modifica veicolo' : 'Nuovo veicolo'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Targa" error={fieldError('plate')}>
               <input
                 required
@@ -441,7 +442,7 @@ export function FleetOverview() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Anno" error={fieldError('year')}>
               <NumericInput
                 value={form.year}
@@ -478,7 +479,7 @@ export function FleetOverview() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Field label="Km Totali" error={fieldError('total_km')}>
               <NumericInput
                 value={form.total_km}
@@ -514,7 +515,7 @@ export function FleetOverview() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Autista">
               <input
                 value={form.driver}

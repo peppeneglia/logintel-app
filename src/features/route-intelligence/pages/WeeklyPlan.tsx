@@ -217,7 +217,7 @@ export function WeeklyPlan() {
         <div className="space-y-3 mb-4">
           {routes.map((route, idx) => (
             <div key={idx} className="flex items-center gap-3">
-              <div className="grid grid-cols-4 gap-3 flex-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 flex-1">
                 <CityAutocomplete
                   value={route.origin}
                   onChange={(val, coords) => setRoutes((prev) => prev.map((r, i) => i === idx ? { ...r, origin: val, originCoords: coords ?? r.originCoords } : r))}
@@ -329,7 +329,7 @@ export function WeeklyPlan() {
                     onClick={() => toggleExpand(idx)}
                     className={`flex items-center gap-4 px-4 py-3 border-b border-[#334155] cursor-pointer hover:bg-[#334155]/50 transition-colors ${getRowBg(r.delay)}`}
                   >
-                    <div className="flex-1 grid grid-cols-6 gap-4 items-center text-sm">
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 items-center text-sm">
                       <span className="text-white font-medium">{r.origin} &rarr; {r.destination}</span>
                       <span className="text-slate-400">{r.dayOfWeek}</span>
                       <span className="text-slate-400">{r.departureTime}</span>
@@ -359,7 +359,7 @@ export function WeeklyPlan() {
                       )}
 
                       {/* Stats */}
-                      <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
                         <div className="bg-[#334155] rounded-xl p-3">
                           <p className="text-xs text-slate-400">Distanza</p>
                           <p className="text-lg font-bold text-white">{Math.round(totalDistanceKm)} km</p>

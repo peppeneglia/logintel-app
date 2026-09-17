@@ -116,7 +116,7 @@ export function ComplianceReport() {
     } catch {
       // silently fail on background refresh
     }
-  }, [isDemo, userId])
+  }, [isDemo, userId, consume])
 
   useEffect(() => {
     fetchData()
@@ -151,7 +151,7 @@ export function ComplianceReport() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs text-slate-400">Conformità complessiva</p>
-                <p className="text-4xl font-bold text-white">{overallPercentage}%</p>
+                <p className="text-2xl sm:text-4xl font-bold text-white">{overallPercentage}%</p>
               </div>
               <span className={`inline-block px-3 py-1.5 rounded-full text-sm font-medium ${statusBadge[overallStatus]}`}>
                 {statusLabel[overallStatus]}

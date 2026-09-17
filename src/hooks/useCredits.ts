@@ -28,34 +28,36 @@ export function useCredits() {
     [isDemo, totalAvailable]
   )
 
-  const consume = useCallback(
-    async (cost: number, actionType: string): Promise<boolean> => {
-      // Update store directly for instant UI feedback (no Supabase round-trip)
-      const newRemaining = Math.max(0, creditsRemaining - cost)
-      const currentProfile = useAuthStore.getState().profile
-      if (currentProfile) {
-        useAuthStore.setState({
-          profile: { ...currentProfile, credits_remaining: newRemaining } as Profile,
-        })
-      }
+  // Reads the latest state from the store at call time so the callback identity
+  // is stable and can safely be listed as a dependency of data-loading effects.
+  const consume = useCallback(async (cost: number, actionType: string): Promise<boolean> => {
+    const { profile: currentProfile, isDemo: demo, user: currentUser } = useAuthStore.getState()
+    const remaining = profileField(currentProfile, 'credits_remaining', 500)
+    const extra = profileField(currentProfile, 'extra_credits', 0)
+    const newRemaining = Math.max(0, remaining - cost)
 
-      // Persist demo credits to sessionStorage (survives page reload)
-      if (isDemo) {
-        sessionStorage.setItem('logintel-demo-credits', String(newRemaining))
-        return true
-      }
+    // Update store directly for instant UI feedback (no Supabase round-trip)
+    if (currentProfile) {
+      useAuthStore.setState({
+        profile: { ...currentProfile, credits_remaining: newRemaining } as Profile,
+      })
+    }
 
-      const userId = user?.id
-      if (!userId) return true
-
-      // Fire Supabase update in background — don't block the UI
-      consumeCredits(userId, cost, actionType, creditsRemaining, extraCredits)
-        .catch(() => { /* Supabase unreachable — local update already applied */ })
-
+    // Persist demo credits to sessionStorage (survives page reload)
+    if (demo) {
+      sessionStorage.setItem('logintel-demo-credits', String(newRemaining))
       return true
-    },
-    [isDemo, creditsRemaining, extraCredits, user]
-  )
+    }
+
+    const userId = currentUser?.id
+    if (!userId) return true
+
+    // Fire Supabase update in background — don't block the UI
+    consumeCredits(userId, cost, actionType, remaining, extra)
+      .catch(() => { /* Supabase unreachable — local update already applied */ })
+
+    return true
+  }, [])
 
   const resetIfNewDay = useCallback(async () => {
     if (isDemo) return

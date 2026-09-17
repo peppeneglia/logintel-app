@@ -384,7 +384,7 @@ export function SinglePrediction() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-1">Ritardo stimato</p>
-              <p className={`text-4xl font-bold ${getDelayColor(demo.total_delay_minutes)}`}>+{Math.round(demo.total_delay_minutes)} min</p>
+              <p className={`text-2xl sm:text-4xl font-bold ${getDelayColor(demo.total_delay_minutes)}`}>+{Math.round(demo.total_delay_minutes)} min</p>
             </div>
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-2">Confidenza</p>
@@ -514,7 +514,7 @@ export function SinglePrediction() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-1">Ritardo stimato</p>
-              <p className={`text-4xl font-bold ${result.total_delay_minutes > 0 ? 'text-red-400' : 'text-emerald-400'}`}>+{Math.round(result.total_delay_minutes)} min</p>
+              <p className={`text-2xl sm:text-4xl font-bold ${result.total_delay_minutes > 0 ? 'text-red-400' : 'text-emerald-400'}`}>+{Math.round(result.total_delay_minutes)} min</p>
             </div>
             <div className="bg-[#334155] rounded-xl p-4">
               <p className="text-sm text-slate-400 mb-2">Confidenza</p>
